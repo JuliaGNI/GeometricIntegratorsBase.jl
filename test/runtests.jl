@@ -1,6 +1,11 @@
-using GeometricIntegratorsBase
-using Test
+using SafeTestsets
 
-@testset "GeometricIntegratorsBase.jl" begin
-    # Write your tests here.
-end
+include("harmonic_oscillator.jl")
+
+@safetestset "Initial Guess Tests                                                             " begin include("initialguess_tests.jl") end
+@safetestset "Method Tests                                                                    " begin include("method_tests.jl") end
+@safetestset "Integrator Cache Tests                                                          " begin include("cache_tests.jl") end
+@safetestset "Solution Step Tests                                                             " begin include("solutionstep_tests.jl") end
+@safetestset "Solver Tests                                                                    " begin include("solver_tests.jl") end
+@safetestset "Integrator Tests                                                                " begin include("integrator_tests.jl") end
+@safetestset "Projection Tests                                                                " begin include("projection_tests.jl") end
