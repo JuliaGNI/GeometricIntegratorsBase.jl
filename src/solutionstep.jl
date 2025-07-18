@@ -24,7 +24,7 @@ _vectorfield(x::TimeVariable) = missing
 _vectorfield(x::StateVariable) = VectorfieldVariable(x)
 _vectorfield(x::VectorfieldVariable) = missing
 _vectorfield(x::AlgebraicVariable) = missing
-_vectorfield(x::StateWithError) = _vectorfield(parent(x))
+_vectorfield(x::StateWithError) = _vectorfield(x.state)
 
 
 """
@@ -45,14 +45,14 @@ the internal state of the integrator as obtained from the function
 
 """
 struct SolutionStep{
-        equationType <: GeometricEquation,
-        solutionType <: NamedTuple,
-        vectorfieldType <: NamedTuple,
-        historyType <: NamedTuple,
-        internalType <: NamedTuple,
-        paramsType <: OptionalParameters,
-        nHistory
-    }
+    equationType<:GeometricEquation,
+    solutionType<:NamedTuple,
+    vectorfieldType<:NamedTuple,
+    historyType<:NamedTuple,
+    internalType<:NamedTuple,
+    paramsType<:OptionalParameters,
+    nHistory
+}
 
     solution::solutionType
     vectorfield::vectorfieldType
@@ -60,7 +60,7 @@ struct SolutionStep{
     internal::internalType
     parameters::paramsType
 
-    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory = 1, internal = NamedTuple()) where {equType}
+    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=1, internal=NamedTuple()) where {equType}
         @assert nhistory ≥ 1
 
         # create solution vector for all variables in ics
@@ -81,7 +81,7 @@ struct SolutionStep{
         history = merge(solution, vectorfield_dots)
 
         # create solstep
-        solstep = new{equType, typeof(solution), typeof(vectorfield_filtered), typeof(history), typeof(internal), typeof(parameters), nhistory}(solution, vectorfield_filtered, history, internal, parameters)
+        solstep = new{equType,typeof(solution),typeof(vectorfield_filtered),typeof(history),typeof(internal),typeof(parameters),nhistory}(solution, vectorfield_filtered, history, internal, parameters)
 
         # copy initial conditions to current solution of solstep
         copy!(solstep, ics)
@@ -90,7 +90,7 @@ struct SolutionStep{
     end
 end
 
-function SolutionStep(problem::GeometricProblem{superType}; kwargs...) where {superType <: GeometricEquation}
+function SolutionStep(problem::GeometricProblem{superType}; kwargs...) where {superType<:GeometricEquation}
     SolutionStep{superType}(initial_conditions(problem), parameters(problem); kwargs...)
 end
 
@@ -101,7 +101,7 @@ end
 # end
 
 function solutionstep(int::AbstractIntegrator, sol; kwargs...)
-    solstep = SolutionStep(problem(int); internal = internal_variables(method(int), problem(int)), kwargs...)
+    solstep = SolutionStep(problem(int); internal=internal_variables(method(int), problem(int)), kwargs...)
     copy!(solstep, sol)
     solstep
 end
@@ -109,9 +109,9 @@ end
 
 @inline function Base.hasproperty(::SolutionStep{ET,ST,VT,HT}, s::Symbol) where {ET,ST,VT,HT}
     hasfield(ST, s) ||
-    hasfield(ST, _strip_bar(s)) ||
-    hasfield(VT, _strip_dot(s)) ||
-    hasfield(SolutionStep, s)
+        hasfield(ST, _strip_bar(s)) ||
+        hasfield(VT, _strip_dot(s)) ||
+        hasfield(SolutionStep, s)
 end
 
 @inline function Base.getproperty(sol::SolutionStep{ET,ST,VT,HT}, s::Symbol) where {ET,ST,VT,HT}
@@ -259,7 +259,7 @@ function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:S
             end
             # subtract Δs as long as value is above range
             while s[0][i] > range(s[0], i)[end]
-                    s[0][i] -= Δs
+                s[0][i] -= Δs
                 # subtract Δs for all entries of history to allow for consistent initial guesses
                 for j in eachsolution(solstep)
                     s[j][i] -= Δs
