@@ -2,8 +2,10 @@ using GeometricIntegratorsBase
 using GeometricEquations
 using Test
 
-using GeometricBase: VectorfieldVariable, periodic
+using GeometricBase: StateWithError, TimeVariable, VectorfieldVariable
+using GeometricBase: periodic
 using GeometricIntegratorsBase: enforce_periodicity!
+using GeometricIntegratorsBase: _strip_symbol, _strip_bar, _strip_dot, _add_symbol, _add_bar, _add_dot, _state, _vectorfield
 
 using ..HarmonicOscillator
 
@@ -34,6 +36,35 @@ iode = iodeproblem()
 idae = idaeproblem()
 lode = lodeproblem()
 ldae = ldaeproblem()
+
+
+@testset "$(rpad("Solution Step Helper Functions",80))" begin
+    x = rand(3)
+
+    @test _strip_symbol(:q̄, Char(0x0304)) == :q
+    @test _strip_symbol(:q̇, Char(0x0307)) == :q
+
+    @test _strip_bar(:q̄) == :q
+    @test _strip_dot(:q̇) == :q
+
+    @test _add_symbol(:q, Char(0x0304)) == :q̄
+    @test _add_symbol(:q, Char(0x0307)) == :q̇
+
+    @test _add_bar(:q) == :q̄
+    @test _add_dot(:q) == :q̇
+
+    @test _state(1) == 0
+    @test _state(StateVariable(x)) == StateWithError(StateVariable(zero(x)))
+
+    @test ismissing(_vectorfield(1))
+    @test ismissing(_vectorfield(TimeVariable(1.0)))
+    @test ismissing(_vectorfield(AlgebraicVariable(x)))
+    @test ismissing(_vectorfield(VectorfieldVariable(StateVariable(x))))
+
+    @test _vectorfield(StateVariable(x)) == VectorfieldVariable(zero(x))
+    @test _vectorfield(StateWithError(StateVariable(x))) == VectorfieldVariable(zero(x))
+
+end
 
 
 @testset "$(rpad("Solution Step Constructors",80))" begin
@@ -136,18 +167,18 @@ end
 
     solstep = SolutionStep(ode_periodic)
 
-    @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol=1E-14
-    @test solstep.q̄ ≈ [0.0, 0.0] atol=1E-14
+    @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
+    @test solstep.q̄ ≈ [0.0, 0.0] atol = 1E-14
 
     reset!(solstep, Δt)
 
-    @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol=1E-14
-    @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol=1E-14
+    @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
+    @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
 
     update!(solstep, (q=[3π, 0.0],))
 
-    @test solstep.q ≈ [initial_conditions(ode).q[1] + 3π, initial_conditions(ode).q[2]] atol=1E-14
-    @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol=1E-14
+    @test solstep.q ≈ [initial_conditions(ode).q[1] + 3π, initial_conditions(ode).q[2]] atol = 1E-14
+    @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
 
     enforce_periodicity!(solstep)
 
