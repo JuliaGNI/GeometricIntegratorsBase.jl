@@ -3,8 +3,8 @@ using GeometricEquations
 using Test
 
 using GeometricBase: StateWithError, TimeVariable, VectorfieldVariable
-using GeometricBase: periodic
-using GeometricIntegratorsBase: enforce_periodicity!
+using GeometricBase: periodic, value
+using GeometricIntegratorsBase: enforce_periodicity!, internal, nhistory
 using GeometricIntegratorsBase: _strip_symbol, _strip_bar, _strip_dot, _add_symbol, _add_bar, _add_dot, _state, _vectorfield
 
 using ..HarmonicOscillator
@@ -78,6 +78,87 @@ end
     @test typeof(SolutionStep(hdae)) <: SolutionStep{HDAE}
     @test typeof(SolutionStep(idae)) <: SolutionStep{IDAE}
     @test typeof(SolutionStep(ldae)) <: SolutionStep{LDAE}
+end
+
+
+@testset "$(rpad("SolutionStep Accessor Functions",80))" begin
+
+    # Test with ODE solution step
+    solstep_ode = SolutionStep(ode; nhistory=3)
+
+    # Test nhistory
+    @test nhistory(solstep_ode) == 3
+
+    # Test basic accessor functions
+    @test solution(solstep_ode) == solstep_ode.solution
+    @test vectorfield(solstep_ode) == solstep_ode.vectorfield
+    @test history(solstep_ode) == solstep_ode.history
+    @test internal(solstep_ode) == solstep_ode.internal
+    @test parameters(solstep_ode) == solstep_ode.parameters
+
+    # Test keys
+    @test keys(solstep_ode) == (:t, :q)
+
+    # Test indexed accessor functions
+    sol_current = solution(solstep_ode, 0)
+    sol_previous = solution(solstep_ode, 1)
+
+    @test haskey(sol_current, :t)
+    @test haskey(sol_current, :q)
+    @test haskey(sol_previous, :t)
+    @test haskey(sol_previous, :q)
+
+    # Test vectorfield accessor with index
+    vf_current = vectorfield(solstep_ode, 0)
+    vf_previous = vectorfield(solstep_ode, 1)
+
+    @test haskey(vf_current, :q)
+    @test haskey(vf_previous, :q)
+
+    # Test history accessor with index
+    hist_current = history(solstep_ode, 0)
+    hist_previous = history(solstep_ode, 1)
+
+    @test haskey(hist_current, :t)
+    @test haskey(hist_current, :q)
+    @test haskey(hist_current, :q̇)
+    @test haskey(hist_previous, :t)
+    @test haskey(hist_previous, :q)
+    @test haskey(hist_previous, :q̇)
+
+    # Test that indexed accessors return NamedTuples with correct structure
+    @test typeof(sol_current) <: NamedTuple
+    @test typeof(vf_current) <: NamedTuple
+    @test typeof(hist_current) <: NamedTuple
+
+    # Test that the returned values have the same keys as the original
+    @test keys(sol_current) == keys(solution(solstep_ode))
+    @test keys(vf_current) == keys(vectorfield(solstep_ode))
+    @test keys(hist_current) == keys(history(solstep_ode))
+
+    # Test with PODE solution step
+    solstep_pode = SolutionStep(pode; nhistory=2)
+
+    @test nhistory(solstep_pode) == 2
+    @test keys(solstep_pode) == (:t, :q, :p)
+
+    sol_pode_current = solution(solstep_pode, 0)
+    @test haskey(sol_pode_current, :t)
+    @test haskey(sol_pode_current, :q)
+    @test haskey(sol_pode_current, :p)
+
+    # Test with DAE solution step
+    solstep_dae = SolutionStep(dae; nhistory=1)
+
+    @test nhistory(solstep_dae) == 1
+    @test keys(solstep_dae) == (:t, :q, :λ, :μ)
+
+    sol_dae_current = solution(solstep_dae, 0)
+    @test haskey(sol_dae_current, :t)
+    @test haskey(sol_dae_current, :q)
+    @test haskey(sol_dae_current, :λ)
+    @test haskey(sol_dae_current, :μ)
+
 end
 
 
@@ -506,3 +587,301 @@ end
 #     @test solstep.p̄[1] ≈ ω * A * cos(- ω * timestep(pdae) + ϕ)
 
 # end
+
+
+# Create a simple equation type for testing
+struct TestEquation <: GeometricEquation{Nothing,Nothing,Nothing} end
+
+# Helper function to create a basic SolutionStep for testing
+function create_test_solutionstep(; nhistory=2)
+    # Create initial conditions with both regular and periodic variables
+    q_val = [1.0, 2.0, 3.0]
+    p_val = [0.5, 1.5, 2.5]
+
+    # Create periodic ranges for q (component 1 is periodic from 0 to 2π)
+    q_range_min = [0.0, -Inf, -Inf]
+    q_range_max = [2π, Inf, Inf]
+    q_periodic = BitArray([true, false, false])
+
+    # Create state variables
+    t = TimeVariable(0.0)
+    q = StateVariable(q_val, (q_range_min, q_range_max), q_periodic)
+    p = StateVariable(p_val, (fill(-Inf, 3), fill(Inf, 3)), BitArray(fill(false, 3)))
+
+    ics = (t=t, q=q, p=p)
+
+    return SolutionStep{TestEquation}(ics, NullParameters(); nhistory=nhistory)
+end
+
+
+@testset "SolutionStep Update and Periodicity Functions" begin
+    @testset "update! function" begin
+        @testset "Basic functionality" begin
+            solstep = create_test_solutionstep()
+
+            # Store original values
+            orig_t = value(solstep.t)
+            orig_q = copy(solstep.q)
+            orig_p = copy(solstep.p)
+
+            # Define increments
+            Δt = 0.1
+            Δq = [0.1, 0.2, 0.3]
+            Δp = [0.05, 0.1, 0.15]
+
+            # Apply reset
+            reset!(solstep, Δt)
+
+            # Check that time value was updated correctly
+            @test value(solstep.t) ≈ orig_t + Δt
+
+            # Apply update
+            result = update!(solstep, (q=Δq, p=Δp))
+
+            # Check that function returns the solution step
+            @test result === solstep
+
+            # Check that values were updated correctly
+            @test solstep.q ≈ orig_q + Δq
+            @test solstep.p ≈ orig_p + Δp
+
+            # Check that history wasn't affected
+            @test solution(solstep)[:q][1] ≈ orig_q
+            @test solution(solstep)[:p][1] ≈ orig_p
+        end
+
+        @testset "Partial updates" begin
+            solstep = create_test_solutionstep()
+
+            orig_q = copy(solstep.q)
+            orig_p = copy(solstep.p)
+
+            # Update only q
+            Δq = [0.1, 0.2, 0.3]
+            update!(solstep, (q=Δq,))
+
+            @test solstep.q ≈ orig_q + Δq
+            @test solstep.p ≈ orig_p  # p should remain unchanged
+        end
+
+        @testset "Empty update" begin
+            solstep = create_test_solutionstep()
+
+            orig_q = copy(solstep.q)
+            orig_p = copy(solstep.p)
+
+            # Empty update should not change anything
+            update!(solstep, NamedTuple())
+
+            @test solstep.q ≈ orig_q
+            @test solstep.p ≈ orig_p
+        end
+
+        @testset "Error conditions" begin
+            solstep = create_test_solutionstep()
+
+            # Test with invalid key
+            @test_throws AssertionError update!(solstep, (invalid_key=[1.0, 2.0],))
+
+            # Test with subset of invalid keys
+            @test_throws AssertionError update!(solstep, (q=[0.1, 0.2, 0.3], invalid_key=[1.0, 2.0]))
+        end
+    end
+
+    @testset "enforce_periodicity! functions" begin
+
+        @testset "Non-periodic variables (no-op)" begin
+            solstep = create_test_solutionstep()
+
+            # Get a non-periodic variable (p has no periodic components)
+            p_vector = solution(solstep)[:p]
+            orig_p = copy(p_vector[0])
+
+            # This should do nothing
+            enforce_periodicity!(solstep, p_vector)
+
+            @test p_vector[0] ≈ orig_p
+        end
+
+        @testset "Periodic variable enforcement" begin
+            solstep = create_test_solutionstep()
+
+            # Test with value below range
+            @testset "Value below range" begin
+                solstep = create_test_solutionstep()
+                q_vector = solution(solstep)[:q]
+
+                # Set first component (periodic) to below range
+                q_vector[0][1] = -0.5  # Below 0
+
+                # Store history values
+                hist_val = copy(q_vector[1][1])
+
+                enforce_periodicity!(solstep, q_vector)
+
+                # Should be adjusted by adding 2π
+                @test q_vector[0][1] ≈ -0.5 + 2π
+                @test q_vector[1][1] ≈ hist_val + 2π  # History should be adjusted too
+
+                # Non-periodic components should be unchanged
+                @test q_vector[0][2] ≈ 2.0
+                @test q_vector[0][3] ≈ 3.0
+            end
+
+            @testset "Value above range" begin
+                solstep = create_test_solutionstep()
+                q_vector = solution(solstep)[:q]
+
+                # Set first component (periodic) to above range
+                q_vector[0][1] = 7.0  # Above 2π ≈ 6.28
+
+                # Store history values
+                hist_val = copy(q_vector[1][1])
+
+                enforce_periodicity!(solstep, q_vector)
+
+                # Should be adjusted by subtracting 2π
+                @test q_vector[0][1] ≈ 7.0 - 2π
+                @test q_vector[1][1] ≈ hist_val - 2π  # History should be adjusted too
+            end
+
+            @testset "Multiple period adjustments" begin
+                solstep = create_test_solutionstep()
+                q_vector = solution(solstep)[:q]
+
+                # Set value multiple periods outside range
+                q_vector[0][1] = -4π  # Two periods below
+
+                enforce_periodicity!(solstep, q_vector)
+
+                # Should be adjusted by adding 4π to bring it into [0, 2π]
+                @test q_vector[0][1] ≈ -4π + 4π
+                @test 0 ≤ q_vector[0][1] ≤ 2π
+            end
+
+            @testset "Value already in range" begin
+                solstep = create_test_solutionstep()
+                q_vector = solution(solstep)[:q]
+
+                # Set value within range
+                original_val = π  # Within [0, 2π]
+                q_vector[0][1] = original_val
+
+                enforce_periodicity!(solstep, q_vector)
+
+                # Should remain unchanged
+                @test q_vector[0][1] ≈ original_val
+            end
+        end
+
+        @testset "Full solution step periodicity" begin
+            solstep = create_test_solutionstep()
+
+            # Set periodic component out of range
+            solution(solstep)[:q][0][1] = -0.5
+
+            # Store original non-periodic values
+            orig_q2 = copy(solution(solstep)[:q][0][2])
+            orig_q3 = copy(solution(solstep)[:q][0][3])
+            orig_p = copy(solution(solstep)[:p][0])
+
+            # Apply periodicity to entire solution step
+            enforce_periodicity!(solstep)
+
+            # Periodic component should be adjusted
+            @test solution(solstep)[:q][0][1] ≈ -0.5 + 2π
+
+            # Non-periodic components should be unchanged
+            @test solution(solstep)[:q][0][2] ≈ orig_q2
+            @test solution(solstep)[:q][0][3] ≈ orig_q3
+            @test solution(solstep)[:p][0] ≈ orig_p
+        end
+
+        @testset "StateVariableWithError periodicity" begin
+            # Create a solution step with StateVariableWithError
+            q_val = [1.0, 2.0, 3.0]
+            q_range_min = [0.0, -Inf, -Inf]
+            q_range_max = [2π, Inf, Inf]
+            q_periodic = BitArray([true, false, false])
+
+            q_state = StateVariable(q_val, (q_range_min, q_range_max), q_periodic)
+            q_with_error = StateWithError(q_state)
+
+            t = TimeVariable(0.0)
+            ics = (q=q_with_error, t=t)
+
+            solstep = SolutionStep{TestEquation}(ics, NullParameters(); nhistory=2)
+
+            # Set periodic component out of range
+            solution(solstep)[:q][0][1] = -0.5
+
+            enforce_periodicity!(solstep)
+
+            # Should be adjusted for StateVariableWithError too
+            @test solution(solstep)[:q][0][1] ≈ -0.5 + 2π
+        end
+
+        @testset "Edge cases" begin
+            solstep = create_test_solutionstep()
+
+            @testset "Boundary values" begin
+                q_vector = solution(solstep)[:q]
+
+                # Test exact boundary values
+                q_vector[0][1] = 0.0  # At lower bound
+                enforce_periodicity!(solstep, q_vector)
+                @test q_vector[0][1] ≈ 0.0
+
+                q_vector[0][1] = 2π  # At upper bound
+                enforce_periodicity!(solstep, q_vector)
+                @test q_vector[0][1] ≈ 2π
+            end
+
+            @testset "Very small adjustments" begin
+                q_vector = solution(solstep)[:q]
+
+                # Test with value just slightly outside range
+                q_vector[0][1] = 2π + 1e-14
+                enforce_periodicity!(solstep, q_vector)
+                @test 0 ≤ q_vector[0][1] ≤ 2π
+
+                q_vector[0][1] = -1e-14
+                enforce_periodicity!(solstep, q_vector)
+                @test 0 ≤ q_vector[0][1] ≤ 2π
+            end
+        end
+    end
+
+    @testset "Integration tests" begin
+        @testset "Update followed by periodicity enforcement" begin
+            solstep = create_test_solutionstep()
+
+            # Update with increment that takes periodic component out of range
+            # Starting at q[1] = 1.0, add 6.0 to get 7.0 > 2π
+            update!(solstep, (q=[6.0, 0.0, 0.0],))
+
+            # Before periodicity enforcement
+            @test solution(solstep)[:q][0][1] ≈ 7.0
+
+            # Enforce periodicity
+            enforce_periodicity!(solstep)
+
+            # After periodicity enforcement
+            @test solution(solstep)[:q][0][1] ≈ 7.0 - 2π
+            @test 0 ≤ solution(solstep)[:q][0][1] ≤ 2π
+        end
+
+        @testset "Multiple update and periodicity cycles" begin
+            solstep = create_test_solutionstep()
+
+            # Simulate multiple time steps with updates and periodicity
+            for i in 1:5
+                update!(solstep, (q=[0.0, 1.5, 0.0],))  # Add 1.5 to periodic component
+                enforce_periodicity!(solstep)
+
+                # Should always be in range
+                @test 0 ≤ solution(solstep)[:q][0][1] ≤ 2π
+            end
+        end
+    end
+end
