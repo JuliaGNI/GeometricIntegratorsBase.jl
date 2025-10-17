@@ -12,9 +12,6 @@ OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 SimpleSolvers = "36b790f5-6434-4fbe-b711-1f64a1e2f6a2"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
-[sources]
-GeometricBase = {path = "../GeometricBase"}
-
 [compat]
 GeometricBase = "0.12"
 GeometricEquations = "0.20"
