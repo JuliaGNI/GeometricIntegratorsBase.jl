@@ -3,24 +3,38 @@ module GeometricIntegratorsBase
 using GeometricBase
 using GeometricEquations
 using GeometricSolutions
+using LinearAlgebra
 using OffsetArrays
 using SimpleSolvers
 
+import Base: Callable
 using Unicode: normalize
 
-import GeometricBase: parameters, tableau
+import GeometricBase: initialguess, parameters, tableau
 import GeometricBase: timestep, timespan
-import GeometricBase: reset!, update!
+import GeometricBase: reset!, solutionstep!, update!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable
+
+
+# compat workaround
+Base.ndims(prob::EquationProblem) = length(vec(prob.ics.q))
 
 
 export update!, reset!
 
 
 export Extrapolation
+export EulerExtrapolation,
+    MidpointExtrapolation,
+    HermiteExtrapolation
+export extrapolate!, solutionstep!
 
-include("extrapolation.jl")
+include("extrapolation/extrapolation.jl")
+include("extrapolation/aitken_neville.jl")
+include("extrapolation/euler.jl")
+include("extrapolation/hermite.jl")
+include("extrapolation/midpoint.jl")
 
 
 export InitialGuess, NoInitialGuess
@@ -67,5 +81,10 @@ include("integrator.jl")
 export NoProjection, projection
 
 include("projection.jl")
+
+export ExplicitEuler, ImplicitEuler
+
+include("euler/explicit_euler.jl")
+include("euler/implicit_euler.jl")
 
 end

@@ -86,7 +86,7 @@ struct SolutionStep{
     internal::internalType
     parameters::paramsType
 
-    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=1, internal=NamedTuple()) where {equType}
+    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=2, internal=NamedTuple()) where {equType}
         @assert nhistory ≥ 1
 
         # create solution vector for all variables in ics
@@ -127,9 +127,16 @@ end
 # end
 
 function solutionstep(int::AbstractIntegrator, sol; kwargs...)
+    # create solutionstep
     solstep = SolutionStep(problem(int); internal=internal_variables(method(int), problem(int)), kwargs...)
+
+    # copy initial conditions from sol
     copy!(solstep, sol)
-    solstep
+
+    # initialize solution step history
+    initialize!(solstep, problem(int))
+
+    return solstep
 end
 
 
@@ -467,4 +474,17 @@ function enforce_periodicity!(solstep::SolutionStep)
     for s in solution(solstep)
         enforce_periodicity!(solstep, s)
     end
+end
+
+
+function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::Extrapolation=default_extrapolation())
+    for i in backwardhistory(solstep)
+        history(solstep).t[i] = history(solstep).t[i-1] - timestep(problem)
+        soltmp = history(solstep, i)
+        hsttmp = history(solstep, i - 1)
+        extrapolate!(soltmp, hsttmp, problem, extrap)
+        compute_vectorfields!(vectorfield(solstep, i), solution(solstep, i), problem)
+    end
+
+    return solstep
 end

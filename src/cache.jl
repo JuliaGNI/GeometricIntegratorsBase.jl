@@ -8,7 +8,7 @@ Cache(problem::AbstractProblem, method::GeometricMethod) = Cache{datatype(proble
 
 CacheType(T, problem::AbstractProblem, method::GeometricMethod) = NoCache{T}
 
-reset!(::Cache) = nothing
+reset!(::Cache, args...) = nothing
 
 
 abstract type IntegratorCache{D,DT} <: Cache{DT} end
