@@ -10,7 +10,7 @@ using SimpleSolvers
 import Base: Callable
 using Unicode: normalize
 
-import GeometricBase: initialguess, parameters, tableau
+import GeometricBase: equations, initialguess, nconstraints, parameters, tableau
 import GeometricBase: timestep, timespan
 import GeometricBase: reset!, solutionstep!, update!
 import GeometricBase: integrate
