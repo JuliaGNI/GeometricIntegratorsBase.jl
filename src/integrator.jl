@@ -67,7 +67,6 @@ initialguess(int::GeometricIntegrator) = int.iguess
 
 cache(int::GeometricIntegrator, DT) = caches(int)[DT]
 cache(int::GeometricIntegrator) = cache(int, datatype(problem(int)))
-eachstage(int::GeometricIntegrator) = eachstage(method(int))
 hasnullvector(int::GeometricIntegrator) = hasnullvector(method(int))
 implicit_update(int::GeometricIntegrator) = implicit_update(method(int))
 nconstraints(int::GeometricIntegrator) = nconstraints(problem(int))
