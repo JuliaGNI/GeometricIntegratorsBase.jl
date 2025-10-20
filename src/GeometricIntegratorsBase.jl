@@ -13,7 +13,7 @@ using Unicode: normalize
 import GeometricBase: equations, initialguess, nconstraints, parameters, tableau
 import GeometricBase: timestep, timespan
 import GeometricBase: reset!, solutionstep!, update!
-import GeometricBase: integrate
+import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable
 
