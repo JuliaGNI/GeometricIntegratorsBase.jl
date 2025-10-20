@@ -26,6 +26,10 @@ _vectorfield(x::VectorfieldVariable) = missing
 _vectorfield(x::AlgebraicVariable) = missing
 _vectorfield(x::StateWithError) = _vectorfield(x.state)
 
+_copy!(sol, x, i=0) = copy!(sol[i], x)
+_copy!(sol, x::Number, i=0) = sol[i] = x
+_copy!(sol, x::TimeVariable, i=0) = _copy!(sol, value(x), i)
+
 
 """
 Holds the solution of a geometric equation at a single time step.
@@ -165,11 +169,11 @@ end
     s̄ = _strip_bar(s)
     ṡ = _strip_dot(s)
     if hasfield(ST, s)
-        return copy!(getfield(sol, :solution)[s][0], v)
+        return _copy!(getfield(sol, :solution)[s], v, 0)
     elseif s̄ ≠ s && hasfield(ST, s̄)
-        return copy!(getfield(sol, :solution)[s̄][1], v)
+        return _copy!(getfield(sol, :solution)[s̄], v, 1)
     elseif ṡ ≠ s && hasfield(VT, ṡ)
-        return copy!(getfield(sol, :vectorfield)[ṡ][0], v)
+        return _copy!(getfield(sol, :vectorfield)[ṡ], v, 0)
     else
         return setfield!(sol, s, v)
     end
@@ -277,11 +281,6 @@ previous(solstep::SolutionStep) = history(solstep, 1)
 
 eachsolution(sol::SolutionStep) = 1:nhistory(sol)
 backwardhistory(sol::SolutionStep) = nhistory(sol):-1:1
-
-
-_copy!(sol, x, i=0) = copy!(sol[i], x)
-_copy!(sol, x::Number, i=0) = sol[i] = x
-_copy!(sol, x::TimeVariable, i=0) = _copy!(sol, value(x), i)
 
 
 """
