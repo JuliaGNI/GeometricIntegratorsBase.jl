@@ -130,9 +130,9 @@ function extrapolate!(
     return x₁
 end
 
-function extrapolate!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
-    extrapolate!(value(history.t), history.q, value(sol.t), sol.q, problem, extrap)
-    return sol
+function extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
+    extrapolate!(oldsol.t, oldsol.q, newsol.t, newsol.q, problem, extrap)
+    return newsol
 end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
@@ -200,9 +200,9 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     return (q₁, p₁)
 end
 
-function extrapolate!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
-    extrapolate!(value(history.t), history.q, history.p, value(sol.t), sol.q, sol.p, problem, extrap)
-    return sol
+function extrapolate!(newsol, oldsol, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
+    extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
+    return newsol
 end
 
 function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
@@ -272,9 +272,9 @@ function extrapolate!(
     return (q₁, p₁)
 end
 
-function extrapolate!(sol, history, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
-    extrapolate!(value(history.t), history.q, history.p, value(sol.t), sol.q, sol.p, problem, extrap)
-    return sol
+function extrapolate!(newsol, oldsol, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
+    extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
+    return newsol
 end
 
 function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
