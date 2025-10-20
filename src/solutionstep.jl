@@ -410,6 +410,7 @@ constraints and performs no operation.
 - `::OffsetVector{<:AbstractVariable}`: The variable vector (unused)
 """
 enforce_periodicity!(solstep::SolutionStep, ::OffsetVector{<:AbstractVariable}) = nothing
+enforce_periodicity!(solstep::SolutionStep, ::OffsetVector{<:Number}) = nothing
 
 """
     enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}})
@@ -434,7 +435,7 @@ For each component `i` of the state variable:
 - If above the range, subtract the range size until within bounds
 - Apply the same adjustment to all historical values `s[j][i]` for consistency
 """
-function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{DT,<:Union{<:StateVariable{DT},<:StateVariableWithError{DT}}}) where {DT<:Number}
+function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}})
     # loop through all components of state variable s
     for i in eachindex(s[0])
         # check if component i is periodic and if so outside of its range
@@ -461,7 +462,6 @@ function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{DT,<:Union{
     end
 end
 
-enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{DT,<:AbstractArray{DT}}) where {DT<:Number} = nothing
 
 """
     enforce_periodicity!(solstep::SolutionStep)

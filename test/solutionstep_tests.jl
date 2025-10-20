@@ -620,7 +620,7 @@ end
             solstep = create_test_solutionstep()
 
             # Store original values
-            orig_t = value(solstep.t)
+            orig_t = solstep.t
             orig_q = copy(solstep.q)
             orig_p = copy(solstep.p)
 
@@ -633,7 +633,7 @@ end
             reset!(solstep, Δt)
 
             # Check that time value was updated correctly
-            @test value(solstep.t) ≈ orig_t + Δt
+            @test solstep.t ≈ orig_t + Δt
 
             # Apply update
             result = update!(solstep, (q=Δq, p=Δp))
