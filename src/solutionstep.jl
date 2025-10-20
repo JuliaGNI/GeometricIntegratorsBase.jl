@@ -13,7 +13,7 @@ _add_bar(s::Symbol) = _add_symbol(s, Char(0x0304))
 _add_dot(s::Symbol) = _add_symbol(s, Char(0x0307))
 
 _state(x::Number) = zero(x)
-_state(x::TimeVariable) = zero(x)
+_state(x::TimeVariable) = zero(value(x))
 _state(x::StateVariable) = StateWithError(zero(x))
 _state(x::VectorfieldVariable) = zero(x)
 _state(x::AlgebraicVariable) = zero(x)
@@ -279,6 +279,11 @@ eachsolution(sol::SolutionStep) = 1:nhistory(sol)
 backwardhistory(sol::SolutionStep) = nhistory(sol):-1:1
 
 
+_copy!(sol, x, i=0) = copy!(sol[i], x)
+_copy!(sol, x::Number, i=0) = sol[i] = x
+_copy!(sol, x::TimeVariable, i=0) = _copy!(sol, value(x), i)
+
+
 """
     reset!(solstep::SolutionStep, Δt)
 
@@ -297,11 +302,12 @@ next time step.
 function GeometricBase.reset!(solstep::SolutionStep, Δt)
     for k in keys(solstep)
         for i in backwardhistory(solstep)
-            copy!(solution(solstep)[k][i], solution(solstep)[k][i-1])
+            _copy!(solution(solstep)[k], solution(solstep)[k][i-1], i)
         end
     end
 
-    add!(solstep.t, Δt)
+    # add!(solstep.t, Δt)
+    solution(solstep).t[0] += Δt
 
     return solstep
 end
@@ -323,7 +329,7 @@ function Base.copy!(solstep::SolutionStep, sol::NamedTuple)
     @assert keys(sol) ⊆ keys(solstep)
 
     for k in keys(sol)
-        copy!(solution(solstep)[k][0], sol[k])
+        _copy!(solution(solstep)[k], sol[k])
     end
 
     # for i in backwardhistory(solstep)
@@ -429,7 +435,7 @@ For each component `i` of the state variable:
 - If above the range, subtract the range size until within bounds
 - Apply the same adjustment to all historical values `s[j][i]` for consistency
 """
-function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}})
+function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{DT,<:Union{<:StateVariable{DT},<:StateVariableWithError{DT}}}) where {DT<:Number}
     # loop through all components of state variable s
     for i in eachindex(s[0])
         # check if component i is periodic and if so outside of its range
@@ -456,6 +462,8 @@ function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:S
     end
 end
 
+enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{DT,<:AbstractArray{DT}}) where {DT<:Number} = nothing
+
 """
     enforce_periodicity!(solstep::SolutionStep)
 
@@ -478,13 +486,20 @@ end
 
 
 function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::Extrapolation=default_extrapolation())
-    for i in backwardhistory(solstep)
+    for i in eachsolution(solstep)
         history(solstep).t[i] = history(solstep).t[i-1] - timestep(problem)
         soltmp = history(solstep, i)
         hsttmp = history(solstep, i - 1)
         extrapolate!(soltmp, hsttmp, problem, extrap)
         compute_vectorfields!(vectorfield(solstep, i), solution(solstep, i), problem)
     end
+
+    return solstep
+end
+
+function initialize!(solstep::SolutionStep, problem::DELEProblem, extrap::Extrapolation=default_extrapolation())
+    history(solstep).t[1] = solstep.t - timestep(problem)
+    history(solstep).q[1] .= initial_conditions(problem).q̄
 
     return solstep
 end
