@@ -8,7 +8,3 @@ Documentation for [GeometricIntegratorsBase](https://github.com/JuliaGNI/Geometr
 
 ```@index
 ```
-
-```@autodocs
-Modules = [GeometricIntegratorsBase]
-```
