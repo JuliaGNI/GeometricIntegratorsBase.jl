@@ -1,11 +1,11 @@
 
-# const default_extrapolation_stages = 5
+const default_extrapolation_stages = 5
 
 # abstract type Extrapolation <: DeterministicMethod end
 abstract type Extrapolation end
 
 # default_extrapolation() = missing
-default_extrapolation() = MidpointExtrapolation(5)
+default_extrapolation() = MidpointExtrapolation(default_extrapolation_stages)
 
 # struct NoExtrapolation <: Extrapolation end
 # struct NoInitialGuess <: Extrapolation end
@@ -13,8 +13,6 @@ default_extrapolation() = MidpointExtrapolation(5)
 
 
 # """
-
-
 # """
 # function extrapolate! end
 

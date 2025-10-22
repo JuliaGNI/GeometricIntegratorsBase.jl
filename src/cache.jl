@@ -26,6 +26,7 @@ abstract type DELEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
 
 copy_internal_variables!(::SolutionStep, ::Union{IntegratorCache,NoCache}) = nothing
 
+nlsolution(::NoCache) = missing
 nlsolution(::IntegratorCache) = missing
 
 

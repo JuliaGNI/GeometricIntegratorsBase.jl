@@ -130,15 +130,18 @@ end
 #     return solstep
 # end
 
-function solutionstep(int::AbstractIntegrator, sol; kwargs...)
+function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=default_extrapolation(), kwargs...)
     # create solutionstep
     solstep = SolutionStep(problem(int); internal=internal_variables(method(int), problem(int)), kwargs...)
 
     # copy initial conditions from sol
     copy!(solstep, sol)
 
+    # compute vector fields for initial conditions
+    compute_vectorfields!(vectorfield(solstep, 0), solution(solstep, 0), problem(int))
+
     # initialize solution step history
-    initialize!(solstep, problem(int))
+    initialize!(solstep, problem(int), extrap)
 
     return solstep
 end
@@ -487,12 +490,9 @@ end
 function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::Extrapolation=default_extrapolation())
     for i in eachsolution(solstep)
         history(solstep).t[i] = history(solstep).t[i-1] - timestep(problem)
-        soltmp = history(solstep, i)
-        hsttmp = history(solstep, i - 1)
-        extrapolate!(soltmp, hsttmp, problem, extrap)
+        extrapolate!(history(solstep, i), history(solstep, i - 1), problem, extrap)
         compute_vectorfields!(vectorfield(solstep, i), solution(solstep, i), problem)
     end
-
     return solstep
 end
 

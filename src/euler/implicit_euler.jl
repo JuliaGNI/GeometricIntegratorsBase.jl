@@ -45,13 +45,13 @@ default_iguess(::ImplicitEuler) = HermiteExtrapolation()
 
 function initial_guess!(sol, history, params, int::GeometricIntegrator{<:ImplicitEuler})
     # temporary solution
-    ig = (t=sol.t, q=cache(int).q, v=cache(int).v)
+    ig = (t=sol.t, q=cache(int).q, q̇=cache(int).v)
 
     # compute initial guess
     solutionstep!(ig, history, problem(int), iguess(int))
 
     # assemble initial guess for nonlinear solver solution vector
-    nlsolution(int) .= ig.v
+    nlsolution(int) .= ig.q̇
 end
 
 function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}

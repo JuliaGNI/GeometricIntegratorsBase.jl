@@ -64,15 +64,15 @@ extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, tᵢ, xᵢ, ẋᵢ, Hermite
 @test extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, t₁, x₁, HermiteExtrapolation()) == xᵢ
 @test extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, HermiteExtrapolation()) == (xᵢ, ẋᵢ)
 
-sol = (t=t₁, q=x₁, v=ẋ₁)
-ref = (t=tᵢ, q=xᵢ, v=ẋᵢ)
+sol = (t=t₁, q=x₁, q̇=ẋ₁)
+ref = (t=tᵢ, q=xᵢ, q̇=ẋᵢ)
 history = (t=[t₀, tₚ], q=[x₀, xₚ], q̇=[ẋ₀, ẋₚ])
 solutionstep!(sol, history, ode, HermiteExtrapolation())
 @test sol == ref
 
 
 # solution and history tuples
-sol = (t=tᵢ, q=xᵢ, v=ẋᵢ)
+sol = (t=tᵢ, q=xᵢ, q̇=ẋᵢ)
 history = (t=[t₀], q=[x₀], q̇=[ẋ₀])
 
 # Euler Extrapolation for ODEs

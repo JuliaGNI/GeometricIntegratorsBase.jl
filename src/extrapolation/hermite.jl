@@ -170,8 +170,6 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
 
     extrapolate!(t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, tᵢ, xᵢ, extrap)
 
-    # TODO: Verify interpolation of ẋ ! Values appear to be totally wrong !
-
     # Interpolate ẋ at t
     if tᵢ == t₀
         ẋᵢ .= ẋ₀
@@ -197,7 +195,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
         sol.q .= q₁
         sol.v .= q̇₁
     else
-        extrapolate!(t₀, q₀, q̇₀, t₁, q₁, q̇₁, sol.t, sol.q, sol.v, extrap)
+        extrapolate!(t₀, q₀, q̇₀, t₁, q₁, q̇₁, sol.t, sol.q, sol.q̇, extrap)
     end
 
     return sol
@@ -212,7 +210,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
         sol.q .= q₁
         sol.v .= v₁
     else
-        extrapolate!(t₀, q₀, v₀, t₁, q₁, v₁, sol.t, sol.q, sol.v, extrap)
+        extrapolate!(t₀, q₀, v₀, t₁, q₁, v₁, sol.t, sol.q, sol.q̇, extrap)
     end
 
     if p₀ == p₁
@@ -220,7 +218,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
         sol.p .= p₁
         sol.f .= f₁
     else
-        extrapolate!(t₀, p₀, f₀, t₁, p₁, f₁, sol.t, sol.p, sol.f, extrap)
+        extrapolate!(t₀, p₀, f₀, t₁, p₁, f₁, sol.t, sol.p, sol.ṗ, extrap)
     end
 
     return sol

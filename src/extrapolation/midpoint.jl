@@ -137,7 +137,7 @@ end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
     extrapolate!(history.t[1], history.q[1], sol.t, sol.q, problem, extrap)
-    initialguess(problem).v(sol.v, sol.t, sol.q, parameters(problem))
+    initialguess(problem).v(sol.q̇, sol.t, sol.q, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
 end

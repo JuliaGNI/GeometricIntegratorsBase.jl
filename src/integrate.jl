@@ -13,8 +13,12 @@ function integrate!(solstep::SolutionStep, int::AbstractIntegrator)
     # compute initial guess
     initial_guess!(current(solstep), history(solstep), parameters(solstep), int)
 
+    # println(" prediction = ", nlsolution(int))
+
     # integrate one initial condition for one time step
     integrate_step!(current(solstep), history(solstep), parameters(solstep), int)
+
+    # println(" solution =   ", nlsolution(int))
 
     # copy internal variables from cache to solution step
     copy_internal_variables!(solstep, cache(int))
@@ -37,14 +41,14 @@ Solve for time steps n with n₁ ≤ n ≤ n₂.
 integrate!(solution, integrator, n₁, n₂)
 ```
 """
-function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int)
+function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int; kwargs...)
     # check time steps range for consistency
     @assert n₁ ≥ 1
     @assert n₂ ≥ n₁
     @assert n₂ ≤ ntime(sol)
 
     # copy initial condition from solution to solutionstep and initialize
-    solstep = solutionstep(int, sol[n₁-1])
+    solstep = solutionstep(int, sol[n₁-1]; kwargs...)
 
     # loop over time steps
     for n in n₁:n₂
@@ -83,8 +87,8 @@ Solve for all time steps n:
 integrate!(solution, integrator)
 ```
 """
-function integrate!(sol::GeometricSolution, int::AbstractIntegrator)
-    integrate!(sol, int, 1, ntime(sol))
+function integrate!(sol::GeometricSolution, int::AbstractIntegrator; kwargs...)
+    integrate!(sol, int, 1, ntime(sol); kwargs...)
 end
 
 
