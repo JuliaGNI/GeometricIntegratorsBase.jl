@@ -13,12 +13,8 @@ function integrate!(solstep::SolutionStep, int::AbstractIntegrator)
     # compute initial guess
     initial_guess!(current(solstep), history(solstep), parameters(solstep), int)
 
-    # println(" prediction = ", nlsolution(int))
-
     # integrate one initial condition for one time step
     integrate_step!(current(solstep), history(solstep), parameters(solstep), int)
-
-    # println(" solution =   ", nlsolution(int))
 
     # copy internal variables from cache to solution step
     copy_internal_variables!(solstep, cache(int))
