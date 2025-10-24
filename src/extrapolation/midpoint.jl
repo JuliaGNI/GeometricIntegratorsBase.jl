@@ -85,11 +85,14 @@ where
 * `s`:  number of interpolations (order $p=2s+2$)
 
 """
-struct MidpointExtrapolation <: Extrapolation
+struct MidpointExtrapolation{TT} <: Extrapolation
     s::Int
-    MidpointExtrapolation(s=default_extrapolation_stages) = new(s)
+    Δt::TT
+    MidpointExtrapolation(s=default_extrapolation_stages, Δt=1.0) = new{typeof(Δt)}(s, Δt)
 end
 
+_copy_solution(sol::NamedTuple) = NamedTuple{keys(sol)}(copy(sol[k]) for k in keys(sol))
+_set_time_of_solution(sol::NamedTuple, t::Number) = NamedTuple{keys(sol)}(k == :t ? t : sol[k] for k in keys(sol))
 
 function extrapolate!(
     t₀::TT, x₀::AbstractArray{DT},
@@ -283,4 +286,22 @@ function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::Midpo
     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.q̇, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
+end
+
+
+function extrapolate!(newsol, oldsol, problem::GeometricProblem, extrap::MidpointExtrapolation)
+    Δt = sign(newsol.t) * extrap.Δt
+    t = oldsol.t
+    tmpsol = _copy_solution(oldsol)
+
+    while abs(t + Δt) < abs(newsol.t)
+        prvsol = tmpsol
+        tmpsol = _set_time_of_solution(prvsol, t + Δt)
+        extrapolate!(prvsol, tmpsol, problem, extrap)
+        t += Δt
+    end
+
+    extrapolate!(tmpsol, newsol, problem, extrap)
+
+    return newsol
 end
