@@ -25,7 +25,13 @@ Base.ndims(prob::EquationProblem) = length(vec(prob.ics.q))
 export update!, reset!
 
 
-export Extrapolation
+export InitialGuess, NoInitialGuess
+export initialguess!
+
+include("initialguess.jl")
+
+
+export Extrapolation, NoExtrapolation
 export EulerExtrapolation,
     MidpointExtrapolation,
     HermiteExtrapolation
@@ -36,12 +42,6 @@ include("extrapolation/aitken_neville.jl")
 include("extrapolation/euler.jl")
 include("extrapolation/hermite.jl")
 include("extrapolation/midpoint.jl")
-
-
-export InitialGuess, NoInitialGuess
-export initialguess!
-
-include("initialguess.jl")
 
 
 export GeometricMethod

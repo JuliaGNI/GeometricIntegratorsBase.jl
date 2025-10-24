@@ -7,9 +7,19 @@ abstract type Extrapolation end
 # default_extrapolation() = missing
 default_extrapolation() = MidpointExtrapolation(default_extrapolation_stages)
 
-# struct NoExtrapolation <: Extrapolation end
-# struct NoInitialGuess <: Extrapolation end
+struct NoExtrapolation <: Extrapolation end
 
+
+function extrapolate!(newsol, oldsol, ::GeometricProblem, extrap::Union{NoExtrapolation,NoInitialGuess})
+    for k in keys(newsol)
+        if k != :t
+            newsol[k] .= oldsol[k]
+        end
+    end
+    return newsol
+end
+
+solutionstep!(sol, history, ::GeometricProblem, extrap::Union{NoExtrapolation,NoInitialGuess}) = sol
 
 
 # """
