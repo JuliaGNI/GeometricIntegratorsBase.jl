@@ -15,7 +15,7 @@ Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 [compat]
 GeometricBase = "0.12"
 GeometricEquations = "0.20"
-GeometricSolutions = "0.5"
+GeometricSolutions = "0.5.3"
 LinearAlgebra = "1"
 OffsetArrays = "1"
 Parameters = "0.12"
