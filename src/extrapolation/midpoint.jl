@@ -133,7 +133,7 @@ function extrapolate!(
     return x₁
 end
 
-function extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
+function _extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
     extrapolate!(oldsol.t, oldsol.q, newsol.t, newsol.q, problem, extrap)
     return newsol
 end
@@ -203,7 +203,7 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     return (q₁, p₁)
 end
 
-function extrapolate!(newsol, oldsol, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
+function _extrapolate!(newsol, oldsol, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
     extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
     return newsol
 end
@@ -275,7 +275,7 @@ function extrapolate!(
     return (q₁, p₁)
 end
 
-function extrapolate!(newsol, oldsol, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
+function _extrapolate!(newsol, oldsol, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
     extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
     return newsol
 end
@@ -290,18 +290,18 @@ end
 
 
 function extrapolate!(newsol, oldsol, problem::GeometricProblem, extrap::MidpointExtrapolation)
-    Δt = sign(newsol.t) * extrap.Δt
+    Δt = sign(newsol.t - oldsol.t) * extrap.Δt
     t = oldsol.t
     tmpsol = _copy_solution(oldsol)
 
     while abs(t + Δt) < abs(newsol.t)
-        prvsol = tmpsol
-        tmpsol = _set_time_of_solution(prvsol, t + Δt)
-        extrapolate!(prvsol, tmpsol, problem, extrap)
+        prvsol = _copy_solution(tmpsol)
+        tmpsol = _set_time_of_solution(tmpsol, t + Δt)
+        _extrapolate!(tmpsol, prvsol, problem, extrap)
         t += Δt
     end
 
-    extrapolate!(tmpsol, newsol, problem, extrap)
+    _extrapolate!(newsol, tmpsol, problem, extrap)
 
     return newsol
 end
