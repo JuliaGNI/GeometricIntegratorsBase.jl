@@ -193,7 +193,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
     if q₀ == q₁
         nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
-        sol.v .= q̇₁
+        sol.q̇ .= q̇₁
     else
         extrapolate!(t₀, q₀, q̇₀, t₁, q₁, q̇₁, sol.t, sol.q, sol.q̇, extrap)
     end
@@ -208,7 +208,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
     if q₀ == q₁
         nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
-        sol.v .= v₁
+        sol.q̇ .= v₁
     else
         extrapolate!(t₀, q₀, v₀, t₁, q₁, v₁, sol.t, sol.q, sol.q̇, extrap)
     end
@@ -216,7 +216,7 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
     if p₀ == p₁
         nowarn || @warn "Hermite Extrapolation: p's history[1] and history[2] are identical!"
         sol.p .= p₁
-        sol.f .= f₁
+        sol.ṗ .= f₁
     else
         extrapolate!(t₀, p₀, f₀, t₁, p₁, f₁, sol.t, sol.p, sol.ṗ, extrap)
     end
