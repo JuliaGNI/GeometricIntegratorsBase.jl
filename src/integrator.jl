@@ -22,7 +22,7 @@ struct GeometricIntegrator{
     MT<:GeometricMethod,
     PT<:AbstractProblem,
     CT<:CacheDict{PT,MT},
-    ST<:Union{NonlinearSolver,SolverMethod},
+    ST<:Union{AbstractSolver,NoSolver},
     IT<:Union{InitialGuess,Extrapolation}
 } <: AbstractIntegrator
 

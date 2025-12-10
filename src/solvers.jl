@@ -21,3 +21,8 @@ end
 
 # residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
 residual!(y, x, parameters) = residual!(y, x, parameters...) # TODO: This is a workaround for a SimpleSolvers limitation. Should be removed.
+
+# Workaround for SimpleSolvers renaming of Newton to NewtonMethod. Should be removed once optimisers have been removed from SimpleSolvers.
+const Newton = NewtonMethod
+
+export Newton

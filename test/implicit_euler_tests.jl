@@ -1,7 +1,6 @@
 using GeometricIntegratorsBase
 using GeometricEquations
 using GeometricSolutions
-using SimpleSolvers
 using Test
 
 using GeometricSolutions: relative_maximum_error
