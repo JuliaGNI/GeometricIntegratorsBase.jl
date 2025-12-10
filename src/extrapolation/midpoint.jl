@@ -208,11 +208,32 @@ function _extrapolate!(newsol, oldsol, problem::AbstractProblemPODE, extrap::Mid
     return newsol
 end
 
+# function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
+#     extrapolate!(history.t[1], history.q[1], history.p[1], sol.t, sol.q, sol.p, problem, extrap)
+#     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
+#     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
+#     # update_vectorfields!(sol, problem)
+#     return sol
+# end
+
 function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
-    extrapolate!(history.t[1], history.q[1], history.p[1], sol.t, sol.q, sol.p, problem, extrap)
+    Δt = sign(sol.t - history.t[1]) * extrap.Δt
+    t = history.t[1]
+    tmpsol = (t = history.t[1], q = history.q[1], p = history.p[1], q̇ = history.q̇[1], ṗ = history.ṗ[1])
+
+    while abs(t + Δt) < abs(sol.t)
+        prvsol = _copy_solution(tmpsol)
+        tmpsol = _set_time_of_solution(tmpsol, t + Δt)
+        _extrapolate!(tmpsol, prvsol, problem, extrap)
+        t += Δt
+    end
+
+    _extrapolate!(sol, tmpsol, problem, extrap)
+
     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
     # update_vectorfields!(sol, problem)
+
     return sol
 end
 
