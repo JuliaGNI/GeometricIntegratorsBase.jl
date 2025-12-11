@@ -51,6 +51,16 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
         # integrate one step and copy solution from cache to solution
         sol[n] = integrate!(solstep, int)
 
+        havenan = false
+        for s in current(solstep)
+            havenan = havenan || any(isnan, s)
+        end
+
+        if havenan
+            @warn "Solver encountered NaNs in solution at timestep n=$(n)."
+            break
+        end
+
         # try
         #     sol[n] = integrate!(int)
         # catch ex
