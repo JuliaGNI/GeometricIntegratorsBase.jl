@@ -19,7 +19,7 @@ GeometricSolutions = "0.5.3"
 LinearAlgebra = "1"
 OffsetArrays = "1"
 Parameters = "0.12"
-SimpleSolvers = "0.6"
+SimpleSolvers = "0.6, 0.7"
 Unicode = "1"
 julia = "1.8"
 
