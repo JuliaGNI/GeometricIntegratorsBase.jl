@@ -7,9 +7,9 @@ using LinearAlgebra
 using OffsetArrays
 using SimpleSolvers
 
-import Base: Callable
 using Unicode: normalize
 
+import Base: Callable
 import GeometricBase: equations, initialguess, nconstraints, parameters, tableau
 import GeometricBase: timestep, timespan
 import GeometricBase: reset!, solutionstep!, update!

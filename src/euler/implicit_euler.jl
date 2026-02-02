@@ -107,7 +107,7 @@ end
 
 function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitEuler,<:AbstractProblemODE})
     # call nonlinear solver
-    solve!(nlsolution(int), solver(int), (sol, params, int))
+    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
 
     # print solver status
     # println(status(solver))

@@ -23,7 +23,8 @@ struct GeometricIntegrator{
     PT<:AbstractProblem,
     CT<:CacheDict{PT,MT},
     ST<:Union{<:AbstractSolver,NoSolver},
-    IT<:Union{InitialGuess,Extrapolation}
+    IT<:Union{InitialGuess,Extrapolation},
+    SST<:AbstractSolverState
 } <: AbstractIntegrator
 
     problem::PT
@@ -31,6 +32,7 @@ struct GeometricIntegrator{
     caches::CT
     solver::ST
     iguess::IT
+    solverstate::SST
 end
 
 function GeometricIntegrator(
@@ -43,7 +45,7 @@ function GeometricIntegrator(
     options...
 )
     solver = initsolver(solvermethod, method, caches; (length(options) == 0 ? default_options(integratormethod) : options)...)
-    GeometricIntegrator(problem, method, caches, solver, iguess)
+    GeometricIntegrator(problem, method, caches, solver, iguess, SolverState(solver))
 end
 
 function GeometricIntegrator(
@@ -64,6 +66,7 @@ caches(int::GeometricIntegrator) = int.caches
 solver(int::GeometricIntegrator) = int.solver
 iguess(int::GeometricIntegrator) = int.iguess
 initialguess(int::GeometricIntegrator) = int.iguess
+solverstate(int::GeometricIntegrator) = int.solverstate
 
 cache(int::GeometricIntegrator, DT) = caches(int)[DT]
 cache(int::GeometricIntegrator) = cache(int, datatype(problem(int)))
