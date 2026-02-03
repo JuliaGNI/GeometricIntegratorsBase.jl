@@ -16,6 +16,7 @@ import GeometricBase: reset!, solutionstep!, update!
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable
+import SimpleSolvers: NonlinearSolverMethod
 
 
 # compat workaround

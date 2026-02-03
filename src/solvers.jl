@@ -13,10 +13,10 @@ default_options(method=nothing) = (
 initsolver(::SolverMethod, ::GeometricMethod, ::CacheDict; kwargs...) = NoSolver()
 
 # create nonlinear solver
-function initsolver(::NewtonMethod, method::GeometricMethod, caches::CacheDict; kwargs...)
+function initsolver(solvermethod::NonlinearSolverMethod, method::GeometricMethod, caches::CacheDict; kwargs...)
     x = zero(nlsolution(caches))
     y = zero(nlsolution(caches))
-    NewtonSolver(x, residual!, y; kwargs...)
+    NonlinearSolver(solvermethod, x, residual!, y; kwargs...)
 end
 
 # residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
