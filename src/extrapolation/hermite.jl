@@ -187,8 +187,8 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
 end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::HermiteExtrapolation; nowarn=false)
-    t₀, q₀, q̇₀ = history.t[2], history.q[2], history.q̇[2]
-    t₁, q₁, q̇₁ = history.t[1], history.q[1], history.q̇[1]
+    t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
+    t₁, q₁, q̇₁ = history[1].t, history[1].q, history[1].q̇
 
     if q₀ == q₁
         nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
@@ -202,8 +202,8 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
 end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,AbstractProblemIODE}, extrap::HermiteExtrapolation; nowarn=false)
-    t₀, q₀, v₀, p₀, f₀ = history.t[2], history.q[2], history.q̇[2], history.p[2], history.ṗ[2]
-    t₁, q₁, v₁, p₁, f₁ = history.t[1], history.q[1], history.q̇[1], history.p[1], history.ṗ[1]
+    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p, history[2].ṗ
+    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p, history[1].ṗ
 
     if q₀ == q₁
         nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"

@@ -66,7 +66,7 @@ function extrapolate!(sol, history, problem::Union{AbstractProblemODE,SODEProble
 end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::EulerExtrapolation)
-    extrapolate!(history.t[1], history.q[1], sol.t, sol.q, problem, extrap)
+    extrapolate!(history[1].t, history[1].q, sol.t, sol.q, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol

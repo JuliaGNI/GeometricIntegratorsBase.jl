@@ -50,6 +50,16 @@ functions(ode).v(ẋ₀, t₀, x₀, parameters(ode))
 functions(ode).v(ẋₙ, tₙ, xₙ, parameters(ode))
 
 
+# Create SolutionStep for ODE Tests
+
+sol = SolutionStep(ode; nhistory=2)
+copy!(sol, (t=tₚ, q=xₚ, q̇=ẋₚ))
+reset!(sol, Δt)
+
+copy!(sol, (t=t₀, q=x₀, q̇=ẋ₀))
+reset!(sol, Δt)
+
+
 # Hermite Extrapolation
 
 extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, tᵢ, xᵢ, ẋᵢ, HermiteExtrapolation())
@@ -63,91 +73,101 @@ extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, tᵢ, xᵢ, ẋᵢ, Hermite
 @test extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, t₁, x₁, HermiteExtrapolation()) == xᵢ
 @test extrapolate!(tₚ, xₚ, ẋₚ, t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, HermiteExtrapolation()) == (xᵢ, ẋᵢ)
 
-sol = (t=t₁, q=x₁, q̇=ẋ₁)
-ref = (t=tᵢ, q=xᵢ, q̇=ẋᵢ)
-history = (t=[t₀, tₚ], q=[x₀, xₚ], q̇=[ẋ₀, ẋₚ])
-solutionstep!(sol, history, ode, HermiteExtrapolation())
-@test sol == ref
 
+# Hermite Extrapolation for ODE solutionstep
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, HermiteExtrapolation())
+@test sol.t == tᵢ
+@test sol.q == xᵢ
+@test sol.q̇ == ẋᵢ
 
-# solution and history tuples
-sol = (t=tᵢ, q=xᵢ, q̇=ẋᵢ)
-history = (t=[t₀], q=[x₀], q̇=[ẋ₀])
 
 # Euler Extrapolation for ODEs
 
-solutionstep!(sol, history, ode, EulerExtrapolation(0))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(0))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 5E-2
 @test sol.q̇ ≈ ẋₙ atol = 5E-2
 
-solutionstep!(sol, history, ode, EulerExtrapolation(1))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(1))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 5E-3
 @test sol.q̇ ≈ ẋₙ atol = 5E-3
 
-solutionstep!(sol, history, ode, EulerExtrapolation(2))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(2))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 5E-5
 @test sol.q̇ ≈ ẋₙ atol = 5E-5
 
-solutionstep!(sol, history, ode, EulerExtrapolation(3))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(3))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-6
 @test sol.q̇ ≈ ẋₙ atol = 1E-6
 
-solutionstep!(sol, history, ode, EulerExtrapolation(4))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(4))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-8
 @test sol.q̇ ≈ ẋₙ atol = 1E-8
 
-solutionstep!(sol, history, ode, EulerExtrapolation(5))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, EulerExtrapolation(5))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-10
 @test sol.q̇ ≈ ẋₙ atol = 1E-10
 
 
 # Midpoint Extrapolation for ODEs
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(0))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(0))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 5E-5
 @test sol.q̇ ≈ ẋₙ atol = 5E-5
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(1))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(1))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-8
 @test sol.q̇ ≈ ẋₙ atol = 1E-8
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(2))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(2))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-12
 @test sol.q̇ ≈ ẋₙ atol = 1E-12
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(3))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(3))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-16
 @test sol.q̇ ≈ ẋₙ atol = 1E-16
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(4))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(4))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-16
 @test sol.q̇ ≈ ẋₙ atol = 1E-16
 
-solutionstep!(sol, history, ode, MidpointExtrapolation(5))
-# println(xᵢ, xₙ, xᵢ .- xₙ)
-# println(ẋᵢ, xₙ, ẋᵢ .- ẋₙ)
+copy!(sol, (t=t₁, q=x₀, q̇=ẋ₀))
+solutionstep!(current(sol), state(sol), ode, MidpointExtrapolation(5))
+# println(sol.q, xₙ, sol.q .- xₙ)
+# println(sol.q̇, xₙ, sol.q̇ .- ẋₙ)
 @test sol.q ≈ xₙ atol = 1E-15
 @test sol.q̇ ≈ ẋₙ atol = 1E-15
 
@@ -170,8 +190,6 @@ ṗ₀ = zero(p₀)
 ṗₙ = zero(p₀)
 ṗᵢ = zero(p₀)
 
-sol = (t=tᵢ, q=qᵢ, p=pᵢ, q̇=q̇ᵢ, ṗ=ṗᵢ)
-
 
 # Compute Reference Solution for PODEs
 
@@ -190,84 +208,97 @@ functions(pode).f(ṗ₀, t₀, q₀, p₀, parameters(pode))
 functions(pode).f(ṗₙ, tₙ, qₙ, pₙ, parameters(pode))
 
 
+# Create SolutionStep for PODE Tests
+
+sol = SolutionStep(pode; nhistory=2)
+copy!(sol, (t=tₚ, q=qₚ, p=pₚ, q̇=q̇ₚ, ṗ=ṗₚ))
+reset!(sol, Δt)
+
+copy!(sol, (t=t₀, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+reset!(sol, Δt)
+
+
 # Hermite Extrapolation
 
-history = (t=[t₀, tₚ], q=[q₀, qₚ], p=[p₀, pₚ], q̇=[q̇₀, q̇ₚ], ṗ=[ṗ₀, ṗₚ])
-
-solutionstep!(sol, history, pode, HermiteExtrapolation())
-# println(qᵢ, qₙ, qᵢ .- qₙ)
-# println(pᵢ, pₙ, pᵢ .- pₙ)
-# println(q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 5E-6
-@test pᵢ ≈ pₙ atol = 5E-8
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-4
-@test ṗᵢ ≈ ṗₙ atol = 1E-6
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, HermiteExtrapolation())
+# println(sol.q, qₙ, sol.q .- qₙ)
+# println(sol.p, pₙ, sol.p .- pₙ)
+# println(sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 5E-6
+@test sol.p ≈ pₙ atol = 5E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
 
 
 # Midpoint Extrapolation for PODEs
 
-history = (t=[t₀], q=[q₀], p=[p₀], q̇=[q̇₀], ṗ=[ṗ₀])
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(0))
+# println(0, sol.q, qₙ, sol.q .- qₙ)
+# println(0, sol.p, pₙ, sol.p .- pₙ)
+# println(0, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(0, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-6
+@test sol.p ≈ pₙ atol = 1E-4
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
 
-solutionstep!(sol, history, pode, MidpointExtrapolation(0))
-# println(0, qᵢ, qₙ, qᵢ .- qₙ)
-# println(0, pᵢ, pₙ, pᵢ .- pₙ)
-# println(0, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(0, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-6
-@test pᵢ ≈ pₙ atol = 1E-4
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-4
-@test ṗᵢ ≈ ṗₙ atol = 1E-6
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(1))
+# println(1, sol.q, qₙ, sol.q .- qₙ)
+# println(1, sol.p, pₙ, sol.p .- pₙ)
+# println(1, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(1, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-10
+@test sol.p ≈ pₙ atol = 1E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-8
+@test sol.ṗ ≈ ṗₙ atol = 1E-10
 
-solutionstep!(sol, history, pode, MidpointExtrapolation(1))
-# println(1, qᵢ, qₙ, qᵢ .- qₙ)
-# println(1, pᵢ, pₙ, pᵢ .- pₙ)
-# println(1, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(1, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-10
-@test pᵢ ≈ pₙ atol = 1E-8
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-8
-@test ṗᵢ ≈ ṗₙ atol = 1E-10
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(2))
+# println(2, sol.q, qₙ, sol.q .- qₙ)
+# println(2, sol.p, pₙ, sol.p .- pₙ)
+# println(2, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(2, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-14
+@test sol.p ≈ pₙ atol = 1E-12
+@test sol.q̇ ≈ q̇ₙ atol = 1E-12
+@test sol.ṗ ≈ ṗₙ atol = 1E-14
 
-solutionstep!(sol, history, pode, MidpointExtrapolation(2))
-# println(2, qᵢ, qₙ, qᵢ .- qₙ)
-# println(2, pᵢ, pₙ, pᵢ .- pₙ)
-# println(2, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(2, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-14
-@test pᵢ ≈ pₙ atol = 1E-12
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-12
-@test ṗᵢ ≈ ṗₙ atol = 1E-14
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(3))
+# println(3, sol.q, qₙ, sol.q .- qₙ)
+# println(3, sol.p, pₙ, sol.p .- pₙ)
+# println(3, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(3, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-16
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-16
 
-solutionstep!(sol, history, pode, MidpointExtrapolation(3))
-# println(3, qᵢ, qₙ, qᵢ .- qₙ)
-# println(3, pᵢ, pₙ, pᵢ .- pₙ)
-# println(3, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(3, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-16
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-16
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(4))
+# println(4, sol.q, qₙ, sol.q .- qₙ)
+# println(4, sol.p, pₙ, sol.p .- pₙ)
+# println(4, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(4, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-16
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-16
 
-solutionstep!(sol, history, pode, MidpointExtrapolation(4))
-# println(4, qᵢ, qₙ, qᵢ .- qₙ)
-# println(4, pᵢ, pₙ, pᵢ .- pₙ)
-# println(4, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(4, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-16
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-16
-
-solutionstep!(sol, history, pode, MidpointExtrapolation(5))
-# println(5, qᵢ, qₙ, qᵢ .- qₙ)
-# println(5, pᵢ, pₙ, pᵢ .- pₙ)
-# println(5, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(5, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-15
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-15
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, MidpointExtrapolation(5))
+# println(5, sol.q, qₙ, sol.q .- qₙ)
+# println(5, sol.p, pₙ, sol.p .- pₙ)
+# println(5, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(5, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-15
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-15
 
 
 # Create IODE Solution Arrays
@@ -293,8 +324,6 @@ ṗ₀ = zero(p₀)
 ṗₙ = zero(p₀)
 ṗᵢ = zero(p₀)
 
-sol = (t=tᵢ, q=qᵢ, p=pᵢ, q̇=q̇ᵢ, ṗ=ṗᵢ)
-
 
 # Compute Reference Solution for IODEs
 
@@ -316,81 +345,94 @@ initialguess(iode).f(ṗ₀, t₀, q₀, q̇₀, parameters(iode))
 initialguess(iode).f(ṗₙ, tₙ, qₙ, q̇ₙ, parameters(iode))
 
 
+# Create SolutionStep for IODE Tests
+
+sol = SolutionStep(iode; nhistory=2)
+copy!(sol, (t=tₚ, q=qₚ, p=pₚ, q̇=q̇ₚ, ṗ=ṗₚ))
+reset!(sol, Δt)
+
+copy!(sol, (t=t₀, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+reset!(sol, Δt)
+
+
 # Hermite Extrapolation
 
-history = (t=[t₀, tₚ], q=[q₀, qₚ], p=[p₀, pₚ], q̇=[q̇₀, q̇ₚ], ṗ=[ṗ₀, ṗₚ])
-
-solutionstep!(sol, history, iode, HermiteExtrapolation())
-# println(qᵢ, qₙ, qᵢ .- qₙ)
-# println(pᵢ, pₙ, pᵢ .- pₙ)
-# println(q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 5E-6
-@test pᵢ ≈ pₙ atol = 5E-8
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-4
-@test ṗᵢ ≈ ṗₙ atol = 1E-6
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, HermiteExtrapolation())
+# println(sol.q, qₙ, sol.q .- qₙ)
+# println(sol.p, pₙ, sol.p .- pₙ)
+# println(sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 5E-6
+@test sol.p ≈ pₙ atol = 5E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
 
 
 # Midpoint Extrapolation for IODEs
 
-history = (t=[t₀], q=[q₀], p=[p₀], q̇=[q̇₀], ṗ=[ṗ₀])
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(0))
+# println(0, sol.q, qₙ, sol.q .- qₙ)
+# println(0, sol.p, pₙ, sol.p .- pₙ)
+# println(0, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(0, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-6
+@test sol.p ≈ pₙ atol = 1E-4
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
 
-solutionstep!(sol, history, iode, MidpointExtrapolation(0))
-# println(0, qᵢ, qₙ, qᵢ .- qₙ)
-# println(0, pᵢ, pₙ, pᵢ .- pₙ)
-# println(0, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(0, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-6
-@test pᵢ ≈ pₙ atol = 1E-4
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-4
-@test ṗᵢ ≈ ṗₙ atol = 1E-6
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(1))
+# println(1, sol.q, qₙ, sol.q .- qₙ)
+# println(1, sol.p, pₙ, sol.p .- pₙ)
+# println(1, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(1, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-10
+@test sol.p ≈ pₙ atol = 1E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-8
+@test sol.ṗ ≈ ṗₙ atol = 1E-10
 
-solutionstep!(sol, history, iode, MidpointExtrapolation(1))
-# println(1, qᵢ, qₙ, qᵢ .- qₙ)
-# println(1, pᵢ, pₙ, pᵢ .- pₙ)
-# println(1, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(1, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-10
-@test pᵢ ≈ pₙ atol = 1E-8
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-8
-@test ṗᵢ ≈ ṗₙ atol = 1E-10
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(2))
+# println(2, sol.q, qₙ, sol.q .- qₙ)
+# println(2, sol.p, pₙ, sol.p .- pₙ)
+# println(2, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(2, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-14
+@test sol.p ≈ pₙ atol = 1E-12
+@test sol.q̇ ≈ q̇ₙ atol = 1E-12
+@test sol.ṗ ≈ ṗₙ atol = 1E-14
 
-solutionstep!(sol, history, iode, MidpointExtrapolation(2))
-# println(2, qᵢ, qₙ, qᵢ .- qₙ)
-# println(2, pᵢ, pₙ, pᵢ .- pₙ)
-# println(2, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(2, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-14
-@test pᵢ ≈ pₙ atol = 1E-12
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-12
-@test ṗᵢ ≈ ṗₙ atol = 1E-14
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(3))
+# println(3, sol.q, qₙ, sol.q .- qₙ)
+# println(3, sol.p, pₙ, sol.p .- pₙ)
+# println(3, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(3, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-16
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-16
 
-solutionstep!(sol, history, iode, MidpointExtrapolation(3))
-# println(3, qᵢ, qₙ, qᵢ .- qₙ)
-# println(3, pᵢ, pₙ, pᵢ .- pₙ)
-# println(3, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(3, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-16
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-16
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(4))
+# println(4, sol.q, qₙ, sol.q .- qₙ)
+# println(4, sol.p, pₙ, sol.p .- pₙ)
+# println(4, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(4, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-16
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-16
 
-solutionstep!(sol, history, iode, MidpointExtrapolation(4))
-# println(4, qᵢ, qₙ, qᵢ .- qₙ)
-# println(4, pᵢ, pₙ, pᵢ .- pₙ)
-# println(4, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(4, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-16
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-16
-
-solutionstep!(sol, history, iode, MidpointExtrapolation(5))
-# println(5, qᵢ, qₙ, qᵢ .- qₙ)
-# println(5, pᵢ, pₙ, pᵢ .- pₙ)
-# println(5, q̇ᵢ, q̇ₙ, q̇ᵢ .- q̇ₙ)
-# println(5, ṗᵢ, ṗₙ, ṗᵢ .- ṗₙ)
-@test qᵢ ≈ qₙ atol = 1E-15
-@test pᵢ ≈ pₙ atol = 1E-16
-@test q̇ᵢ ≈ q̇ₙ atol = 1E-16
-@test ṗᵢ ≈ ṗₙ atol = 1E-15
+copy!(sol, (t=t₁, q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, MidpointExtrapolation(5))
+# println(5, sol.q, qₙ, sol.q .- qₙ)
+# println(5, sol.p, pₙ, sol.p .- pₙ)
+# println(5, sol.q̇, q̇ₙ, sol.q̇ .- q̇ₙ)
+# println(5, sol.ṗ, ṗₙ, sol.ṗ .- ṗₙ)
+@test sol.q ≈ qₙ atol = 1E-15
+@test sol.p ≈ pₙ atol = 1E-16
+@test sol.q̇ ≈ q̇ₙ atol = 1E-16
+@test sol.ṗ ≈ ṗₙ atol = 1E-15

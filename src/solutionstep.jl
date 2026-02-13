@@ -1,36 +1,3 @@
-
-# q̄ = Symbol(join([Char('q'), Char(0x0304)]))
-# q̇ = Symbol(join([Char('q'), Char(0x0307)]))
-# q = Symbol(strip(String(:q̄), Char(0x0304)))
-# q = Symbol(strip(String(:q̇), Char(0x0307)))
-
-_strip_symbol(s::Symbol, c::Char) = Symbol(strip(normalize(String(s); decompose=true), c))
-_strip_bar(s::Symbol) = _strip_symbol(s, Char(0x0304))
-_strip_dot(s::Symbol) = _strip_symbol(s, Char(0x0307))
-
-_add_symbol(s::Symbol, c::Char) = Symbol(normalize("$(s)$(c)"))
-_add_bar(s::Symbol) = _add_symbol(s, Char(0x0304))
-_add_dot(s::Symbol) = _add_symbol(s, Char(0x0307))
-
-_state(x::Number) = zero(x)
-_state(x::TimeVariable) = zero(value(x))
-_state(x::StateVariable) = StateWithError(zero(x))
-_state(x::VectorfieldVariable) = zero(x)
-_state(x::AlgebraicVariable) = zero(x)
-_state(x::StateWithError) = zero(x)
-
-_vectorfield(x::Number) = missing
-_vectorfield(x::TimeVariable) = missing
-_vectorfield(x::StateVariable) = VectorfieldVariable(x)
-_vectorfield(x::VectorfieldVariable) = missing
-_vectorfield(x::AlgebraicVariable) = missing
-_vectorfield(x::StateWithError) = _vectorfield(x.state)
-
-_copy!(sol, x, i=0) = copy!(sol[i], x)
-_copy!(sol, x::Number, i=0) = sol[i] = x
-_copy!(sol, x::TimeVariable, i=0) = _copy!(sol, value(x), i)
-
-
 """
 Holds the solution of a geometric equation at a single time step.
 
@@ -76,42 +43,53 @@ a `SolutionStep` with the correct internal variables for a given integrator.
 """
 struct SolutionStep{
     equationType<:GeometricEquation,
-    solutionType<:NamedTuple,
-    vectorfieldType<:NamedTuple,
-    historyType<:NamedTuple,
+    nHistory,
+    stateType<:OffsetArray,
+    solutionType<:OffsetArray,
+    vectorfieldType<:OffsetArray,
     internalType<:NamedTuple,
     paramsType<:OptionalParameters,
-    nHistory
+    currentType<:State,
+    previousType<:State
 }
 
+    state::stateType
     solution::solutionType
     vectorfield::vectorfieldType
-    history::historyType
+
     internal::internalType
     parameters::paramsType
 
-    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=2, internal=NamedTuple()) where {equType}
+    current::currentType
+    previous::previousType
+
+    function SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters=NullParameters(); nhistory=2, internal=NamedTuple()) where {equType}
         @assert nhistory ≥ 1
 
-        # create solution vector for all variables in ics
-        solution = NamedTuple{keys(ics)}(
-            OffsetVector([_state(x) for _ in 0:nhistory], 0:nhistory) for x in ics
-        )
+        # create state vector according to the variables in ics
+        states = OffsetVector([State(ics; initialize=false) for _ in 0:nhistory], 0:nhistory)
 
-        # create vectorfield vector for all state variables in ics
-        vectorfield = NamedTuple{keys(ics)}(
-            OffsetVector([_vectorfield(x) for _ in 0:nhistory], 0:nhistory) for x in ics
-        )
+        # create solution vector from the solution variables in states
+        solutions = OffsetVector([solution(st) for st in states], 0:nhistory)
 
-        vectorfield_filtered = NamedTuple{filter(k -> !all(ismissing.(vectorfield[k])), keys(vectorfield))}(vectorfield)
+        # create vectorfield vector from the vectorfield variables in states
+        vectorfields = OffsetVector([vectorfield(st) for st in states], 0:nhistory)
 
-        vectorfield_keys = Tuple(_add_dot(k) for k in keys(vectorfield_filtered))
-        vectorfield_dots = NamedTuple{vectorfield_keys}(values(vectorfield_filtered))
-
-        history = merge(solution, vectorfield_dots)
+        # create wrappers for current and previous state
+        current = states[0]
+        previous = HistoryState(states[1])
 
         # create solstep
-        solstep = new{equType,typeof(solution),typeof(vectorfield_filtered),typeof(history),typeof(internal),typeof(parameters),nhistory}(solution, vectorfield_filtered, history, internal, parameters)
+        solstep = new{equType,nhistory,
+            typeof(states),
+            typeof(solutions),
+            typeof(vectorfields),
+            typeof(internal),
+            typeof(parameters),
+            typeof(current),
+            typeof(previous)}(
+            states, solutions, vectorfields, internal, parameters, current, previous
+        )
 
         # copy initial conditions to current solution of solstep
         copy!(solstep, ics)
@@ -146,54 +124,57 @@ function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=defaul
     return solstep
 end
 
+@inline hasstatevariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{CST},HT<:State{HST}} = hasfield(CST, s)
+@inline hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{CST},HT<:State{HST}} = hasfield(HST, s)
 
-@inline function Base.hasproperty(::SolutionStep{ET,ST,VT,HT}, s::Symbol) where {ET,ST,VT,HT}
-    hasfield(ST, s) ||
-        hasfield(ST, _strip_bar(s)) ||
-        hasfield(VT, _strip_dot(s)) ||
-        hasfield(SolutionStep, s)
+@inline function Base.hasproperty(sol::SolutionStep, s::Symbol)
+    hasfield(SolutionStep, s) || hasstatevariable(sol, s) || hashistoryvariable(sol, s)
 end
 
-@inline function Base.getproperty(sol::SolutionStep{ET,ST,VT,HT}, s::Symbol) where {ET,ST,VT,HT}
-    s̄ = _strip_bar(s)
-    ṡ = _strip_dot(s)
-    if hasfield(ST, s)
-        return getfield(sol, :solution)[s][0]
-    elseif s̄ ≠ s && hasfield(ST, s̄)
-        return getfield(sol, :solution)[s̄][1]
-    elseif ṡ ≠ s && hasfield(VT, ṡ)
-        return getfield(sol, :vectorfield)[ṡ][0]
+@inline function Base.getproperty(sol::SolutionStep, s::Symbol)
+    if hasstatevariable(sol, s)
+        return state(sol.current)[s]
+    elseif hashistoryvariable(sol, s)
+        return state(sol.previous)[s]
     else
         return getfield(sol, s)
     end
 end
 
-@inline function Base.setproperty!(sol::SolutionStep{ET,ST,VT,HT}, s::Symbol, v) where {ET,ST,VT,HT}
-    s̄ = _strip_bar(s)
-    ṡ = _strip_dot(s)
-    if hasfield(ST, s)
-        return _copy!(getfield(sol, :solution)[s], v, 0)
-    elseif s̄ ≠ s && hasfield(ST, s̄)
-        return _copy!(getfield(sol, :solution)[s̄], v, 1)
-    elseif ṡ ≠ s && hasfield(VT, ṡ)
-        return _copy!(getfield(sol, :vectorfield)[ṡ], v, 0)
+@inline function Base.setproperty!(sol::SolutionStep, s::Symbol, x)
+    if hasstatevariable(sol, s)
+        return copy!(state(sol.current)[s], x)
+    elseif hashistoryvariable(sol, s)
+        return copy!(state(sol.previous)[s], x)
     else
-        return setfield!(sol, s, v)
+        return setfield!(sol, s, x)
     end
 end
 
-# @inline Base.getindex(sol::SolutionStep, s::Symbol) = getproperty(sol, s)
 
-# GeometricBase.datatype(::SolutionStep{dType, tType, aType}) where {dType, tType, aType} = dType
-# GeometricBase.timetype(::SolutionStep{dType, tType, aType}) where {dType, tType, aType} = tType
-# GeometricBase.arrtype(::SolutionStep{dType, tType, aType}) where {dType, tType, aType} = aType
+"""
+    keys(solstep::SolutionStep)
+
+Return the keys of the state variables in the solution step.
+"""
+Base.keys(solstep::SolutionStep) = keys(current(solstep))
 
 """
     nhistory(solstep::SolutionStep)
 
 Return the number of previous time steps stored in the solution step.
 """
-nhistory(::SolutionStep{ET,ST,VT,HT,IT,PT,NT}) where {ET,ST,VT,HT,IT,PT,NT} = NT
+nhistory(::SolutionStep{ET,NT}) where {ET,NT} = NT
+
+"""
+    state(solstep::SolutionStep)
+
+Return the state field of the solution step, which contains the state
+vectors for all variables at the current and previous time steps.
+"""
+state(solstep::SolutionStep) = solstep.state
+
+history(solstep::SolutionStep) = state(solstep)
 
 """
     solution(solstep::SolutionStep)
@@ -212,14 +193,6 @@ vectorfield evaluations for all variables at the current and previous time steps
 vectorfield(solstep::SolutionStep) = solstep.vectorfield
 
 """
-    history(solstep::SolutionStep)
-
-Return the history field of the solution step, which provides convenient access
-to both solution and vectorfield data at the current and previous time steps.
-"""
-history(solstep::SolutionStep) = solstep.history
-
-"""
     internal(solstep::SolutionStep)
 
 Return the internal field of the solution step, which contains integrator-specific
@@ -236,21 +209,20 @@ of the geometric equation.
 parameters(solstep::SolutionStep) = solstep.parameters
 
 """
-    keys(solstep::SolutionStep)
+    state(solstep::SolutionStep, i::Int)
 
-Return the keys of the solution variables in the solution step.
+Return a [`State`](@ref) with the state at time step `i`, where `i=0` is the current
+time step, `i=1` is the previous time step, etc.
 """
-Base.keys(solstep::SolutionStep) = keys(solution(solstep))
+state(solstep::SolutionStep, i::Int) = state(solstep)[i]
 
 """
     solution(solstep::SolutionStep, i::Int)
 
-Return a NamedTuple with the solution at time step `i`, where `i=0` is the current
+Return a `NamedTuple` with the solution at time step `i`, where `i=0` is the current
 time step, `i=1` is the previous time step, etc.
 """
-solution(solstep::SolutionStep, i::Int) = NamedTuple{keys(solution(solstep))}(
-    solution(solstep)[k][i] for k in keys(solution(solstep))
-)
+solution(solstep::SolutionStep, i::Int) = solution(solstep)[i]
 
 """
     vectorfield(solstep::SolutionStep, i::Int)
@@ -258,29 +230,17 @@ solution(solstep::SolutionStep, i::Int) = NamedTuple{keys(solution(solstep))}(
 Return a NamedTuple with the vectorfield at time step `i`, where `i=0` is the current
 time step, `i=1` is the previous time step, etc.
 """
-vectorfield(solstep::SolutionStep, i::Int) = NamedTuple{keys(vectorfield(solstep))}(
-    vectorfield(solstep)[k][i] for k in keys(vectorfield(solstep))
-)
-
-"""
-    history(solstep::SolutionStep, i::Int)
-
-Return a NamedTuple with the history (solution and vectorfield) at time step `i`,
-where `i=0` is the current time step, `i=1` is the previous time step, etc.
-"""
-history(solstep::SolutionStep, i::Int) = NamedTuple{keys(history(solstep))}(
-    history(solstep)[k][i] for k in keys(history(solstep))
-)
+vectorfield(solstep::SolutionStep, i::Int) = vectorfield(solstep)[i]
 
 """
 Returns a NamedTuple with the solution of the current time step.
 """
-current(solstep::SolutionStep) = history(solstep, 0)
+current(solstep::SolutionStep) = state(solstep, 0)
 
 """
 Returns a NamedTuple with the solution of the previous time step.
 """
-previous(solstep::SolutionStep) = history(solstep, 1)
+previous(solstep::SolutionStep) = state(solstep, 1)
 
 eachsolution(sol::SolutionStep) = 1:nhistory(sol)
 backwardhistory(sol::SolutionStep) = nhistory(sol):-1:1
@@ -302,14 +262,12 @@ next time step.
 - `Δt`: the time step size to advance
 """
 function GeometricBase.reset!(solstep::SolutionStep, Δt)
-    for k in keys(solstep)
-        for i in backwardhistory(solstep)
-            _copy!(solution(solstep)[k], solution(solstep)[k][i-1], i)
-        end
+    for i in backwardhistory(solstep)
+        copy!(state(solstep, i), state(solstep, i - 1))
     end
 
     # add!(solstep.t, Δt)
-    solution(solstep).t[0] += Δt
+    current(solstep).t += Δt
 
     return solstep
 end
@@ -328,16 +286,7 @@ current time step (index 0) of the solution step is modified.
 - `sol`: the named tuple containing the solution values to copy
 """
 function Base.copy!(solstep::SolutionStep, sol::NamedTuple)
-    @assert keys(sol) ⊆ keys(solstep)
-
-    for k in keys(sol)
-        _copy!(solution(solstep)[k], sol[k])
-    end
-
-    # for i in backwardhistory(solstep)
-    #     solution(solstep)[k][i] = 0
-    # end
-
+    copy!(current(solstep), sol)
     return solstep
 end
 
@@ -353,10 +302,10 @@ end
 # stored as plain Julia numbers instead of AbstractScalarVariable.
 # Typically, this concerns the time which should be a TimeVariable.
 # _update!(x::OffsetVector{DT, <:AbstractArray{DT}}, y::OffsetVector{DT, <:AbstractArray{DT}}, i, j) where {DT} = x[i] = y[j]
-# _update!(x::OffsetVector{<:AbstractScalarVariable}, Δx) = x[0] += Δx
+# _update!(x::OffsetVector{<:AbstractScalarVariable}, Δx) = x += Δx
 
-_update!(x::OffsetVector{<:AbstractStateVariable}, Δx) = add!(x[0], Δx)
-_update!(x::OffsetVector{<:AlgebraicVariable}, Δx) = copy!(x[0], Δx)
+_update!(x::AbstractStateVariable, Δx) = add!(x, Δx)
+_update!(x::AlgebraicVariable, y) = copy!(x, y)
 
 """
     update!(solstep::SolutionStep, Δ::NamedTuple)
@@ -391,7 +340,7 @@ update!(solstep, (q = [0.1, 0.2], p = [0.05, 0.1]))
 function update!(solstep::SolutionStep, Δ::NamedTuple)
     @assert keys(Δ) ⊆ keys(solstep)
 
-    sol = solution(solstep)
+    sol = current(solstep)
     for k in keys(Δ)
         _update!(sol[k], Δ[k])
     end
@@ -400,23 +349,10 @@ function update!(solstep::SolutionStep, Δ::NamedTuple)
 end
 
 
-"""
-    enforce_periodicity!(solstep::SolutionStep, ::OffsetVector{<:AbstractVariable})
-
-No-op method for non-periodic variables.
-
-This method is called for variable types that do not support periodicity
-constraints and performs no operation.
-
-# Arguments
-- `solstep::SolutionStep`: The solution step (unused)
-- `::OffsetVector{<:AbstractVariable}`: The variable vector (unused)
-"""
-enforce_periodicity!(solstep::SolutionStep, ::OffsetVector{<:AbstractVariable}) = nothing
-enforce_periodicity!(solstep::SolutionStep, ::OffsetVector{<:Number}) = nothing
+_var(solstep::SolutionStep, s::Symbol, i=0) = state(solstep)[i][s]
 
 """
-    enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}})
+    enforce_periodicity!(solstep::SolutionStep)
 
 Enforce periodic boundary conditions on a state variable.
 
@@ -427,38 +363,45 @@ to both the current solution and all historical values to maintain
 consistency for initial guesses in iterative solvers.
 
 # Arguments
-- `solstep::SolutionStep`: The solution step containing the variable
-- `s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}}`:
-  The state variable to enforce periodicity on
+- `solstep::SolutionStep`: The solution step to enforce periodicity on
 
 # Details
+This function iterates through all variables in the solution step and
+calls `enforce_periodicity!` on each one. Variables that support
+periodicity will have their boundary conditions enforced, while others
+will be unaffected.
+
 For each component `i` of the state variable:
 - If `isperiodic(s[0], i)` is true, check if `s[0][i]` is within `range(s[0], i)`
 - If below the range, add the range size until within bounds
 - If above the range, subtract the range size until within bounds
 - Apply the same adjustment to all historical values `s[j][i]` for consistency
 """
-function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:StateVariable,<:StateVariableWithError}})
-    # loop through all components of state variable s
-    for i in eachindex(s[0])
-        # check if component i is periodic and if so outside of its range
-        if isperiodic(s[0], i)# && !verifyrange(s[0], i)
-            # compute range size Δs
-            Δs = (range(s[0], i)[end] - range(s[0], i)[begin])
-            # add Δs as long as value is below range
-            while s[0][i] < range(s[0], i)[begin]
-                s[0][i] += Δs
-                # add Δs for all entries of history to allow for consistent initial guesses
-                for j in eachsolution(solstep)
-                    s[j][i] += Δs
+function enforce_periodicity!(solstep::SolutionStep)
+    # loop through all solution variables
+    for s in keys(current(solstep))
+        v = _var(solstep, s, 0)
+        # loop through all components of state variable v
+        for i in eachindex(v)
+            # check if component i is periodic and if so outside of its range
+            if isperiodic(v, i)# && !verifyrange(s[0], i)
+                # compute range size Δs
+                Δs = (range(v, i)[end] - range(v, i)[begin])
+                # add Δs as long as value is below range
+                while v[i] < range(v, i)[begin]
+                    v[i] += Δs
+                    # add Δs for all entries of history to allow for consistent initial guesses
+                    for j in eachsolution(solstep)
+                        _var(solstep, s, j)[i] += Δs
+                    end
                 end
-            end
-            # subtract Δs as long as value is above range
-            while s[0][i] > range(s[0], i)[end]
-                s[0][i] -= Δs
-                # subtract Δs for all entries of history to allow for consistent initial guesses
-                for j in eachsolution(solstep)
-                    s[j][i] -= Δs
+                # subtract Δs as long as value is above range
+                while v[i] > range(v, i)[end]
+                    v[i] -= Δs
+                    # subtract Δs for all entries of history to allow for consistent initial guesses
+                    for j in eachsolution(solstep)
+                        _var(solstep, s, j)[i] -= Δs
+                    end
                 end
             end
         end
@@ -466,39 +409,18 @@ function enforce_periodicity!(solstep::SolutionStep, s::OffsetVector{<:Union{<:S
 end
 
 
-"""
-    enforce_periodicity!(solstep::SolutionStep)
-
-Enforce periodic boundary conditions on all solution variables.
-
-This function iterates through all variables in the solution step and
-calls `enforce_periodicity!` on each one. Variables that support
-periodicity will have their boundary conditions enforced, while others
-will be unaffected.
-
-# Arguments
-- `solstep::SolutionStep`: The solution step to enforce periodicity on
-"""
-function enforce_periodicity!(solstep::SolutionStep)
-    # loop through all solution variables
-    for s in solution(solstep)
-        enforce_periodicity!(solstep, s)
-    end
-end
-
-
 function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::Extrapolation=default_extrapolation())
     for i in eachsolution(solstep)
-        history(solstep).t[i] = history(solstep).t[i-1] - timestep(problem)
-        extrapolate!(history(solstep, i), history(solstep, i - 1), problem, extrap)
+        state(solstep, i)[:t] .= state(solstep, i - 1).t .- timestep(problem)
+        extrapolate!(state(solstep, i), state(solstep, i - 1), problem, extrap)
         compute_vectorfields!(vectorfield(solstep, i), solution(solstep, i), problem)
     end
     return solstep
 end
 
 function initialize!(solstep::SolutionStep, problem::DELEProblem, extrap::Extrapolation=default_extrapolation())
-    history(solstep).t[1] = solstep.t - timestep(problem)
-    history(solstep).q[1] .= initial_conditions(problem).q̄
+    state(solstep, 1)[:t] .= state(solstep, 0).t .- timestep(problem)
+    state(solstep, 1)[:q] .= initial_conditions(problem).q̄
 
     return solstep
 end

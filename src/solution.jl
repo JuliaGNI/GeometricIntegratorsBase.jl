@@ -9,5 +9,5 @@ end
 
 
 function Base.setindex!(sol::GeometricSolution, solstep::SolutionStep, n)
-    sol[n] = current(solstep)
+    sol[n] = state(current(solstep))
 end

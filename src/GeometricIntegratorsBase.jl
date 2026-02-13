@@ -13,6 +13,7 @@ import Base: Callable
 import GeometricBase: equations, initialguess, nconstraints, parameters, tableau
 import GeometricBase: timestep, timespan
 import GeometricBase: reset!, solutionstep!, update!
+import GeometricBase: solution, state, vectorfield
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable
@@ -56,8 +57,8 @@ include("method.jl")
 
 
 export SolutionStep
-export parameters, solution, vectorfield
-export current, previous, history
+export parameters, solution, state, vectorfield
+export current, history, previous
 
 include("solutionstep.jl")
 include("solution.jl")

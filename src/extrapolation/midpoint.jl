@@ -91,9 +91,6 @@ struct MidpointExtrapolation{TT} <: Extrapolation
     MidpointExtrapolation(s=default_extrapolation_stages, Δt=1.0) = new{typeof(Δt)}(s, Δt)
 end
 
-_copy_solution(sol::NamedTuple) = NamedTuple{keys(sol)}(copy(sol[k]) for k in keys(sol))
-_set_time_of_solution(sol::NamedTuple, t::Number) = NamedTuple{keys(sol)}(k == :t ? t : sol[k] for k in keys(sol))
-
 function extrapolate!(
     t₀::TT, x₀::AbstractArray{DT},
     t₁::TT, x₁::AbstractArray{DT},
@@ -139,7 +136,7 @@ function _extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE,SODEPro
 end
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
-    extrapolate!(history.t[1], history.q[1], sol.t, sol.q, problem, extrap)
+    extrapolate!(history[1].t, history[1].q, sol.t, sol.q, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
@@ -217,13 +214,14 @@ end
 # end
 
 function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
-    Δt = sign(sol.t - history.t[1]) * extrap.Δt
-    t = history.t[1]
-    tmpsol = (t = history.t[1], q = history.q[1], p = history.p[1], q̇ = history.q̇[1], ṗ = history.ṗ[1])
+    Δt = sign(sol.t - history[1].t) * extrap.Δt
+    t = history[1].t
+
+    tmpsol = copy(history[1])
 
     while abs(t + Δt) < abs(sol.t)
-        prvsol = _copy_solution(tmpsol)
-        tmpsol = _set_time_of_solution(tmpsol, t + Δt)
+        prvsol = copy(tmpsol)
+        tmpsol.t .= t + Δt
         _extrapolate!(tmpsol, prvsol, problem, extrap)
         t += Δt
     end
@@ -302,7 +300,7 @@ function _extrapolate!(newsol, oldsol, problem::AbstractProblemIODE, extrap::Mid
 end
 
 function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
-    extrapolate!(history.t[1], history.q[1], history.p[1], sol.t, sol.q, sol.p, problem, extrap)
+    extrapolate!(history[1].t, history[1].q, history[1].p, sol.t, sol.q, sol.p, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.q̇, parameters(problem))
     # update_vectorfields!(sol, problem)
@@ -310,14 +308,15 @@ function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::Midpo
 end
 
 
+# TODO: Revise this function! Adapt interface or merge functionality into solutionstep! and remove.
 function extrapolate!(newsol, oldsol, problem::GeometricProblem, extrap::MidpointExtrapolation)
     Δt = sign(newsol.t - oldsol.t) * extrap.Δt
     t = oldsol.t
-    tmpsol = _copy_solution(oldsol)
+    tmpsol = copy(oldsol)
 
     while abs(t + Δt) < abs(newsol.t)
-        prvsol = _copy_solution(tmpsol)
-        tmpsol = _set_time_of_solution(tmpsol, t + Δt)
+        prvsol = copy(tmpsol)
+        tmpsol.t .= t + Δt
         _extrapolate!(tmpsol, prvsol, problem, extrap)
         t += Δt
     end
