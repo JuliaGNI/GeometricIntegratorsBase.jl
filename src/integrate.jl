@@ -26,10 +26,29 @@ function integrate!(solstep::SolutionStep, int::AbstractIntegrator)
     enforce_periodicity!(solstep)
 
     # update vector field for initial guess
-    compute_vectorfields!(vectorfield(solstep, 0), solution(solstep, 0), problem(int))
+    compute_vectorfields!(current(solstep), problem(int))
 
     return solstep
 end
+
+function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int, solstep, curstate)
+    # loop over time steps
+    for n in n₁:n₂
+        # integrate one step
+        integrate!(solstep, int)
+
+        # copy solution from solution step to solution
+        copy!(sol, curstate, n)
+
+        # check for NaNs
+        if isnan(curstate)
+            @warn "Solver encountered NaNs in solution at timestep n=$(n)."
+            break
+        end
+    end
+    return sol
+end
+
 
 """
 Solve for time steps n with n₁ ≤ n ≤ n₂.
@@ -45,44 +64,47 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
 
     # copy initial condition from solution to solutionstep and initialize
     solstep = solutionstep(int, sol[n₁-1]; kwargs...)
+    curstate = current(solstep)
 
-    # loop over time steps
-    for n in n₁:n₂
-        # integrate one step and copy solution from cache to solution
-        sol[n] = integrate!(solstep, int)
+    integrate!(sol, int, n₁, n₂, solstep, curstate)
 
-        havenan = false
-        for s in current(solstep)
-            havenan = havenan || any(isnan, s)
-        end
+    # # loop over time steps
+    # for n in n₁:n₂
+    #     # integrate one step
+    #     integrate!(solstep, int)
 
-        if havenan
-            @warn "Solver encountered NaNs in solution at timestep n=$(n)."
-            break
-        end
+    #     # copy solution from solution step to solution
+    #     copy!(sol, curstate, n)
 
-        # try
-        #     sol[n] = integrate!(int)
-        # catch ex
-        #     tstr = " in time step " * string(n)
-        #
-        #     if m₁ ≠ m₂
-        #         tstr *= " for initial condition " * string(m)
-        #     end
-        #
-        #     tstr *= "."
-        #
-        #     if isa(ex, DomainError)
-        #         @warn("Domain error" * tstr)
-        #     elseif isa(ex, ErrorException)
-        #         @warn("Simulation exited early" * tstr)
-        #         @warn(ex.msg)
-        #     else
-        #         @warn(string(typeof(ex)) * tstr)
-        #         throw(ex)
-        #     end
-        # end
-    end
+    #     # check for NaNs
+    #     if isnan(curstate)
+    #         @warn "Solver encountered NaNs in solution at timestep n=$(n)."
+    #         break
+    #     end
+    # end
+
+    # try
+    #     integrate!(solstep, int)
+    #     copy!(sol, current(solstep), n)
+    # catch ex
+    #     tstr = " in time step " * string(n)
+
+    #     if m₁ ≠ m₂
+    #         tstr *= " for initial condition " * string(m)
+    #     end
+
+    #     tstr *= "."
+
+    #     if isa(ex, DomainError)
+    #         @warn("Domain error" * tstr)
+    #     elseif isa(ex, ErrorException)
+    #         @warn("Simulation exited early" * tstr)
+    #         @warn(ex.msg)
+    #     else
+    #         @warn(string(typeof(ex)) * tstr)
+    #         throw(ex)
+    #     end
+    # end
 
     return sol
 end

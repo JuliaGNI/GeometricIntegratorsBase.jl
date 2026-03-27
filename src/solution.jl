@@ -6,8 +6,3 @@ end
 function Solution(problem::EnsembleProblem, args...; kwargs...)
     EnsembleSolution(problem, args...; kwargs...)
 end
-
-
-function Base.setindex!(sol::GeometricSolution, solstep::SolutionStep, n)
-    sol[n] = state(current(solstep))
-end

@@ -122,7 +122,7 @@ using ..HarmonicOscillator
         sol = integrate(ode, ImplicitEuler())
 
         # Compute energy at each time step
-        energies = [hamiltonian(t, Array(q), parameters(ode)) for (t, q) in zip(sol.t, sol.q)]
+        energies = [hamiltonian(s.t, Array(s.q), parameters(ode)) for s in states(sol)]
 
         # For harmonic oscillator, energy should be approximately conserved
         # (though ImplicitEuler is not symplectic, so we allow larger deviation)
@@ -179,7 +179,7 @@ using ..HarmonicOscillator
         # Test with single timestep
         ode_single = odeproblem([0.5, 0.0]; timestep=0.1, timespan=(0.0, 0.1))
         sol_single = integrate(ode_single, ImplicitEuler())
-        @test length(sol_single.t) == 2  # Initial + one step
+        @test length(sol_single.timeser) == 2  # Initial + one step
         @test all(x -> all(isfinite, x), sol_single.q)
     end
 
@@ -189,7 +189,7 @@ using ..HarmonicOscillator
 
         # Check that solution maintains data type consistency
         @test all(x -> all(isfinite, x), sol.q)
-        @test length(sol.q) == length(sol.t)
+        @test length(sol.q) == length(sol.timeser)
     end
 
     @testset "Method Interface" begin

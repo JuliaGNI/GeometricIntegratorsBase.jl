@@ -10,13 +10,14 @@ using SimpleSolvers
 using Unicode: normalize
 
 import Base: Callable
-import GeometricBase: equations, initialguess, nconstraints, parameters, tableau
+import GeometricBase: equations, nconstraints, parameters, tableau
+import GeometricBase: initialguess, initialstate, initialtime
 import GeometricBase: timestep, timespan
 import GeometricBase: reset!, solutionstep!, update!
-import GeometricBase: solution, state, vectorfield
+import GeometricBase: solution, solutionkeys, state, vectorfield
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
-import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable
+import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable, TimeVariable
 import SimpleSolvers: NonlinearSolverMethod
 
 
@@ -25,6 +26,7 @@ Base.ndims(prob::EquationProblem) = length(vec(prob.ics.q))
 
 
 export update!, reset!
+export State
 
 
 export InitialGuess, NoInitialGuess
