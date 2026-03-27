@@ -8,6 +8,8 @@ using GeometricEquations
 using GeometricSolutions
 using Parameters
 
+using GeometricIntegratorsBase: StateVariable, StateVariableWithError
+
 export odeproblem, podeproblem, hodeproblem, iodeproblem, lodeproblem, sodeproblem,
     daeproblem, pdaeproblem, hdaeproblem, idaeproblem, ldaeproblem
 export deleproblem_midpoint, deleproblem_trapezoidal
@@ -88,6 +90,7 @@ exact_solution_p(t, q₀::AbstractVector, p₀::AbstractVector, t₀, params) = 
 exact_solution_q(t, x₀::AbstractVector, t₀, params) = exact_solution_q(t, x₀[1], x₀[2], t₀, params)
 exact_solution_p(t, x₀::AbstractVector, t₀, params) = exact_solution_p(t, x₀[1], x₀[2], t₀, params)
 exact_solution(t, x₀::AbstractVector, t₀, params) = [exact_solution_q(t, x₀, t₀, params), exact_solution_p(t, x₀, t₀, params)]
+exact_solution(t, x₀::Union{StateVariable,StateVariableWithError}, t₀, params) = StateVariable(exact_solution(t, parent(x₀), t₀, params))
 
 
 const q₀ = [0.5]
@@ -146,7 +149,7 @@ end
 
 function exact_solution!(sol::GeometricSolution, prob::ODEProblem)
     for n in eachtimestep(sol)
-        sol.q[n] .= exact_solution(sol.t[n], sol.q[0], sol.t[0], parameters(prob))
+        sol[n].q .= exact_solution(sol[n].t, sol[0].q, sol[0].t, parameters(prob))
     end
     return sol
 end
@@ -189,8 +192,8 @@ end
 
 function exact_solution!(sol::GeometricSolution, prob::Union{PODEProblem,HODEProblem})
     for n in eachtimestep(sol)
-        sol.q[n] = [exact_solution_q(sol.t[n], sol.q[0], sol.p[0], sol.t[0], parameters(prob))]
-        sol.p[n] = [exact_solution_p(sol.t[n], sol.q[0], sol.p[0], sol.t[0], parameters(prob))]
+        sol[n].q = [exact_solution_q(sol[n].t, sol[0].q, sol[0].p, sol[0].t, parameters(prob))]
+        sol[n].p = [exact_solution_p(sol[n].t, sol[0].q, sol[0].p, sol[0].t, parameters(prob))]
     end
     return sol
 end
