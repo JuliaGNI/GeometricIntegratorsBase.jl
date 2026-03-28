@@ -179,7 +179,7 @@ using ..HarmonicOscillator
         # Test with single timestep
         ode_single = odeproblem([0.5, 0.0]; timestep=0.1, timespan=(0.0, 0.1))
         sol_single = integrate(ode_single, ImplicitEuler())
-        @test length(sol_single.timeser) == 2  # Initial + one step
+        @test length(sol_single.t) == 2  # Initial + one step
         @test all(x -> all(isfinite, x), sol_single.q)
     end
 
@@ -189,7 +189,7 @@ using ..HarmonicOscillator
 
         # Check that solution maintains data type consistency
         @test all(x -> all(isfinite, x), sol.q)
-        @test length(sol.q) == length(sol.timeser)
+        @test length(sol.q) == length(sol.t)
     end
 
     @testset "Method Interface" begin
