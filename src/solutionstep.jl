@@ -31,7 +31,7 @@ data from previous time steps.
 ## Constructors
 
 ```julia
-SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=1, internal=NamedTuple())
+SolutionStep{equType}(ics::State, parameters::OptionalParameters; nhistory=1, internal=NamedTuple())
 SolutionStep(problem::GeometricProblem; kwargs...)
 ```
 
@@ -125,7 +125,7 @@ function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=defaul
 end
 
 hasstatevariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(CST, s)
-hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{CST},HT<:State{TT,HST}} = hasfield(HST, s)
+hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(HST, s)
 stateType(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}) where {ET,NH,ST,SOLT,VT,IT,PT,CT,HT} = CT
 
 
