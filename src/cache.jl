@@ -11,7 +11,7 @@ CacheType(T, problem::AbstractProblem, method::GeometricMethod) = NoCache{T}
 reset!(::Cache, args...) = nothing
 
 
-abstract type IntegratorCache{D,DT} <: Cache{DT} end
+abstract type IntegratorCache{DT,D} <: Cache{DT} end
 
 abstract type ODEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
 abstract type DAEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
