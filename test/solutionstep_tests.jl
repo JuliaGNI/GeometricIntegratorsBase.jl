@@ -733,10 +733,10 @@ end
             solstep = create_test_solutionstep()
 
             # Test with invalid key
-            @test_throws AssertionError update!(solstep, (invalid_key=[1.0, 2.0],))
+            @test_throws ArgumentError update!(solstep, (invalid_key=[1.0, 2.0],))
 
             # Test with subset of invalid keys
-            @test_throws AssertionError update!(solstep, (q=[0.1, 0.2, 0.3], invalid_key=[1.0, 2.0]))
+            @test_throws ArgumentError update!(solstep, (q=[0.1, 0.2, 0.3], invalid_key=[1.0, 2.0]))
         end
     end
 
