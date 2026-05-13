@@ -82,7 +82,8 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator; kwargs...)
 end
 
 
-# Apply integrator for ntime time steps and return solution.
+# Create solution and run integrator
+# TODO: Needs to be refactored as this is type piracy.
 function integrate(integrator::AbstractIntegrator; kwargs...)
     solution = Solution(problem(integrator))
     integrate!(solution, integrator; kwargs...)
