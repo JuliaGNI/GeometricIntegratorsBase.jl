@@ -30,7 +30,7 @@ using ..HarmonicOscillator
 
         # Test cache creation
         cache = Cache{Float64}(ode, method)
-        @test cache isa ImplicitEulerCache{Float64,ndims(ode)}
+        @test cache isa ImplicitEulerCache{Float64}
 
         # Test cache fields
         @test length(cache.x) == ndims(ode)

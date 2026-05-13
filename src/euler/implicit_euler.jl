@@ -14,13 +14,13 @@ issymplectic(method::ImplicitEuler) = false
 @doc raw"""
 Implicit Euler integrator cache.
 """
-struct ImplicitEulerCache{DT,D} <: ODEIntegratorCache{DT,D}
+struct ImplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     x::Vector{DT}
     q::Vector{DT}
     v::Vector{DT}
     v̄::Vector{DT}
 
-    function ImplicitEulerCache{DT,D}() where {DT,D}
+    function ImplicitEulerCache{DT}(D::Int) where {DT}
         x = zeros(DT, D)
         q = zeros(DT, D)
         v = zeros(DT, D)
@@ -32,10 +32,10 @@ end
 nlsolution(cache::ImplicitEulerCache) = cache.x
 
 function Cache{ST}(problem::AbstractProblem, method::ImplicitEuler; kwargs...) where {ST}
-    ImplicitEulerCache{ST,ndims(problem)}(; kwargs...)
+    ImplicitEulerCache{ST}(ndims(problem); kwargs...)
 end
 
-@inline CacheType(ST, problem::AbstractProblem, method::ImplicitEuler) = ImplicitEulerCache{ST,ndims(problem)}
+@inline CacheType(ST, problem::AbstractProblem, method::ImplicitEuler) = ImplicitEulerCache{ST}
 
 
 solversize(problem::AbstractProblemODE, ::ImplicitEuler) = ndims(problem)

@@ -13,20 +13,20 @@ issymplectic(method::ExplicitEuler) = false
 @doc raw"""
 Explicit Euler integrator cache.
 """
-struct ExplicitEulerCache{DT,D} <: ODEIntegratorCache{DT,D}
+struct ExplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     v::Vector{DT}
 
-    function ExplicitEulerCache{DT,D}() where {DT,D}
+    function ExplicitEulerCache{DT}(D::Int) where {DT}
         v = zeros(DT, D)
         new(v)
     end
 end
 
 function Cache{ST}(problem::AbstractProblem, method::ExplicitEuler; kwargs...) where {ST}
-    ExplicitEulerCache{ST,ndims(problem)}(; kwargs...)
+    ExplicitEulerCache{ST}(ndims(problem); kwargs...)
 end
 
-@inline CacheType(ST, problem::AbstractProblem, method::ExplicitEuler) = ExplicitEulerCache{ST,ndims(problem)}
+@inline CacheType(ST, problem::AbstractProblem, method::ExplicitEuler) = ExplicitEulerCache{ST}
 
 
 function update!(sol, params, _, int::GeometricIntegrator{<:ExplicitEuler})
