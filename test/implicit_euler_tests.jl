@@ -34,16 +34,16 @@ using ..HarmonicOscillator
         @test cache isa ImplicitEulerCache{Float64}
 
         # Test cache fields
-        @test length(cache.x) == ndims(ode)
-        @test length(cache.q) == ndims(ode)
-        @test length(cache.v) == ndims(ode)
-        @test length(cache.v̄) == ndims(ode)
+        @test axes(cache.x) == axes(initial_conditions(ode).q)
+        @test axes(cache.q) == axes(initial_conditions(ode).q)
+        @test axes(cache.v) == axes(initial_conditions(ode).q)
+        @test axes(cache.v̄) == axes(initial_conditions(ode).q)
 
         # Test nlsolution accessor
         @test nlsolution(cache) === cache.x
 
         # Test solver size
-        @test solversize(ode, method) == ndims(ode)
+        @test solversize(ode, method) == length(initial_conditions(ode).q)
     end
 
     @testset "Integration Accuracy - Basic" begin
