@@ -18,12 +18,13 @@ import GeometricBase: solution, solutionkeys, state, vectorfield
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable, TimeVariable
+import GeometricBase: NoSolver
 import SimpleSolvers: NonlinearSolverMethod
 
 
 export update!, reset!
 export State
-
+export NoSolver
 
 export InitialGuess, NoInitialGuess
 export initialguess!
