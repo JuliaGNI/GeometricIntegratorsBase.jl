@@ -53,6 +53,8 @@ islodemethod(::Union{LODEMethod,Type{<:LODEMethod}}) = true
 issodemethod(::Union{SODEMethod,Type{<:SODEMethod}}) = true
 
 isdaemethod(::Union{DAEMethod,Type{<:DAEMethod}}) = true
+
+isdelemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
 ispdaemethod(::Union{PDAEMethod,Type{<:PDAEMethod}}) = true
 ishdaemethod(::Union{HDAEMethod,Type{<:HDAEMethod}}) = true
 isidaemethod(::Union{IDAEMethod,Type{<:IDAEMethod}}) = true
