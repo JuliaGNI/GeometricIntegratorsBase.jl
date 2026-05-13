@@ -125,9 +125,7 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     tᵢ::TT, xᵢ::AbstractArray{DT},
     ::HermiteExtrapolation) where {DT,TT}
 
-    if t₀ == t₁
-        @error "t₀ and t₁ in Hermite extrapolation are identical!"
-    end
+    t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
     s::TT = (tᵢ - t₀) / Δt
@@ -153,9 +151,7 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     tᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
     extrap::HermiteExtrapolation) where {DT,TT}
 
-    if t₀ == t₁
-        @error "t₀ and t₁ in Hermite extrapolation are identical!"
-    end
+    t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
     s::TT = (tᵢ - t₀) / Δt
