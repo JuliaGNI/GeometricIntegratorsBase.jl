@@ -122,7 +122,7 @@ function extrapolate!(
             xᵢ₁ .= xᵢ₂
             xᵢ₂ .= xᵢₜ
         end
-        pts[i] .+= xᵢ₂
+        pts[i] .= xᵢ₂
     end
 
     aitken_neville!(x₁, zero(TT), σ², pts)
@@ -190,8 +190,8 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
             pᵢ₁ .= pᵢ₂
             pᵢ₂ .= pᵢₜ
         end
-        qts[i] .+= qᵢ₂
-        pts[i] .+= pᵢ₂
+        qts[i] .= qᵢ₂
+        pts[i] .= pᵢ₂
     end
 
     aitken_neville!(q₁, zero(TT), σ2, qts)
@@ -284,8 +284,8 @@ function extrapolate!(
             pᵢ₁ .= pᵢ₂
             pᵢ₂ .= pᵢₜ
         end
-        qts[i] .+= qᵢ₂
-        pts[i] .+= pᵢ₂
+        qts[i] .= qᵢ₂
+        pts[i] .= pᵢ₂
     end
 
     aitken_neville!(q₁, zero(TT), σ2, qts)
