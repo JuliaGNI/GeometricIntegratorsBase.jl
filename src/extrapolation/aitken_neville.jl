@@ -12,10 +12,10 @@ where
 * `xi`: interpolation values
 """
 function aitken_neville!(x::AbstractArray, t::TT, ti::AbstractVector{TT}, xi::AbstractVector) where {TT}
-    @assert length(ti) == length(xi)
-    
+    length(ti) == length(xi) || throw(ArgumentError("ti and xi must have the same length"))
+
     for _xi in xi
-        @assert axes(x) == axes(_xi)
+        axes(x) == axes(_xi) || throw(ArgumentError("All xi entries must have the same axes as x"))
     end
 
     for j in eachindex(ti)

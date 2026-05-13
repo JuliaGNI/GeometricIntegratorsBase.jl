@@ -58,9 +58,9 @@ integrate!(solution, integrator, n₁, n₂)
 """
 function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int; kwargs...)
     # check time steps range for consistency
-    @assert n₁ ≥ 1
-    @assert n₂ ≥ n₁
-    @assert n₂ ≤ ntime(sol)
+    n₁ ≥ 1 || throw(ArgumentError("n₁ must be ≥ 1, got $n₁"))
+    n₂ ≥ n₁ || throw(ArgumentError("n₂ must be ≥ n₁, got n₂=$n₂ < n₁=$n₁"))
+    n₂ ≤ ntime(sol) || throw(ArgumentError("n₂ must be ≤ ntime(sol)=$(ntime(sol)), got $n₂"))
 
     # copy initial condition from solution to solutionstep and initialize
     solstep = solutionstep(int, sol[n₁-1]; kwargs...)

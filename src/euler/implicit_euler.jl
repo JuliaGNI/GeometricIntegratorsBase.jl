@@ -80,7 +80,7 @@ end
 
 # Compute stages of implicit Euler methods.
 function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
-    @assert axes(x) == axes(b)
+    axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # copy previous solution from solstep to cache
     # reset!(cache(int, ST), sol...)

@@ -97,7 +97,7 @@ function extrapolate!(
     problem::Union{AbstractProblemODE,SODEProblem},
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(x₀) == axes(x₁)
+    axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
     F = [2i * one(TT) for i in 1:extrap.s+1]
     σ = (t₁ - t₀) ./ F
@@ -147,7 +147,8 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     problem::AbstractProblemPODE,
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
+    axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
+    axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
     F = [2i * one(TT) for i in 1:extrap.s+1]
     σ = (t₁ - t₀) ./ F
@@ -240,7 +241,8 @@ function extrapolate!(
     problem::AbstractProblemIODE,
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
+    axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
+    axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
     F = [2i * one(TT) for i in 1:extrap.s+1]
     σ = (t₁ - t₀) ./ F

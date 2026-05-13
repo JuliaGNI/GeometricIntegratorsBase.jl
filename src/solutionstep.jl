@@ -64,7 +64,7 @@ struct SolutionStep{
     previous::previousType
 
     function SolutionStep{equType}(ics::State, parameters::OptionalParameters=NullParameters(); nhistory=2, internal=NamedTuple()) where {equType}
-        @assert nhistory ≥ 1
+        nhistory ≥ 1 || throw(ArgumentError("nhistory must be at least 1, got $nhistory"))
 
         # create state vector according to the variables in ics
         states = OffsetVector([State(ics; initialize=false) for _ in 0:nhistory], 0:nhistory)

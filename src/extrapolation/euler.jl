@@ -28,7 +28,7 @@ where
 struct EulerExtrapolation <: Extrapolation
     s::Int
     function EulerExtrapolation(s=default_extrapolation_stages)
-        @assert s ≥ 0
+        s ≥ 0 || throw(ArgumentError("Number of stages s must be non-negative, got $s"))
         new(s)
     end
 end
@@ -39,7 +39,7 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
     problem::AbstractProblemODE,
     extrap::EulerExtrapolation) where {DT,TT}
 
-    @assert axes(x₀) == axes(x₁)
+    axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
     F = collect(1:(extrap.s+1))
     σ = (t₁ - t₀) ./ F
