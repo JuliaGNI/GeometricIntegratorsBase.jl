@@ -48,9 +48,8 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
     vᵢ = zero(x₀)
 
     for i in F
-        for _ in 1:(F[i]-1)
-            tᵢ = t₀ + σ[i]
-            initialguess(problem).v(vᵢ, tᵢ, pts[i], parameters(problem))
+        for k in 0:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], pts[i], parameters(problem))
             pts[i] .+= σ[i] * vᵢ
         end
     end

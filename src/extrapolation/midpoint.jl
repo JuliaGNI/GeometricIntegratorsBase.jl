@@ -113,11 +113,10 @@ function extrapolate!(
     initialguess(problem).v(v₀, t₀, x₀, parameters(problem))
 
     for i in eachindex(pts)
-        tᵢ = t₀ + σ[i]
         xᵢ₁ .= x₀
         xᵢ₂ .= x₀ .+ σ[i] .* v₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, xᵢ₂, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], xᵢ₂, parameters(problem))
             xᵢₜ .= xᵢ₁ .+ 2σ[i] .* vᵢ
             xᵢ₁ .= xᵢ₂
             xᵢ₂ .= xᵢₜ
@@ -175,14 +174,13 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     initialguess(problem).f(f₀, t₀, q₀, p₀, parameters(problem))
 
     for i in 1:extrap.s+1
-        tᵢ = t₀ + σ[i]
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
-            initialguess(problem).f(fᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
+            initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
             qᵢ₁ .= qᵢ₂
             qᵢ₂ .= qᵢₜ
@@ -269,14 +267,13 @@ function extrapolate!(
     initialguess(problem).f(f₀, t₀, q₀, v₀, parameters(problem))
 
     for i in 1:extrap.s+1
-        tᵢ = t₀ + σ[i]
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
-            initialguess(problem).f(fᵢ, tᵢ, qᵢ₂, vᵢ, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
+            initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, vᵢ, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
             qᵢ₁ .= qᵢ₂
             qᵢ₂ .= qᵢₜ
