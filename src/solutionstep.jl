@@ -368,9 +368,13 @@ update!(solstep, (q = [0.1, 0.2], p = [0.05, 0.1]))
 ```
 """
 function update!(solstep::SolutionStep, Δ::NamedTuple)
-    sol = current(solstep)
     for k in keys(Δ)
         k ∈ keys(solstep) || throw(ArgumentError("Key $(k) is not present in the solution step"))
+    end
+
+    sol = current(solstep)
+
+    for k in keys(Δ)
         _update!(sol[Val(k)], Δ[k])
     end
 
