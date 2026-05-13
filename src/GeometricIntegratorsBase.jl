@@ -21,10 +21,6 @@ import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVar
 import SimpleSolvers: NonlinearSolverMethod
 
 
-# compat workaround
-Base.ndims(prob::EquationProblem) = length(vec(prob.ics.q))
-
-
 export update!, reset!
 export State
 
