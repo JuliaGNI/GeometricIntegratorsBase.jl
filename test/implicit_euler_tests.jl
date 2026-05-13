@@ -7,6 +7,7 @@ using GeometricSolutions: relative_maximum_error
 using GeometricIntegratorsBase: ImplicitEulerCache, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
+using SimpleSolvers: Newton
 
 using ..HarmonicOscillator
 
