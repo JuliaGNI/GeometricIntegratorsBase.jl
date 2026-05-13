@@ -23,7 +23,7 @@ GeometricSolutions = "0.6.3"
 LinearAlgebra = "1"
 OffsetArrays = "1"
 SafeTestsets = "0.1.0"
-SimpleSolvers = "0.7.5, 0.8"
+SimpleSolvers = "0.8.2"
 Unicode = "1"
 julia = "1.10"
 

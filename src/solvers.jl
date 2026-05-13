@@ -17,5 +17,6 @@ function initsolver(solvermethod::NonlinearSolverMethod, method::GeometricMethod
     NonlinearSolver(solvermethod, x, residual!, y; kwargs...)
 end
 
-# residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
-residual!(y, x, parameters) = residual!(y, x, parameters...) # TODO: This is a workaround for a SimpleSolvers limitation. Should be removed.
+# This accounts for the SimpleSolvers interface, expecting a single parameter argument,
+# whereas the typical `residual!` methods expect a number of additional arguments.
+residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
