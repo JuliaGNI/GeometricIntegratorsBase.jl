@@ -74,6 +74,8 @@ issymplectic(t::Type{<:GeometricMethod}) = applicable(t) ? issymplectic(t()) : m
 isenergypreserving(t::Type{<:GeometricMethod}) = applicable(t) ? isenergypreserving(t()) : missing
 isstifflyaccurate(t::Type{<:GeometricMethod}) = applicable(t) ? isstifflyaccurate(t()) : missing
 
+reference(::GeometricMethod) = missing
+
 print_reference(io, method::GeometricMethod) =
     ismissing(reference(method)) || print(io, reference(method))
 
