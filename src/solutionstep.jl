@@ -31,7 +31,7 @@ data from previous time steps.
 ## Constructors
 
 ```julia
-SolutionStep{equType}(ics::NamedTuple, parameters::OptionalParameters; nhistory=1, internal=NamedTuple())
+SolutionStep{equType}(ics::State, parameters::OptionalParameters; nhistory=1, internal=NamedTuple())
 SolutionStep(problem::GeometricProblem; kwargs...)
 ```
 
@@ -64,7 +64,7 @@ struct SolutionStep{
     previous::previousType
 
     function SolutionStep{equType}(ics::State, parameters::OptionalParameters=NullParameters(); nhistory=2, internal=NamedTuple()) where {equType}
-        @assert nhistory ≥ 1
+        nhistory ≥ 1 || throw(ArgumentError("nhistory must be at least 1, got $nhistory"))
 
         # create state vector according to the variables in ics
         states = OffsetVector([State(ics; initialize=false) for _ in 0:nhistory], 0:nhistory)
@@ -125,7 +125,7 @@ function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=defaul
 end
 
 hasstatevariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(CST, s)
-hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{CST},HT<:State{TT,HST}} = hasfield(HST, s)
+hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(HST, s)
 stateType(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}) where {ET,NH,ST,SOLT,VT,IT,PT,CT,HT} = CT
 
 
@@ -356,7 +356,7 @@ method for each variable type, which handles different variable types correctly
 - `solstep`: The updated solution step (for method chaining)
 
 # Throws
-- `AssertionError`: If any key in `Δ` is not present in the solution step
+- `ArgumentError`: If any key in `Δ` is not present in the solution step
 
 # Examples
 ```julia
@@ -368,10 +368,12 @@ update!(solstep, (q = [0.1, 0.2], p = [0.05, 0.1]))
 ```
 """
 function update!(solstep::SolutionStep, Δ::NamedTuple)
-    # @assert Val.(keys(Δ)) ⊆ keys(solstep)
-    @assert keys(Δ) ⊆ keys(solstep)
+    for k in keys(Δ)
+        k ∈ keys(solstep) || throw(ArgumentError("Key $(k) is not present in the solution step"))
+    end
 
     sol = current(solstep)
+
     for k in keys(Δ)
         _update!(sol[Val(k)], Δ[k])
     end

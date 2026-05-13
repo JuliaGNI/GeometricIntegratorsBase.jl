@@ -1,6 +1,4 @@
 
-struct NoSolver <: SolverMethod end
-
 default_linesearch(method=nothing) = Backtracking()
 
 default_options(method=nothing) = (
@@ -19,10 +17,6 @@ function initsolver(solvermethod::NonlinearSolverMethod, method::GeometricMethod
     NonlinearSolver(solvermethod, x, residual!, y; kwargs...)
 end
 
-# residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
-residual!(y, x, parameters) = residual!(y, x, parameters...) # TODO: This is a workaround for a SimpleSolvers limitation. Should be removed.
-
-# Workaround for SimpleSolvers renaming of Newton to NewtonMethod. Should be removed once optimisers have been removed from SimpleSolvers.
-const Newton = NewtonMethod
-
-export Newton
+# This accounts for the SimpleSolvers interface, expecting a single parameter argument,
+# whereas the typical `residual!` methods expect a number of additional arguments.
+residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)

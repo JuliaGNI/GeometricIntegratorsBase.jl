@@ -59,7 +59,7 @@ function GeometricIntegrator(
     GeometricIntegrator(problem, method, solver, initialguess; kwargs...)
 end
 
-GeometricIntegrator(::AbstractProblem, ::Nothing, args...; kwargs...) = nothing
+GeometricIntegrator(::AbstractProblem, ::Nothing, args...; kwargs...) = missing
 
 problem(int::GeometricIntegrator) = int.problem
 method(int::GeometricIntegrator) = int.method
@@ -102,7 +102,7 @@ end
 
 
 """
-
+Performs one integration step of an integrator.
 """
 function integrate_step! end
 

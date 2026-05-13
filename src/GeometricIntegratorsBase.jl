@@ -18,16 +18,13 @@ import GeometricBase: solution, solutionkeys, state, vectorfield
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable, TimeVariable
+import GeometricBase: NoSolver
 import SimpleSolvers: NonlinearSolverMethod
-
-
-# compat workaround
-Base.ndims(prob::EquationProblem) = length(vec(prob.ics.q))
 
 
 export update!, reset!
 export State
-
+export NoSolver
 
 export InitialGuess, NoInitialGuess
 export initialguess!
@@ -71,8 +68,6 @@ export cache, nlsolution
 
 include("cache.jl")
 
-
-export NoSolver
 
 include("solvers.jl")
 

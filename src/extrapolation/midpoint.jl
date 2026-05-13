@@ -37,7 +37,7 @@ p(t_0) &= p_0 ,
 \end{aligned}
 ```
 
-for $q_1 = q(t_1)$ and $p_1 = p(t_1)$m and is called with
+for $q_1 = q(t_1)$ and $p_1 = p(t_1)$, and is called with
 
 ```julia
 extrapolate!(t₀, q₀, p₀, t₁, q₁, p₁, ::PODEProblem, MidpointExtrapolation(s))
@@ -97,32 +97,31 @@ function extrapolate!(
     problem::Union{AbstractProblemODE,SODEProblem},
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(x₀) == axes(x₁)
+    axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ² = σ .^ 2
-    local pts = [zero(x₀) for _ in 1:extrap.s+1]
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ² = σ .^ 2
+    pts = [zero(x₀) for _ in 1:extrap.s+1]
 
-    local xᵢ₁ = zero(x₀)
-    local xᵢ₂ = zero(x₀)
-    local xᵢₜ = zero(x₀)
-    local vᵢ = zero(x₀)
-    local v₀ = zero(x₀)
+    xᵢ₁ = zero(x₀)
+    xᵢ₂ = zero(x₀)
+    xᵢₜ = zero(x₀)
+    vᵢ = zero(x₀)
+    v₀ = zero(x₀)
 
     initialguess(problem).v(v₀, t₀, x₀, parameters(problem))
 
     for i in eachindex(pts)
-        tᵢ = t₀ + σ[i]
         xᵢ₁ .= x₀
         xᵢ₂ .= x₀ .+ σ[i] .* v₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, xᵢ₂, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], xᵢ₂, parameters(problem))
             xᵢₜ .= xᵢ₁ .+ 2σ[i] .* vᵢ
             xᵢ₁ .= xᵢ₂
             xᵢ₂ .= xᵢₜ
         end
-        pts[i] .+= xᵢ₂
+        pts[i] .= xᵢ₂
     end
 
     aitken_neville!(x₁, zero(TT), σ², pts)
@@ -148,41 +147,41 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     problem::AbstractProblemPODE,
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
+    axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
+    axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ2 = σ .^ 2
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ2 = σ .^ 2
 
-    local qts = [zero(q₀) for _ in 1:extrap.s+1]
-    local pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:extrap.s+1]
+    pts = [zero(p₀) for _ in 1:extrap.s+1]
 
-    local qᵢ₁ = zero(q₀)
-    local qᵢ₂ = zero(q₀)
-    local qᵢₜ = zero(q₀)
+    qᵢ₁ = zero(q₀)
+    qᵢ₂ = zero(q₀)
+    qᵢₜ = zero(q₀)
 
-    local pᵢ₁ = zero(p₀)
-    local pᵢ₂ = zero(p₀)
-    local pᵢₜ = zero(p₀)
+    pᵢ₁ = zero(p₀)
+    pᵢ₂ = zero(p₀)
+    pᵢₜ = zero(p₀)
 
-    local v₀ = zero(q₀)
-    local vᵢ = zero(q₀)
+    v₀ = zero(q₀)
+    vᵢ = zero(q₀)
 
-    local f₀ = zero(p₀)
-    local fᵢ = zero(p₀)
+    f₀ = zero(p₀)
+    fᵢ = zero(p₀)
 
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, p₀, parameters(problem))
 
     for i in 1:extrap.s+1
-        tᵢ = t₀ + σ[i]
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
-            initialguess(problem).f(fᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
+            initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
             qᵢ₁ .= qᵢ₂
             qᵢ₂ .= qᵢₜ
@@ -190,8 +189,8 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
             pᵢ₁ .= pᵢ₂
             pᵢ₂ .= pᵢₜ
         end
-        qts[i] .+= qᵢ₂
-        pts[i] .+= pᵢ₂
+        qts[i] .= qᵢ₂
+        pts[i] .= pᵢ₂
     end
 
     aitken_neville!(q₁, zero(TT), σ2, qts)
@@ -242,41 +241,41 @@ function extrapolate!(
     problem::AbstractProblemIODE,
     extrap::MidpointExtrapolation) where {DT,TT}
 
-    @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
+    axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
+    axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ2 = σ .^ 2
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ2 = σ .^ 2
 
-    local qts = [zero(q₀) for _ in 1:extrap.s+1]
-    local pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:extrap.s+1]
+    pts = [zero(p₀) for _ in 1:extrap.s+1]
 
-    local qᵢ₁ = zero(q₀)
-    local qᵢ₂ = zero(q₀)
-    local qᵢₜ = zero(q₀)
+    qᵢ₁ = zero(q₀)
+    qᵢ₂ = zero(q₀)
+    qᵢₜ = zero(q₀)
 
-    local pᵢ₁ = zero(p₀)
-    local pᵢ₂ = zero(p₀)
-    local pᵢₜ = zero(p₀)
+    pᵢ₁ = zero(p₀)
+    pᵢ₂ = zero(p₀)
+    pᵢₜ = zero(p₀)
 
-    local v₀ = zero(q₀)
-    local vᵢ = zero(q₀)
+    v₀ = zero(q₀)
+    vᵢ = zero(q₀)
 
-    local f₀ = zero(p₀)
-    local fᵢ = zero(p₀)
+    f₀ = zero(p₀)
+    fᵢ = zero(p₀)
 
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, v₀, parameters(problem))
 
     for i in 1:extrap.s+1
-        tᵢ = t₀ + σ[i]
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for _ in 1:(F[i]-1)
-            initialguess(problem).v(vᵢ, tᵢ, qᵢ₂, pᵢ₂, parameters(problem))
-            initialguess(problem).f(fᵢ, tᵢ, qᵢ₂, vᵢ, parameters(problem))
+        for k in 1:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
+            initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, vᵢ, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
             qᵢ₁ .= qᵢ₂
             qᵢ₂ .= qᵢₜ
@@ -284,8 +283,8 @@ function extrapolate!(
             pᵢ₁ .= pᵢ₂
             pᵢ₂ .= pᵢₜ
         end
-        qts[i] .+= qᵢ₂
-        pts[i] .+= pᵢ₂
+        qts[i] .= qᵢ₂
+        pts[i] .= pᵢ₂
     end
 
     aitken_neville!(q₁, zero(TT), σ2, qts)

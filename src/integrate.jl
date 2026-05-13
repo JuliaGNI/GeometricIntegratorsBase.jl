@@ -58,53 +58,15 @@ integrate!(solution, integrator, n₁, n₂)
 """
 function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int; kwargs...)
     # check time steps range for consistency
-    @assert n₁ ≥ 1
-    @assert n₂ ≥ n₁
-    @assert n₂ ≤ ntime(sol)
+    n₁ ≥ 1 || throw(ArgumentError("n₁ must be ≥ 1, got $n₁"))
+    n₂ ≥ n₁ || throw(ArgumentError("n₂ must be ≥ n₁, got n₂=$n₂ < n₁=$n₁"))
+    n₂ ≤ ntime(sol) || throw(ArgumentError("n₂ must be ≤ ntime(sol)=$(ntime(sol)), got $n₂"))
 
     # copy initial condition from solution to solutionstep and initialize
     solstep = solutionstep(int, sol[n₁-1]; kwargs...)
     curstate = current(solstep)
 
     integrate!(sol, int, n₁, n₂, solstep, curstate)
-
-    # # loop over time steps
-    # for n in n₁:n₂
-    #     # integrate one step
-    #     integrate!(solstep, int)
-
-    #     # copy solution from solution step to solution
-    #     copy!(sol, curstate, n)
-
-    #     # check for NaNs
-    #     if isnan(curstate)
-    #         @warn "Solver encountered NaNs in solution at timestep n=$(n)."
-    #         break
-    #     end
-    # end
-
-    # try
-    #     integrate!(solstep, int)
-    #     copy!(sol, current(solstep), n)
-    # catch ex
-    #     tstr = " in time step " * string(n)
-
-    #     if m₁ ≠ m₂
-    #         tstr *= " for initial condition " * string(m)
-    #     end
-
-    #     tstr *= "."
-
-    #     if isa(ex, DomainError)
-    #         @warn("Domain error" * tstr)
-    #     elseif isa(ex, ErrorException)
-    #         @warn("Simulation exited early" * tstr)
-    #         @warn(ex.msg)
-    #     else
-    #         @warn(string(typeof(ex)) * tstr)
-    #         throw(ex)
-    #     end
-    # end
 
     return sol
 end
@@ -120,7 +82,8 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator; kwargs...)
 end
 
 
-# Apply integrator for ntime time steps and return solution.
+# Create solution and run integrator
+# TODO: Needs to be refactored as this is type piracy.
 function integrate(integrator::AbstractIntegrator; kwargs...)
     solution = Solution(problem(integrator))
     integrate!(solution, integrator; kwargs...)

@@ -28,7 +28,7 @@ where
 struct EulerExtrapolation <: Extrapolation
     s::Int
     function EulerExtrapolation(s=default_extrapolation_stages)
-        @assert s ≥ 0
+        s ≥ 0 || throw(ArgumentError("Number of stages s must be non-negative, got $s"))
         new(s)
     end
 end
@@ -39,18 +39,17 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
     problem::AbstractProblemODE,
     extrap::EulerExtrapolation) where {DT,TT}
 
-    @assert axes(x₀) == axes(x₁)
+    axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
-    local F = collect(1:(extrap.s+1))
-    local σ = (t₁ - t₀) ./ F
-    local pts = [copy(x₀) for _ in F]
+    F = collect(1:(extrap.s+1))
+    σ = (t₁ - t₀) ./ F
+    pts = [copy(x₀) for _ in F]
 
-    local vᵢ = zero(x₀)
+    vᵢ = zero(x₀)
 
     for i in F
-        for _ in 1:(F[i]-1)
-            tᵢ = t₀ + σ[i]
-            initialguess(problem).v(vᵢ, tᵢ, pts[i], parameters(problem))
+        for k in 0:(F[i]-1)
+            initialguess(problem).v(vᵢ, t₀ + k * σ[i], pts[i], parameters(problem))
             pts[i] .+= σ[i] * vᵢ
         end
     end

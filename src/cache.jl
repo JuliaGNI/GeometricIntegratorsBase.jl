@@ -11,15 +11,15 @@ CacheType(T, problem::AbstractProblem, method::GeometricMethod) = NoCache{T}
 reset!(::Cache, args...) = nothing
 
 
-abstract type IntegratorCache{D,DT} <: Cache{DT} end
+abstract type IntegratorCache{DT} <: Cache{DT} end
 
-abstract type ODEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type DAEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type IODEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type IDAEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type PODEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type PDAEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
-abstract type DELEIntegratorCache{DT,D} <: IntegratorCache{DT,D} end
+abstract type ODEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type DAEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type IODEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type IDAEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type PODEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type PDAEIntegratorCache{DT} <: IntegratorCache{DT} end
+abstract type DELEIntegratorCache{DT} <: IntegratorCache{DT} end
 
 # cache(::AbstractIntegrator, DT) = nothing
 # cache(::AbstractIntegrator) = nothing
@@ -50,8 +50,8 @@ end
 end
 
 function updateall!(c::CacheDict, data)
-    for (key, cache) in c.caches
-        update!(c.caches[key], data...)
+    for (_, cache) in c.caches
+        update!(cache, data...)
     end
 end
 

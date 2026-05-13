@@ -53,6 +53,8 @@ islodemethod(::Union{LODEMethod,Type{<:LODEMethod}}) = true
 issodemethod(::Union{SODEMethod,Type{<:SODEMethod}}) = true
 
 isdaemethod(::Union{DAEMethod,Type{<:DAEMethod}}) = true
+
+isdelemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
 ispdaemethod(::Union{PDAEMethod,Type{<:PDAEMethod}}) = true
 ishdaemethod(::Union{HDAEMethod,Type{<:HDAEMethod}}) = true
 isidaemethod(::Union{IDAEMethod,Type{<:IDAEMethod}}) = true
@@ -74,12 +76,10 @@ issymplectic(t::Type{<:GeometricMethod}) = applicable(t) ? issymplectic(t()) : m
 isenergypreserving(t::Type{<:GeometricMethod}) = applicable(t) ? isenergypreserving(t()) : missing
 isstifflyaccurate(t::Type{<:GeometricMethod}) = applicable(t) ? isstifflyaccurate(t()) : missing
 
+reference(::GeometricMethod) = missing
+
 print_reference(io, method::GeometricMethod) =
-    try
-        ismissing(reference(method)) || print(io, reference(method))
-    catch MethodError
-        String("")
-    end
+    ismissing(reference(method)) || print(io, reference(method))
 
 # function check_symplecticity end
 function symplecticity_conditions end

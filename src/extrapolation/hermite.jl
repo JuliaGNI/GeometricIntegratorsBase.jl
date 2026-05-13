@@ -125,29 +125,16 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     tᵢ::TT, xᵢ::AbstractArray{DT},
     ::HermiteExtrapolation) where {DT,TT}
 
-    if t₀ == t₁
-        @error "t₀ and t₁ in Hermite extrapolation are identical!"
-    end
+    t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
-    local a₀::TT
-    local a₁::TT
-    local b₀::TT
-    local b₁::TT
-    local Δt::TT = t₁ - t₀
-    local s::TT = (tᵢ - t₀) / Δt
+    Δt::TT = t₁ - t₀
+    s::TT = (tᵢ - t₀) / Δt
 
-    # Interpolate x at t
-    if tᵢ == t₀
-        xᵢ .= x₀
-    elseif tᵢ == t₁
-        xᵢ .= x₁
-    else
-        a₁ = 3s^2 - 2s^3
-        a₀ = 1 - a₁
-        b₁ = s^2 * (s - 1)
-        b₀ = s * (1 - s) + b₁
-        xᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* Δt .* ẋ₀ .+ b₁ .* Δt .* ẋ₁
-    end
+    a₁ = 3s^2 - 2s^3
+    a₀ = 1 - a₁
+    b₁ = s^2 * (s - 1)
+    b₀ = s * (1 - s) + b₁
+    xᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* Δt .* ẋ₀ .+ b₁ .* Δt .* ẋ₁
 
     return xᵢ
 end
@@ -157,31 +144,18 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     tᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
     extrap::HermiteExtrapolation) where {DT,TT}
 
-    if t₀ == t₁
-        @error "t₀ and t₁ in Hermite extrapolation are identical!"
-    end
+    t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
-    local a₀::TT
-    local a₁::TT
-    local b₀::TT
-    local b₁::TT
-    local Δt::TT = t₁ - t₀
-    local s::TT = (tᵢ - t₀) / Δt
+    Δt::TT = t₁ - t₀
+    s::TT = (tᵢ - t₀) / Δt
 
     extrapolate!(t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, tᵢ, xᵢ, extrap)
 
-    # Interpolate ẋ at t
-    if tᵢ == t₀
-        ẋᵢ .= ẋ₀
-    elseif tᵢ == t₁
-        ẋᵢ .= ẋ₁
-    else
-        a₁ = (6s - 6s^2) / Δt
-        a₀ = -a₁
-        b₁ = s * (3s - 2)
-        b₀ = 1 - 2s + b₁
-        ẋᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* ẋ₀ .+ b₁ .* ẋ₁
-    end
+    a₁ = (6s - 6s^2) / Δt
+    a₀ = -a₁
+    b₁ = s * (3s - 2)
+    b₀ = 1 - 2s + b₁
+    ẋᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* ẋ₀ .+ b₁ .* ẋ₁
 
     return (xᵢ, ẋᵢ)
 end

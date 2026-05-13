@@ -14,17 +14,17 @@ issymplectic(method::ImplicitEuler) = false
 @doc raw"""
 Implicit Euler integrator cache.
 """
-struct ImplicitEulerCache{DT,D} <: ODEIntegratorCache{DT,D}
+struct ImplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     x::Vector{DT}
     q::Vector{DT}
     v::Vector{DT}
     v̄::Vector{DT}
 
-    function ImplicitEulerCache{DT,D}() where {DT,D}
-        x = zeros(DT, D)
-        q = zeros(DT, D)
-        v = zeros(DT, D)
-        v̄ = zeros(DT, D)
+    function ImplicitEulerCache{DT}(ics) where {DT}
+        x = zeros(DT, length(vec(ics.q)))
+        q = zeros(DT, axes(ics.q))
+        v = zeros(DT, axes(ics.q))
+        v̄ = zeros(DT, axes(ics.q))
         new(x, q, v, v̄)
     end
 end
@@ -32,13 +32,13 @@ end
 nlsolution(cache::ImplicitEulerCache) = cache.x
 
 function Cache{ST}(problem::AbstractProblem, method::ImplicitEuler; kwargs...) where {ST}
-    ImplicitEulerCache{ST,ndims(problem)}(; kwargs...)
+    ImplicitEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, problem::AbstractProblem, method::ImplicitEuler) = ImplicitEulerCache{ST,ndims(problem)}
+@inline CacheType(ST, ::AbstractProblem, ::ImplicitEuler) = ImplicitEulerCache{ST}
 
 
-solversize(problem::AbstractProblemODE, ::ImplicitEuler) = ndims(problem)
+solversize(problem::AbstractProblemODE, ::ImplicitEuler) = length(vec(initial_conditions(problem).q))
 
 default_solver(::ImplicitEuler) = Newton()
 default_iguess(::ImplicitEuler) = HermiteExtrapolation()
@@ -55,9 +55,9 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:Implici
 end
 
 function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
-    local q = cache(int, ST).q
-    local v = cache(int, ST).v
-    local v̄ = cache(int, ST).v̄
+    q = cache(int, ST).q
+    v = cache(int, ST).v
+    v̄ = cache(int, ST).v̄
 
     # compute q = q̄ + Δt * x (v = x)
     v̄ .= x
@@ -70,8 +70,8 @@ end
 
 function residual!(b::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
     # get cache for internal stages
-    local v = cache(int, ST).v
-    local v̄ = cache(int, ST).v̄
+    v = cache(int, ST).v
+    v̄ = cache(int, ST).v̄
 
     # compute b = - (v-v)
     b .= v .- v̄
@@ -80,7 +80,7 @@ end
 
 # Compute stages of implicit Euler methods.
 function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
-    @assert axes(x) == axes(b)
+    axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # copy previous solution from solstep to cache
     # reset!(cache(int, ST), sol...)

@@ -13,14 +13,14 @@ prob = odeproblem()
 
 struct TestMethod <: GeometricMethod end
 
-struct TestCache{DT,D} <: IntegratorCache{DT,D}
+struct TestCache{DT} <: IntegratorCache{DT}
     x::Vector{DT}
     q::Vector{DT}
 
     function TestCache{DT}(q) where {DT}
         x = zeros(DT, 2 * length(axes(q)))
         q = zero(similar(q, DT))
-        new{DT,length(x)}(x, q)
+        new{DT}(x, q)
     end
 end
 
