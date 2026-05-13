@@ -16,17 +16,17 @@ Explicit Euler integrator cache.
 struct ExplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     v::Vector{DT}
 
-    function ExplicitEulerCache{DT}(D::Int) where {DT}
-        v = zeros(DT, D)
+    function ExplicitEulerCache{DT}(ics) where {DT}
+        v = zeros(DT, axes(ics.q))
         new(v)
     end
 end
 
 function Cache{ST}(problem::AbstractProblem, method::ExplicitEuler; kwargs...) where {ST}
-    ExplicitEulerCache{ST}(ndims(problem); kwargs...)
+    ExplicitEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, problem::AbstractProblem, method::ExplicitEuler) = ExplicitEulerCache{ST}
+@inline CacheType(ST, ::AbstractProblem, ::ExplicitEuler) = ExplicitEulerCache{ST}
 
 
 function update!(sol, params, _, int::GeometricIntegrator{<:ExplicitEuler})

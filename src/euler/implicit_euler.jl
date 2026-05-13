@@ -20,11 +20,11 @@ struct ImplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     v::Vector{DT}
     v̄::Vector{DT}
 
-    function ImplicitEulerCache{DT}(D::Int) where {DT}
-        x = zeros(DT, D)
-        q = zeros(DT, D)
-        v = zeros(DT, D)
-        v̄ = zeros(DT, D)
+    function ImplicitEulerCache{DT}(ics) where {DT}
+        x = zeros(DT, length(vec(ics.q)))
+        q = zeros(DT, axes(ics.q))
+        v = zeros(DT, axes(ics.q))
+        v̄ = zeros(DT, axes(ics.q))
         new(x, q, v, v̄)
     end
 end
@@ -32,13 +32,13 @@ end
 nlsolution(cache::ImplicitEulerCache) = cache.x
 
 function Cache{ST}(problem::AbstractProblem, method::ImplicitEuler; kwargs...) where {ST}
-    ImplicitEulerCache{ST}(ndims(problem); kwargs...)
+    ImplicitEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, problem::AbstractProblem, method::ImplicitEuler) = ImplicitEulerCache{ST}
+@inline CacheType(ST, ::AbstractProblem, ::ImplicitEuler) = ImplicitEulerCache{ST}
 
 
-solversize(problem::AbstractProblemODE, ::ImplicitEuler) = ndims(problem)
+solversize(problem::AbstractProblemODE, ::ImplicitEuler) = length(vec(initial_conditions(problem).q))
 
 default_solver(::ImplicitEuler) = Newton()
 default_iguess(::ImplicitEuler) = HermiteExtrapolation()
