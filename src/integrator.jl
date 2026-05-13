@@ -102,7 +102,7 @@ end
 
 
 """
-
+Performs one integration step of an integrator.
 """
 function integrate_step! end
 
