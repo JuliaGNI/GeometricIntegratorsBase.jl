@@ -1,6 +1,4 @@
 
-struct NoSolver <: SolverMethod end
-
 default_linesearch(method=nothing) = Backtracking()
 
 default_options(method=nothing) = (

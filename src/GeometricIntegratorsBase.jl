@@ -68,8 +68,6 @@ export cache, nlsolution
 include("cache.jl")
 
 
-export NoSolver
-
 include("solvers.jl")
 
 

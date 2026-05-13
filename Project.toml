@@ -17,7 +17,7 @@ SimpleSolvers = "36b790f5-6434-4fbe-b711-1f64a1e2f6a2"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
-GeometricBase = "0.14"
+GeometricBase = "0.14.5"
 GeometricEquations = "0.21"
 GeometricSolutions = "0.6.3"
 LinearAlgebra = "1"
