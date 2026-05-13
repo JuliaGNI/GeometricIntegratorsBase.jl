@@ -99,16 +99,16 @@ function extrapolate!(
 
     @assert axes(x₀) == axes(x₁)
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ² = σ .^ 2
-    local pts = [zero(x₀) for _ in 1:extrap.s+1]
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ² = σ .^ 2
+    pts = [zero(x₀) for _ in 1:extrap.s+1]
 
-    local xᵢ₁ = zero(x₀)
-    local xᵢ₂ = zero(x₀)
-    local xᵢₜ = zero(x₀)
-    local vᵢ = zero(x₀)
-    local v₀ = zero(x₀)
+    xᵢ₁ = zero(x₀)
+    xᵢ₂ = zero(x₀)
+    xᵢₜ = zero(x₀)
+    vᵢ = zero(x₀)
+    v₀ = zero(x₀)
 
     initialguess(problem).v(v₀, t₀, x₀, parameters(problem))
 
@@ -150,26 +150,26 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
 
     @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ2 = σ .^ 2
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ2 = σ .^ 2
 
-    local qts = [zero(q₀) for _ in 1:extrap.s+1]
-    local pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:extrap.s+1]
+    pts = [zero(p₀) for _ in 1:extrap.s+1]
 
-    local qᵢ₁ = zero(q₀)
-    local qᵢ₂ = zero(q₀)
-    local qᵢₜ = zero(q₀)
+    qᵢ₁ = zero(q₀)
+    qᵢ₂ = zero(q₀)
+    qᵢₜ = zero(q₀)
 
-    local pᵢ₁ = zero(p₀)
-    local pᵢ₂ = zero(p₀)
-    local pᵢₜ = zero(p₀)
+    pᵢ₁ = zero(p₀)
+    pᵢ₂ = zero(p₀)
+    pᵢₜ = zero(p₀)
 
-    local v₀ = zero(q₀)
-    local vᵢ = zero(q₀)
+    v₀ = zero(q₀)
+    vᵢ = zero(q₀)
 
-    local f₀ = zero(p₀)
-    local fᵢ = zero(p₀)
+    f₀ = zero(p₀)
+    fᵢ = zero(p₀)
 
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, p₀, parameters(problem))
@@ -244,26 +244,26 @@ function extrapolate!(
 
     @assert axes(q₀) == axes(q₁) == axes(p₀) == axes(p₁)
 
-    local F = [2i * one(TT) for i in 1:extrap.s+1]
-    local σ = (t₁ - t₀) ./ F
-    local σ2 = σ .^ 2
+    F = [2i * one(TT) for i in 1:extrap.s+1]
+    σ = (t₁ - t₀) ./ F
+    σ2 = σ .^ 2
 
-    local qts = [zero(q₀) for _ in 1:extrap.s+1]
-    local pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:extrap.s+1]
+    pts = [zero(p₀) for _ in 1:extrap.s+1]
 
-    local qᵢ₁ = zero(q₀)
-    local qᵢ₂ = zero(q₀)
-    local qᵢₜ = zero(q₀)
+    qᵢ₁ = zero(q₀)
+    qᵢ₂ = zero(q₀)
+    qᵢₜ = zero(q₀)
 
-    local pᵢ₁ = zero(p₀)
-    local pᵢ₂ = zero(p₀)
-    local pᵢₜ = zero(p₀)
+    pᵢ₁ = zero(p₀)
+    pᵢ₂ = zero(p₀)
+    pᵢₜ = zero(p₀)
 
-    local v₀ = zero(q₀)
-    local vᵢ = zero(q₀)
+    v₀ = zero(q₀)
+    vᵢ = zero(q₀)
 
-    local f₀ = zero(p₀)
-    local fᵢ = zero(p₀)
+    f₀ = zero(p₀)
+    fᵢ = zero(p₀)
 
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, v₀, parameters(problem))

@@ -55,9 +55,9 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:Implici
 end
 
 function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
-    local q = cache(int, ST).q
-    local v = cache(int, ST).v
-    local v̄ = cache(int, ST).v̄
+    q = cache(int, ST).q
+    v = cache(int, ST).v
+    v̄ = cache(int, ST).v̄
 
     # compute q = q̄ + Δt * x (v = x)
     v̄ .= x
@@ -70,8 +70,8 @@ end
 
 function residual!(b::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitEuler}) where {ST}
     # get cache for internal stages
-    local v = cache(int, ST).v
-    local v̄ = cache(int, ST).v̄
+    v = cache(int, ST).v
+    v̄ = cache(int, ST).v̄
 
     # compute b = - (v-v)
     b .= v .- v̄

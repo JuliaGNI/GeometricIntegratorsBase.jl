@@ -41,11 +41,11 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
 
     @assert axes(x₀) == axes(x₁)
 
-    local F = collect(1:(extrap.s+1))
-    local σ = (t₁ - t₀) ./ F
-    local pts = [copy(x₀) for _ in F]
+    F = collect(1:(extrap.s+1))
+    σ = (t₁ - t₀) ./ F
+    pts = [copy(x₀) for _ in F]
 
-    local vᵢ = zero(x₀)
+    vᵢ = zero(x₀)
 
     for i in F
         for _ in 1:(F[i]-1)

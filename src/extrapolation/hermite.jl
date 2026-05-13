@@ -129,12 +129,8 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
         @error "t₀ and t₁ in Hermite extrapolation are identical!"
     end
 
-    local a₀::TT
-    local a₁::TT
-    local b₀::TT
-    local b₁::TT
-    local Δt::TT = t₁ - t₀
-    local s::TT = (tᵢ - t₀) / Δt
+    Δt::TT = t₁ - t₀
+    s::TT = (tᵢ - t₀) / Δt
 
     # Interpolate x at t
     if tᵢ == t₀
@@ -161,12 +157,8 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
         @error "t₀ and t₁ in Hermite extrapolation are identical!"
     end
 
-    local a₀::TT
-    local a₁::TT
-    local b₀::TT
-    local b₁::TT
-    local Δt::TT = t₁ - t₀
-    local s::TT = (tᵢ - t₀) / Δt
+    Δt::TT = t₁ - t₀
+    s::TT = (tᵢ - t₀) / Δt
 
     extrapolate!(t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, tᵢ, xᵢ, extrap)
 
