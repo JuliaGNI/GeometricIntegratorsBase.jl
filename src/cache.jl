@@ -50,8 +50,8 @@ end
 end
 
 function updateall!(c::CacheDict, data)
-    for (key, cache) in c.caches
-        update!(c.caches[key], data...)
+    for (_, cache) in c.caches
+        update!(cache, data...)
     end
 end
 
