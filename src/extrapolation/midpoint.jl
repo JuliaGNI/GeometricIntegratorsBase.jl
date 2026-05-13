@@ -37,7 +37,7 @@ p(t_0) &= p_0 ,
 \end{aligned}
 ```
 
-for $q_1 = q(t_1)$ and $p_1 = p(t_1)$m and is called with
+for $q_1 = q(t_1)$ and $p_1 = p(t_1)$, and is called with
 
 ```julia
 extrapolate!(t₀, q₀, p₀, t₁, q₁, p₁, ::PODEProblem, MidpointExtrapolation(s))

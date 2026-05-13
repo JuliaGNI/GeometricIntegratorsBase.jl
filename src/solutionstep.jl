@@ -356,7 +356,7 @@ method for each variable type, which handles different variable types correctly
 - `solstep`: The updated solution step (for method chaining)
 
 # Throws
-- `AssertionError`: If any key in `Δ` is not present in the solution step
+- `ArgumentError`: If any key in `Δ` is not present in the solution step
 
 # Examples
 ```julia
