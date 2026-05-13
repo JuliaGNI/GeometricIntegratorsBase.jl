@@ -75,11 +75,7 @@ isenergypreserving(t::Type{<:GeometricMethod}) = applicable(t) ? isenergypreserv
 isstifflyaccurate(t::Type{<:GeometricMethod}) = applicable(t) ? isstifflyaccurate(t()) : missing
 
 print_reference(io, method::GeometricMethod) =
-    try
-        ismissing(reference(method)) || print(io, reference(method))
-    catch MethodError
-        String("")
-    end
+    ismissing(reference(method)) || print(io, reference(method))
 
 # function check_symplecticity end
 function symplecticity_conditions end
