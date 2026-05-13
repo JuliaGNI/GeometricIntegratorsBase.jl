@@ -68,44 +68,6 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
 
     integrate!(sol, int, n₁, n₂, solstep, curstate)
 
-    # # loop over time steps
-    # for n in n₁:n₂
-    #     # integrate one step
-    #     integrate!(solstep, int)
-
-    #     # copy solution from solution step to solution
-    #     copy!(sol, curstate, n)
-
-    #     # check for NaNs
-    #     if isnan(curstate)
-    #         @warn "Solver encountered NaNs in solution at timestep n=$(n)."
-    #         break
-    #     end
-    # end
-
-    # try
-    #     integrate!(solstep, int)
-    #     copy!(sol, current(solstep), n)
-    # catch ex
-    #     tstr = " in time step " * string(n)
-
-    #     if m₁ ≠ m₂
-    #         tstr *= " for initial condition " * string(m)
-    #     end
-
-    #     tstr *= "."
-
-    #     if isa(ex, DomainError)
-    #         @warn("Domain error" * tstr)
-    #     elseif isa(ex, ErrorException)
-    #         @warn("Simulation exited early" * tstr)
-    #         @warn(ex.msg)
-    #     else
-    #         @warn(string(typeof(ex)) * tstr)
-    #         throw(ex)
-    #     end
-    # end
-
     return sol
 end
 
