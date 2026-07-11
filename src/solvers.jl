@@ -1,5 +1,5 @@
 
-default_linesearch(method=nothing) = Backtracking()
+default_linesearch(method=nothing) = StrongWolfe()
 
 default_options(method=nothing) = (
     min_iterations=1,
