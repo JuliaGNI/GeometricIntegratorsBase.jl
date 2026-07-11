@@ -7,8 +7,7 @@ using GeometricSolutions: relative_maximum_error
 using GeometricIntegratorsBase: ImplicitEulerCache, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
-using SimpleSolvers: Newton
-
+using SimpleSolvers: DogLeg, Newton
 using ..HarmonicOscillator
 
 @testset "$(rpad("ImplicitEuler Method Tests", 80))" begin
@@ -21,6 +20,7 @@ using ..HarmonicOscillator
         @test !issymmetric(method)
         @test !issymplectic(method)
 
+        # @test default_solver(method) isa DogLeg
         @test default_solver(method) isa Newton
         @test default_iguess(method) isa HermiteExtrapolation
     end
