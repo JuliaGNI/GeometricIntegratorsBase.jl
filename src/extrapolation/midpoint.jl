@@ -220,7 +220,7 @@ function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::Midpo
 
     while abs(t + Δt) < abs(sol.t)
         prvsol = copy(tmpsol)
-        tmpsol.t .= t + Δt
+        tmpsol.time .= t + Δt
         _extrapolate!(tmpsol, prvsol, problem, extrap)
         t += Δt
     end
@@ -315,7 +315,7 @@ function extrapolate!(newsol, oldsol, problem::GeometricProblem, extrap::Midpoin
 
     while abs(t + Δt) < abs(newsol.t)
         prvsol = copy(tmpsol)
-        tmpsol.t .= t + Δt
+        tmpsol.time .= t + Δt
         _extrapolate!(tmpsol, prvsol, problem, extrap)
         t += Δt
     end
