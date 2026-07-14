@@ -281,13 +281,13 @@ next time step.
 - `solstep`: the solution step to reset
 - `Δt`: the time step size to advance
 """
-function GeometricBase.reset!(solstep::SolutionStep, Δt)
+function GeometricBase.reset!(solstep::SolutionStep, t)
     for i in backwardhistory(solstep)
         copy!(state(solstep, i), state(solstep, i - 1))
     end
 
     # add!(solstep.t, Δt)
-    current(solstep).t += Δt
+    current(solstep).t = t
 
     return solstep
 end

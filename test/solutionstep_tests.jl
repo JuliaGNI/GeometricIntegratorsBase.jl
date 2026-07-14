@@ -230,7 +230,7 @@ end
     @test time(current(solstep)) == initial_conditions(ode).t
     @test time(previous(solstep)) == initial_conditions(ode).t
 
-    reset!(solstep, Δt)
+    reset!(solstep, initialstate(ode).t + Δt)
 
     @test solstep.t == initial_conditions(ode).t + Δt
     @test solstep.q == initial_conditions(ode).q
@@ -279,7 +279,7 @@ end
     @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
     @test solstep.q̄ ≈ [0.0, 0.0] atol = 1E-14
 
-    reset!(solstep, Δt)
+    reset!(solstep, initialstate(ode).t + Δt)
 
     @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
     @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
@@ -380,7 +380,7 @@ end
     @test time(current(solstep)) == initial_conditions(pode).t
     @test time(previous(solstep)) == initial_conditions(pode).t
 
-    reset!(solstep, Δt)
+    reset!(solstep, initialstate(pode).t + Δt)
     @test state(current(solstep)) == (
         # t=initial_conditions(pode).t + Δt,
         q=initial_conditions(pode).q,
@@ -507,7 +507,7 @@ end
     @test time(current(solstep)) == initial_conditions(dae).t
     @test time(previous(solstep)) == initial_conditions(dae).t
 
-    reset!(solstep, Δt)
+    reset!(solstep, initialstate(dae).t + Δt)
     @test state(current(solstep)) == (
         # t=initial_conditions(dae).t + Δt,
         q=initial_conditions(dae).q,
@@ -594,7 +594,7 @@ end
 #     @test current(solstep) == (t = t0, q = q0, p = p0, λ = λ0, μ = μ0)
 #     @test previous(solstep) == (t = zero(t0), q = zero(q0), p = zero(p0), λ = zero(λ0), μ = zero(μ0))
 
-#     reset!(solstep, Δt)
+#     reset!(solstep, t0 + Δt)
 #     @test current(solstep) == (t = t0 + Δt, q = q0, p = p0, λ = λ0, μ = μ0)
 #     @test previous(solstep) == (t = t0, q = q0, p = p0, λ = λ0, μ = μ0)
 
@@ -682,7 +682,7 @@ end
             Δp = [0.05, 0.1, 0.15]
 
             # Apply reset
-            reset!(solstep, Δt)
+            reset!(solstep, orig_t + Δt)
 
             # Check that time value was updated correctly
             @test solstep.t ≈ orig_t + Δt

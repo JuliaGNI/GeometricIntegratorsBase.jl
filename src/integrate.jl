@@ -7,9 +7,6 @@
 Parts of one integration step that are common to most if not all typical integrators
 """
 function integrate!(solstep::SolutionStep, int::AbstractIntegrator)
-    # reset solution step
-    reset!(solstep, timestep(int))
-
     # compute initial guess
     initial_guess!(current(solstep), history(solstep), parameters(solstep), int)
 
@@ -34,6 +31,9 @@ end
 function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int, solstep, curstate)
     # loop over time steps
     for n in n₁:n₂
+        # reset solution step
+        reset!(solstep, timesteps(sol)[n])
+
         # integrate one step
         integrate!(solstep, int)
 
