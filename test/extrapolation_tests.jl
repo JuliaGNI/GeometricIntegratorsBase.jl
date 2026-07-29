@@ -122,6 +122,41 @@ solutionstep!(current(sol), state(sol), ode, NormalizedHermiteExtrapolation())
 @test sol.q̇ == ẋᵢ
 
 
+# both versions take Δt from the history, so they also agree when the spacing of
+# the history differs from timestep(problem)
+let τ = 2Δt, tᵣ = t₀ - 2τ, tₛ = t₀ - τ
+    xᵣ = exact_solution(tᵣ, x₀, t₀, parameters(ode))
+    xₛ = exact_solution(tₛ, x₀, t₀, parameters(ode))
+    ẋᵣ = VectorfieldVariable(xᵣ)
+    ẋₛ = VectorfieldVariable(xₛ)
+
+    functions(ode).v(ẋᵣ, tᵣ, xᵣ, parameters(ode))
+    functions(ode).v(ẋₛ, tₛ, xₛ, parameters(ode))
+
+    solᵤ = SolutionStep(ode; nhistory=2)
+
+    copy!(solᵤ, tᵣ, (q=xᵣ, q̇=ẋᵣ))
+    reset!(solᵤ, tₛ)
+
+    copy!(solᵤ, tₛ, (q=xₛ, q̇=ẋₛ))
+    reset!(solᵤ, t₀)
+
+    @test state(solᵤ)[1].t - state(solᵤ)[2].t == τ != timestep(ode)
+
+    solutionstep!(current(solᵤ), state(solᵤ), ode, HermiteExtrapolation())
+    qᵤ = copy(solᵤ.q)
+    q̇ᵤ = copy(solᵤ.q̇)
+
+    solutionstep!(current(solᵤ), state(solᵤ), ode, NormalizedHermiteExtrapolation())
+    @test solᵤ.q == qᵤ
+    @test solᵤ.q̇ == q̇ᵤ
+
+    # and both remain accurate extrapolations to t₀
+    @test solᵤ.q ≈ x₀ atol = 1E-4
+    @test solᵤ.q̇ ≈ ẋ₀ atol = 1E-3
+end
+
+
 # Euler Extrapolation for ODEs
 
 copy!(sol, State(t₁, (q=x₀, q̇=ẋ₀)))

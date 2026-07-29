@@ -316,15 +316,16 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
     t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
     t₁, q₁, q̇₁ = history[1].t, history[1].q, history[1].q̇
 
-    Δt = timestep(problem)
-    cᵢ = (sol.t - t₁) / Δt
-
     if q₀ == q₁
         nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= q̇₁
     else
-        _extrapolate_hermite!(q₀, q̇₀, q₁, q̇₁, cᵢ, Δt, sol.q, sol.q̇)
+        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+
+        Δt = t₁ - t₀
+
+        _extrapolate_hermite!(q₀, q̇₀, q₁, q̇₁, (sol.t - t₁) / Δt, Δt, sol.q, sol.q̇)
     end
 
     return sol
@@ -334,15 +335,16 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
     t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p, history[2].ṗ
     t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p, history[1].ṗ
 
-    Δt = timestep(problem)
-    cᵢ = (sol.t - t₁) / Δt
-
     if q₀ == q₁
         nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= v₁
     else
-        _extrapolate_hermite!(q₀, v₀, q₁, v₁, cᵢ, Δt, sol.q, sol.q̇)
+        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+
+        Δt = t₁ - t₀
+
+        _extrapolate_hermite!(q₀, v₀, q₁, v₁, (sol.t - t₁) / Δt, Δt, sol.q, sol.q̇)
     end
 
     if p₀ == p₁
@@ -350,7 +352,11 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
         sol.p .= p₁
         sol.ṗ .= f₁
     else
-        _extrapolate_hermite!(p₀, f₀, p₁, f₁, cᵢ, Δt, sol.p, sol.ṗ)
+        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+
+        Δt = t₁ - t₀
+
+        _extrapolate_hermite!(p₀, f₀, p₁, f₁, (sol.t - t₁) / Δt, Δt, sol.p, sol.ṗ)
     end
 
     return sol
