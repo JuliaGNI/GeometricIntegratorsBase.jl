@@ -35,7 +35,8 @@ include("initialguess.jl")
 export Extrapolation, NoExtrapolation
 export EulerExtrapolation,
     MidpointExtrapolation,
-    HermiteExtrapolation
+    HermiteExtrapolation,
+    NormalizedHermiteExtrapolation
 export extrapolate!, solutionstep!
 
 include("extrapolation/extrapolation.jl")

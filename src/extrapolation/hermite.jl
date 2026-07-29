@@ -30,6 +30,9 @@ where
 * `v`:  function to compute vector field with signature `v(ẋ,t,x)`
 * `problem`: [`ODEProblem`](@ref) whose vector field to use
 
+See [`NormalizedHermiteExtrapolation`](@ref) for a version of this
+extrapolation that is normalised to the interval ``[0,1]``.
+
 
 #### Derivation
 
@@ -120,6 +123,41 @@ g'(1) &= f'_1 .
 struct HermiteExtrapolation <: Extrapolation end
 
 
+# Evaluate the Hermite polynomial through the two samples (x₀,ẋ₀) and (x₁,ẋ₁) at the
+# normalised time c, that is at t = t₁ + c ⋅ Δt with Δt = t₁ - t₀, so that c = -1
+# corresponds to the first and c = 0 to the second sample.
+# The coefficients are the basis functions of the derivation above, evaluated at
+# s = 1 + c. The derivative values ẋ₀ and ẋ₁ are with respect to the time t, hence
+# the scaling by Δt. Passing Δt = 1 amounts to a fully normalised interpolation.
+function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
+    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+    c::TT, Δt::TT, xᵢ::AbstractArray{DT}) where {DT,TT}
+
+    a₁ = 1 - 3c^2 - 2c^3
+    a₀ = 1 - a₁
+    b₁ = c * (1 + c)^2
+    b₀ = c^2 * (1 + c)
+    xᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* Δt .* ẋ₀ .+ b₁ .* Δt .* ẋ₁
+
+    return xᵢ
+end
+
+function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
+    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+    c::TT, Δt::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT}) where {DT,TT}
+
+    _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, c, Δt, xᵢ)
+
+    a₁ = -6c * (1 + c) / Δt
+    a₀ = -a₁
+    b₁ = (1 + c) * (1 + 3c)
+    b₀ = c * (2 + 3c)
+    ẋᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* ẋ₀ .+ b₁ .* ẋ₁
+
+    return (xᵢ, ẋᵢ)
+end
+
+
 function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
     t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
     tᵢ::TT, xᵢ::AbstractArray{DT},
@@ -128,37 +166,22 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
-    s::TT = (tᵢ - t₀) / Δt
 
-    a₁ = 3s^2 - 2s^3
-    a₀ = 1 - a₁
-    b₁ = s^2 * (s - 1)
-    b₀ = s * (1 - s) + b₁
-    xᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* Δt .* ẋ₀ .+ b₁ .* Δt .* ẋ₁
-
-    return xᵢ
+    return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, (tᵢ - t₁) / Δt, Δt, xᵢ)
 end
 
 function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
     t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
     tᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
-    extrap::HermiteExtrapolation) where {DT,TT}
+    ::HermiteExtrapolation) where {DT,TT}
 
     t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
-    s::TT = (tᵢ - t₀) / Δt
 
-    extrapolate!(t₀, x₀, ẋ₀, t₁, x₁, ẋ₁, tᵢ, xᵢ, extrap)
-
-    a₁ = (6s - 6s^2) / Δt
-    a₀ = -a₁
-    b₁ = s * (3s - 2)
-    b₀ = 1 - 2s + b₁
-    ẋᵢ .= a₀ .* x₀ .+ a₁ .* x₁ .+ b₀ .* ẋ₀ .+ b₁ .* ẋ₁
-
-    return (xᵢ, ẋᵢ)
+    return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, (tᵢ - t₁) / Δt, Δt, xᵢ, ẋᵢ)
 end
+
 
 function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::HermiteExtrapolation; nowarn=false)
     t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
@@ -193,6 +216,141 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
         sol.ṗ .= f₁
     else
         extrapolate!(t₀, p₀, f₀, t₁, p₁, f₁, sol.t, sol.p, sol.ṗ, extrap)
+    end
+
+    return sol
+end
+
+
+@doc raw"""
+# Normalized Hermite's Interpolating Polynomials
+
+Implements the same two point Hermite inter-/extrapolation as
+[`HermiteExtrapolation`](@ref), but normalised to the interval ``[0,1]``, so that
+no sample times need to be passed. Instead of the time ``t`` to extrapolate to,
+the normalised time ``c`` is passed, which corresponds to
+```math
+t = t_1 + c \, \Delta t ,
+\qquad
+\Delta t = t_1 - t_0 ,
+```
+where ``t_0`` and ``t_1`` are the times of the first and second sample.
+Hence ``c = -1`` reproduces the first and ``c = 0`` the second sample.
+
+As the interpolation is normalised, all derivative values are with respect to the
+normalised time ``c``, that is they are scaled by ``\Delta t`` compared to the
+vector field values of [`HermiteExtrapolation`](@ref).
+
+Call with one of the following methods
+```julia
+extrapolate!(x₀, ẋ₀, x₁, ẋ₁, c, x, NormalizedHermiteExtrapolation())
+extrapolate!(x₀, ẋ₀, x₁, ẋ₁, c, x, ẋ, NormalizedHermiteExtrapolation())
+```
+
+where
+
+* `x₀`: first  solution value $x_0 = x(t_0)$
+* `ẋ₀`: first  derivative value $ẋ_0 = \Delta t \, v(t_0, x(t_0))$
+* `x₁`: second solution value $x_1 = x(t_1)$
+* `ẋ₁`: second derivative value $ẋ_1 = \Delta t \, v(t_1, x(t_1))$
+* `c`:  normalised time $c$ to extrapolate, corresponding to $t = t_1 + c \, \Delta t$
+* `x`:  extrapolated solution value $x(t)$
+* `ẋ`:  extrapolated derivative value $\Delta t \, ẋ(t)$
+
+
+#### Basis functions
+
+Substituting ``x \to 1 + c`` into the basis functions ``a_i(x)`` and ``b_i(x)``
+derived for [`HermiteExtrapolation`](@ref) gives
+```math
+\begin{aligned}
+a_0 (c) &= 3 c^2 + 2 c^3 , &
+b_0 (c) &= c^2 (1 + c) , \\
+a_1 (c) &= 1 - 3 c^2 - 2 c^3 , &
+b_1 (c) &= c (1 + c)^2 ,
+\end{aligned}
+```
+so that
+```math
+g(c) = x_0 \, a_0(c) + x_1 \, a_1(c) + ẋ_0 \, b_0(c) + ẋ_1 \, b_1(c) ,
+```
+with derivatives
+```math
+\begin{aligned}
+a'_0 (c) &= 6 c (1 + c) , &
+b'_0 (c) &= c (2 + 3 c) , \\
+a'_1 (c) &= - 6 c (1 + c) , &
+b'_1 (c) &= (1 + c) (1 + 3 c) .
+\end{aligned}
+```
+The basis functions satisfy
+```math
+\begin{aligned}
+g(-1) &= x_0 , &
+g(0) &= x_1 , &
+g'(-1) &= ẋ_0 , &
+g'(0) &= ẋ_1 .
+\end{aligned}
+```
+"""
+struct NormalizedHermiteExtrapolation <: Extrapolation end
+
+
+function extrapolate!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
+    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+    cᵢ::TT, xᵢ::AbstractArray{DT},
+    ::NormalizedHermiteExtrapolation) where {DT,TT}
+
+    return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, cᵢ, one(TT), xᵢ)
+end
+
+function extrapolate!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
+    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+    cᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
+    ::NormalizedHermiteExtrapolation) where {DT,TT}
+
+    return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, cᵢ, one(TT), xᵢ, ẋᵢ)
+end
+
+function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, ::NormalizedHermiteExtrapolation; nowarn=false)
+    t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
+    t₁, q₁, q̇₁ = history[1].t, history[1].q, history[1].q̇
+
+    Δt = timestep(problem)
+    cᵢ = (sol.t - t₁) / Δt
+
+    if q₀ == q₁
+        nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        sol.q .= q₁
+        sol.q̇ .= q̇₁
+    else
+        _extrapolate_hermite!(q₀, q̇₀, q₁, q̇₁, cᵢ, Δt, sol.q, sol.q̇)
+    end
+
+    return sol
+end
+
+function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,AbstractProblemIODE}, ::NormalizedHermiteExtrapolation; nowarn=false)
+    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p, history[2].ṗ
+    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p, history[1].ṗ
+
+    Δt = timestep(problem)
+    cᵢ = (sol.t - t₁) / Δt
+
+    if q₀ == q₁
+        nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        sol.q .= q₁
+        sol.q̇ .= v₁
+    else
+        _extrapolate_hermite!(q₀, v₀, q₁, v₁, cᵢ, Δt, sol.q, sol.q̇)
+    end
+
+    if p₀ == p₁
+        nowarn || @warn "Normalized Hermite Extrapolation: p's history[1] and history[2] are identical!"
+        sol.p .= p₁
+        sol.ṗ .= f₁
+    else
+        _extrapolate_hermite!(p₀, f₀, p₁, f₁, cᵢ, Δt, sol.p, sol.ṗ)
     end
 
     return sol

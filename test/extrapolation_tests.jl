@@ -84,6 +84,44 @@ solutionstep!(current(sol), state(sol), ode, HermiteExtrapolation())
 @test sol.q̇ == ẋᵢ
 
 
+# Normalized Hermite Extrapolation
+
+# the samples are taken at tₚ and t₀, so that tᵢ = t₀ + Δt corresponds to cᵢ = 1
+cᵢ = (tᵢ - t₀) / Δt
+
+xₕ = zero(x₀)
+ẋₕ = VectorfieldVariable(xₕ)
+
+extrapolate!(xₚ, Δt .* ẋₚ, x₀, Δt .* ẋ₀, cᵢ, xₕ, ẋₕ, NormalizedHermiteExtrapolation())
+
+@test xₕ ≈ xₙ atol = 1E-5
+@test ẋₕ ./ Δt ≈ ẋₙ atol = 1E-4
+
+# the normalized version agrees with the time-parameterised one
+@test xₕ ≈ xᵢ
+@test ẋₕ ./ Δt ≈ ẋᵢ
+
+@test extrapolate!(xₚ, Δt .* ẋₚ, x₀, Δt .* ẋ₀, cᵢ, xₕ, NormalizedHermiteExtrapolation()) == xₕ
+@test extrapolate!(xₚ, Δt .* ẋₚ, x₀, Δt .* ẋ₀, cᵢ, xₕ, ẋₕ, NormalizedHermiteExtrapolation()) == (xₕ, ẋₕ)
+
+# the samples themselves are reproduced for cᵢ = -1 and cᵢ = 0
+extrapolate!(xₚ, Δt .* ẋₚ, x₀, Δt .* ẋ₀, -one(Δt), xₕ, ẋₕ, NormalizedHermiteExtrapolation())
+@test xₕ == xₚ
+@test ẋₕ == Δt .* ẋₚ
+
+extrapolate!(xₚ, Δt .* ẋₚ, x₀, Δt .* ẋ₀, zero(Δt), xₕ, ẋₕ, NormalizedHermiteExtrapolation())
+@test xₕ == x₀
+@test ẋₕ == Δt .* ẋ₀
+
+
+# Normalized Hermite Extrapolation for ODE solutionstep
+copy!(sol, State(t₁, (q=x₀, q̇=ẋ₀)))
+solutionstep!(current(sol), state(sol), ode, NormalizedHermiteExtrapolation())
+@test sol.t == tᵢ
+@test sol.q == xᵢ
+@test sol.q̇ == ẋᵢ
+
+
 # Euler Extrapolation for ODEs
 
 copy!(sol, State(t₁, (q=x₀, q̇=ẋ₀)))
@@ -234,6 +272,31 @@ solutionstep!(current(sol), state(sol), pode, HermiteExtrapolation())
 @test sol.ṗ ≈ ṗₙ atol = 1E-6
 
 
+# Normalized Hermite Extrapolation
+
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, NormalizedHermiteExtrapolation())
+@test sol.q ≈ qₙ atol = 5E-6
+@test sol.p ≈ pₙ atol = 5E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
+
+# the normalized version agrees with the time-parameterised one
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, HermiteExtrapolation())
+qₕ = copy(sol.q)
+pₕ = copy(sol.p)
+q̇ₕ = copy(sol.q̇)
+ṗₕ = copy(sol.ṗ)
+
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), pode, NormalizedHermiteExtrapolation())
+@test sol.q == qₕ
+@test sol.p == pₕ
+@test sol.q̇ == q̇ₕ
+@test sol.ṗ == ṗₕ
+
+
 # Midpoint Extrapolation for PODEs
 
 copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
@@ -369,6 +432,31 @@ solutionstep!(current(sol), state(sol), iode, HermiteExtrapolation())
 @test sol.p ≈ pₙ atol = 5E-8
 @test sol.q̇ ≈ q̇ₙ atol = 1E-4
 @test sol.ṗ ≈ ṗₙ atol = 1E-6
+
+
+# Normalized Hermite Extrapolation
+
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, NormalizedHermiteExtrapolation())
+@test sol.q ≈ qₙ atol = 5E-6
+@test sol.p ≈ pₙ atol = 5E-8
+@test sol.q̇ ≈ q̇ₙ atol = 1E-4
+@test sol.ṗ ≈ ṗₙ atol = 1E-6
+
+# the normalized version agrees with the time-parameterised one
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, HermiteExtrapolation())
+qₕ = copy(sol.q)
+pₕ = copy(sol.p)
+q̇ₕ = copy(sol.q̇)
+ṗₕ = copy(sol.ṗ)
+
+copy!(sol, t₁, (q=q₀, p=p₀, q̇=q̇₀, ṗ=ṗ₀))
+solutionstep!(current(sol), state(sol), iode, NormalizedHermiteExtrapolation())
+@test sol.q == qₕ
+@test sol.p == pₕ
+@test sol.q̇ == q̇ₕ
+@test sol.ṗ == ṗₕ
 
 
 # Midpoint Extrapolation for IODEs
