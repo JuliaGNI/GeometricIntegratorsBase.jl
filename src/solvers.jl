@@ -3,9 +3,6 @@ default_linesearch(method=nothing) = Backtracking()
 
 default_options(method=nothing) = (
     min_iterations=1,
-    f_abstol=8eps(),
-    # linesearch=default_linesearch(method),
-    # verbosity=2,
 )
 
 initsolver(::SolverMethod, ::GeometricMethod, ::CacheDict; kwargs...) = NoSolver()
