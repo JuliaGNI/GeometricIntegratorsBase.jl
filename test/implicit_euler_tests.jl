@@ -55,12 +55,10 @@ using ..HarmonicOscillator
         err = relative_maximum_error(sol, ref)
         @test err.q < 5E-2
 
-        # Test with tighter solver tolerances
-        sol_tight = integrate(ode, ImplicitEuler();
-            min_iterations=1,
+        # Test with tighter solver tolerances.
+        sol_tight = @test_nowarn integrate(ode, ImplicitEuler();
             x_abstol=1e-12,
             f_abstol=1e-12,
-            max_iterations=100
         )
         err_tight = relative_maximum_error(sol_tight, ref)
         @test err_tight.q < 5E-2
@@ -103,15 +101,14 @@ using ..HarmonicOscillator
     @testset "Convergence Properties" begin
         ode = odeproblem()
 
-        # Test that very loose tolerances still converge
+        # Test that very loose tolerances still converge.
         sol_loose = integrate(ode, ImplicitEuler();
             x_abstol=1e-4,
             f_abstol=1e-4,
-            max_iterations=50
         )
         @test all(x -> all(isfinite, x), sol_loose.q)
 
-        # Test that we can increase max iterations
+        # Test that max_iterations is still accepted as a solver option
         sol_many_iter = integrate(ode, ImplicitEuler();
             max_iterations=200
         )
