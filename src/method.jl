@@ -20,9 +20,8 @@ abstract type LDAEMethod <: DeterministicMethod end
 abstract type DELEMethod <: DeterministicMethod end
 
 initmethod(method::GeometricMethod) = method
-initmethod(method::GeometricMethod, ::AbstractProblem) = initmethod(method)
-
-solversize(problem::AbstractProblemODE, method::GeometricMethod) = 0
+initmethod(method::GeometricMethod, ::GeometricProblem) = initmethod(method)
+solversize(method::GeometricMethod, ::GeometricProblem) = 0
 
 internal_variables(::GeometricMethod, ::GeometricProblem) = NamedTuple()
 nullvector(::GeometricMethod) = nothing
