@@ -44,7 +44,7 @@ function GeometricIntegrator(
     caches=CacheDict(problem, method),
     options...
 )
-    solver = initsolver(solvermethod, method, caches; merge(default_options(method), options)...)
+    solver = initsolver(solvermethod, method, caches; merge(default_options(method, problem), options)...)
     GeometricIntegrator(problem, method, caches, solver, iguess, SolverState(solver))
 end
 

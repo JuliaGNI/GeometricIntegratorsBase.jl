@@ -43,7 +43,7 @@ using ..HarmonicOscillator
         @test nlsolution(cache) === cache.x
 
         # Test solver size
-        @test solversize(ode, method) == length(initial_conditions(ode).q)
+        @test solversize(method, ode) == length(initial_conditions(ode).q)
     end
 
     @testset "Integration Accuracy - Basic" begin

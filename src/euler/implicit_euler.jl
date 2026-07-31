@@ -38,7 +38,7 @@ end
 @inline CacheType(ST, ::AbstractProblem, ::ImplicitEuler) = ImplicitEulerCache{ST}
 
 
-solversize(problem::AbstractProblemODE, ::ImplicitEuler) = length(vec(initial_conditions(problem).q))
+solversize(::ImplicitEuler, problem::AbstractProblemODE) = length(vec(initial_conditions(problem).q))
 
 default_solver(::ImplicitEuler) = Newton()
 default_iguess(::ImplicitEuler) = HermiteExtrapolation()
