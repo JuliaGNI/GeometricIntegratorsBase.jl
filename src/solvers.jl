@@ -3,7 +3,7 @@ default_linesearch(method=nothing) = Backtracking()
 
 default_options(method::GeometricMethod, problem::GeometricProblem) = (
     min_iterations=1,
-    f_abstol=max(2, solversize(method, problem)) * eps(datatype(problem))
+    f_abstol=max(8, solversize(method, problem)) * eps(datatype(problem))
 )
 
 initsolver(::SolverMethod, ::GeometricMethod, ::CacheDict; kwargs...) = NoSolver()
