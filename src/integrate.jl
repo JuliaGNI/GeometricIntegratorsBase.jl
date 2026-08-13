@@ -35,7 +35,23 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
         reset!(solstep, timesteps(sol)[n])
 
         # integrate one step
-        integrate!(solstep, int)
+        #
+        # A step whose nonlinear solve breaks down throws rather than returning a bad iterate:
+        # since SimpleSolvers 0.11 a non-finite *direction* is rejected outright, where it used to
+        # be handed to a damping that could not shorten it (`Inf * nan_factor` is `Inf`) and so
+        # stalled silently. Left to propagate, that exception would discard the whole trajectory,
+        # because `integrate(problem, method)` allocates the solution internally and the caller
+        # never sees it. So it is treated exactly as the NaN check below treats a bad iterate:
+        # warn, and return what has been computed so far. The `break` happens before the `copy!`,
+        # so `sol` holds valid data up to `n-1`. Only this one exception type is caught — anything
+        # else is a bug and must not be masked.
+        try
+            integrate!(solstep, int)
+        catch e
+            e isa NonlinearSolverException || rethrow()
+            @warn "Nonlinear solver failed at timestep n=$(n): $(e.msg)"
+            break
+        end
 
         # copy solution from solution step to solution
         copy!(sol, curstate, n)
