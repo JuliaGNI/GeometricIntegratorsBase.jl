@@ -48,6 +48,39 @@ say. Every method in this package uses `Newton()`, but `default_options` is reac
 """
 const DEFAULT_F_STALL_WINDOW = 50
 
+"""
+    default_options(method, problem)
+
+The options a `method` is solved with unless the caller says otherwise. They reach the nonlinear
+solver as the keyword arguments of `initsolver`.
+
+`GeometricIntegrator` *merges* them with the options it is handed —
+`merge(default_options(method, problem), options)` in `src/integrator.jl` — so a caller who sets
+one of them keeps the rest. Replacing the whole bundle instead, as this package did up to 0.4.x,
+meant that passing any option at all silently dropped every default not restated alongside it.
+
+The bundle is queried on the `initmethod`-specialised method, so `solversize` below sees the
+concrete integrator rather than the method the caller named: `LobattoIIIA(2)` on a 2-dof ODE
+arrives here as a `DIRK` with `solversize == 2`, `RadauIIA(2)` as an `IRK` with `solversize == 4`.
+
+* `min_iterations = 1` — SimpleSolvers tests its stopping criteria *before* the first step, so
+  without this a solve whose initial guess already satisfies them takes no step at all, and the
+  extrapolated initial guesses used throughout this package are regularly that good.
+* `f_abstol` scales with the size of the solver system: `max(8, solversize(method, problem))`
+  residual components at `eps(datatype(problem))` apiece, because the norm of a residual sitting
+  on its round-off floor grows with the number of components it sums. `f_reltol` is no substitute
+  — it is anchored at the *initial* residual, so a good initial guess makes the relative gate
+  tighter rather than looser. The floor is 8 and not 2 because the smallest solver systems are
+  genuinely tiny: at `2eps ≈ 4.4e-16` the `DIRK` case above sits below its own round-off floor
+  and stagnates, whereas `8eps ≈ 1.78e-15` clears every floor measured downstream and is what
+  this package defaulted to before the size factor existed.
+* `f_stall_window` — see [`DEFAULT_F_STALL_WINDOW`](@ref).
+
+Overriding this is how a downstream family of methods changes solver options in one place rather
+than at every call site. The two overrides that existed for `f_abstol` — one for the implicit
+Runge-Kutta families, one for SPARK — were both removed once the size scaling landed, since the
+sized value lands above the residual floor of each of them.
+"""
 default_options(method::GeometricMethod, problem::GeometricProblem) = (
     min_iterations=1,
     f_abstol=max(8, solversize(method, problem)) * eps(datatype(problem)),
