@@ -30,9 +30,30 @@ riccati_error(sol) = maximum(abs(sol.q[n][1] - 1 / (1 + sol.t[n])) for n in axes
         @test !issymplectic(method)
 
         @test isodemethod(method)
+        @test isiodemethod(method)
+        @test islodemethod(method)
 
         @test default_solver(method) isa Newton
         @test default_iguess(method) isa HermiteExtrapolation
+    end
+
+    @testset "Unsupported Problem Types" begin
+        # the method neither enforces a constraint nor knows about the additional equations of a
+        # differential algebraic problem, so those must be rejected rather than integrated as if
+        # the constraint were absent. the same holds for problem types the method does not
+        # implement at all, and either way the error has to say so
+        for prob in (podeproblem(), hodeproblem(), daeproblem(), idaeproblem(), ldaeproblem())
+            err = try
+                integrate(prob, CrankNicolson())
+                nothing
+            catch e
+                e
+            end
+
+            @test err isa ArgumentError
+            @test occursin("CrankNicolson", err.msg)
+            @test occursin(string(nameof(typeof(equation(prob)))), err.msg)
+        end
     end
 
     @testset "Cache Structure" begin
@@ -194,7 +215,8 @@ riccati_error(sol) = maximum(abs(sol.q[n][1] - 1 / (1 + sol.t[n])) for n in axes
             # either of the two is the very same map. this pins the stage times down exactly,
             # whereas a convergence order test only detects them to leading order
             for (iode, ode) in ((iodeproblem(), odeproblem()),
-                (nonautonomous_iodeproblem(), nonautonomous_iode_odeproblem()))
+                (nonautonomous_iodeproblem(), nonautonomous_iode_odeproblem()),
+                (nonautonomous_lodeproblem(), nonautonomous_iode_odeproblem()))
 
                 si = integrate(iode, CrankNicolson(); x_abstol=1e-14, f_abstol=1e-14)
                 so = integrate(ode, CrankNicolson(); x_abstol=1e-14, f_abstol=1e-14)

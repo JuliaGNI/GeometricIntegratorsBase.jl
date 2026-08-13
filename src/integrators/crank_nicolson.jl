@@ -1,8 +1,8 @@
 @doc raw"""
 Crank-Nicolson Method, also known as the trapezoidal rule.
 
-For an ordinary differential equation ``\dot{q} = v(t,q)``, that is a problem of type
-`AbstractProblemODE`, the method reads
+For an ordinary differential equation ``\dot{q} = v(t,q)``, that is an `ODEProblem`,
+the method reads
 ```math
 q_{n+1} = q_{n} + \frac{h}{2} \, \big[ v (t_{n}, q_{n}) + v (t_{n+1}, q_{n+1}) \big]
 ```
@@ -11,7 +11,7 @@ The nonlinear solver solves for the vector field at the new time step,
 The method is symmetric and second order, but not symplectic (it is conjugate to a symplectic
 method).
 
-For an implicit differential equation, that is a problem of type `AbstractProblemIODE`,
+For an implicit differential equation, that is an `IODEProblem` or `LODEProblem`,
 ```math
 \begin{aligned}
 p &= \vartheta (t, q, v) , &
@@ -47,12 +47,22 @@ isimplicit(method::CrankNicolson) = true
 issymmetric(method::CrankNicolson) = true
 issymplectic(method::CrankNicolson) = false
 
+# besides ordinary differential equations the method is implemented for implicit ones, so the
+# corresponding traits are set explicitly, as they cannot follow from the supertype
+isiodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
+islodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
+
 
 @doc raw"""
 Crank-Nicolson integrator cache.
 
-The field `v̄` holds the vector field at the previous time step, ``v(t_{n}, q_{n})``, which is
-constant throughout the nonlinear solve.
+### Fields
+
+* `x`: nonlinear solver solution vector, holding the vector field ``V = v(t_{n+1}, q_{n+1})``
+* `q`: solution at the end of the time step
+* `v`: vector field at the end of the time step
+* `v̄`: vector field at the beginning of the time step, ``v(t_{n}, q_{n})``, which is constant
+  throughout the nonlinear solve
 """
 struct CrankNicolsonCache{DT} <: ODEIntegratorCache{DT}
     x::Vector{DT}
@@ -71,11 +81,11 @@ end
 
 nlsolution(cache::CrankNicolsonCache) = cache.x
 
-function Cache{ST}(problem::AbstractProblemODE, method::CrankNicolson; kwargs...) where {ST}
+function Cache{ST}(problem::ProblemODE, method::CrankNicolson; kwargs...) where {ST}
     CrankNicolsonCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblemODE, ::CrankNicolson) = CrankNicolsonCache{ST}
+@inline CacheType(ST, ::ProblemODE, ::CrankNicolson) = CrankNicolsonCache{ST}
 
 
 @doc raw"""
@@ -119,21 +129,21 @@ end
 
 nlsolution(cache::CrankNicolsonIODECache) = cache.x
 
-function Cache{ST}(problem::AbstractProblemIODE, method::CrankNicolson; kwargs...) where {ST}
+function Cache{ST}(problem::ProblemIODE, method::CrankNicolson; kwargs...) where {ST}
     CrankNicolsonIODECache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblemIODE, ::CrankNicolson) = CrankNicolsonIODECache{ST}
+@inline CacheType(ST, ::ProblemIODE, ::CrankNicolson) = CrankNicolsonIODECache{ST}
 
 
-solversize(::CrankNicolson, problem::AbstractProblemODE) = length(vec(initial_conditions(problem).q))
-solversize(::CrankNicolson, problem::AbstractProblemIODE) = 2 * length(vec(initial_conditions(problem).q))
+solversize(::CrankNicolson, problem::ProblemODE) = length(vec(initial_conditions(problem).q))
+solversize(::CrankNicolson, problem::ProblemIODE) = 2 * length(vec(initial_conditions(problem).q))
 
 default_solver(::CrankNicolson) = Newton()
 default_iguess(::CrankNicolson) = HermiteExtrapolation()
 
 
-function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE})
+function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE})
     # temporary solution
     ig = (t=sol.t, q=cache(int).q, q̇=cache(int).v)
 
@@ -151,7 +161,7 @@ Requires `v̄` in the cache at working precision to hold ``v(t_{n}, q_{n})``, wh
 `integrate_step!` computes at the beginning of every time step. Calling this function before
 that would silently use a stale or zero `v̄`.
 """
-function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE}) where {ST}
+function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
 
@@ -167,7 +177,7 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
 end
 
 
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE}) where {ST}
     # get cache for internal stages
     v = cache(int, ST).v
 
@@ -177,7 +187,7 @@ end
 
 
 # Compute stages of Crank-Nicolson methods.
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE}) where {ST}
     axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # compute stages from nonlinear solver solution x
@@ -188,7 +198,7 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
 end
 
 
-function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE}) where {DT}
+function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE}) where {DT}
     # compute vector field at internal stages
     components!(x, sol, params, int)
 
@@ -197,7 +207,7 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
 end
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemODE})
     # compute vector field at the previous time step
     # this cannot be taken from the vector field stored in the solution step, as that is
     # computed with initialguess(problem).v, which may be a surrogate for equations(int).v
@@ -211,25 +221,24 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankN
 end
 
 
-function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE})
+function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE})
     local D = length(cache(int).q)
     local x = nlsolution(int)
 
-    # temporary solution at the beginning of the time step, where the extrapolation reproduces
-    # the previous solution step
-    ig = (t=sol.t - timestep(int), q=cache(int).q, p=cache(int).θ, q̇=cache(int).v, ṗ=cache(int).f)
-    solutionstep!(ig, history, problem(int), iguess(int))
+    # the solver variables are the stage velocities determined by ϑ(t, q, V) = p rather than the
+    # velocity of the solution, so they are guessed with the velocity the problem provides for
+    # exactly that purpose, evaluated at both ends of the time step
 
-    # the extrapolated q̇ is a guess for the velocity of the solution, whereas the solver
-    # variables are the stage velocities determined by ϑ(t, q, V) = p, so refine the guess with
-    # the velocity the problem provides for exactly that purpose
-    initialguess(problem(int)).v(ig.q̇, ig.t, ig.q, ig.p, params)
+    # at the beginning of the time step the solution is known: `sol` still holds it, as it is
+    # only updated at the end of `integrate_step!`
+    v̄ = cache(int).v̄
+    initialguess(problem(int)).v(v̄, sol.t - timestep(int), sol.q, sol.p, params)
 
     for k in 1:D
-        x[k] = ig.q̇[k]
+        x[k] = v̄[k]
     end
 
-    # temporary solution at the end of the time step
+    # at the end of the time step the solution is extrapolated
     ig = (t=sol.t, q=cache(int).q, p=cache(int).θ, q̇=cache(int).v, ṗ=cache(int).f)
     solutionstep!(ig, history, problem(int), iguess(int))
     initialguess(problem(int)).v(ig.q̇, ig.t, ig.q, ig.p, params)
@@ -239,7 +248,7 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNi
     end
 end
 
-function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE}) where {ST}
+function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
     θ = cache(int, ST).θ
@@ -270,7 +279,7 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
 end
 
 
-function residual!(b::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE}) where {ST}
+function residual!(b::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE}) where {ST}
     # get cache for internal stages
     θ = cache(int, ST).θ
     f = cache(int, ST).f
@@ -290,7 +299,7 @@ end
 
 
 # Compute stages of Crank-Nicolson methods for implicit differential equations.
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE}) where {ST}
     axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # compute stages from nonlinear solver solution x
@@ -301,7 +310,7 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
 end
 
 
-function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE}) where {DT}
+function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE}) where {DT}
     # compute vector fields at internal stages
     # this has to precede the update, as the stages are computed relative to sol.q and sol.p
     components!(x, sol, params, int)
@@ -312,7 +321,7 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
 end
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemIODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemIODE})
     # call nonlinear solver
     # in contrast to the explicit case, nothing is precomputed at the beginning of the time
     # step: the velocity there is determined implicitly and is part of the solver solution

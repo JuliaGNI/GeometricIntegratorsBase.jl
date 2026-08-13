@@ -22,6 +22,15 @@ import GeometricBase: NoSolver
 import SimpleSolvers: NonlinearSolverMethod
 
 
+# The problem unions of GeometricEquations also cover the constrained variants, that is
+# `AbstractProblemODE` includes `DAEProblem` and `AbstractProblemIODE` includes `IDAEProblem`
+# and `LDAEProblem`. An integrator that does not enforce a constraint must not accept those,
+# as it would otherwise silently return a solution that ignores it, so the integrators in this
+# package dispatch on the unconstrained unions below.
+const ProblemODE{DT,TT} = Union{ODEProblem{DT,TT},SubstepProblem{DT,TT}}
+const ProblemIODE{DT,TT} = Union{IODEProblem{DT,TT},LODEProblem{DT,TT}}
+
+
 export update!, reset!
 export State
 export NoSolver
