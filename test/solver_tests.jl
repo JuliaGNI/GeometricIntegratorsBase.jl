@@ -1,9 +1,10 @@
 using GeometricIntegratorsBase
 using Test
 
+import GeometricIntegratorsBase: DEFAULT_F_STALL_WINDOW
 import GeometricIntegratorsBase: default_linesearch, default_options, initsolver
 
-using SimpleSolvers: Backtracking
+using SimpleSolvers: Backtracking, F_STALL_REPORT_MINIMUM
 
 using ..HarmonicOscillator
 
@@ -33,5 +34,9 @@ caches = CacheDict(prob, TestMethod())
 
 # a solve whose residual goes nowhere is bounded per time step rather than spending
 # `max_iterations` on every one of them
-@test default_options(TestMethod(), prob).f_stall_window == 50
+@test default_options(TestMethod(), prob).f_stall_window == DEFAULT_F_STALL_WINDOW
 @test default_options(TestMethod(), prob).min_iterations == 1
+
+# the window has to stay above the count below which SimpleSolvers holds the no-progress
+# proportion to be no evidence of anything: giving up on less than it will report on is incoherent
+@test DEFAULT_F_STALL_WINDOW > F_STALL_REPORT_MINIMUM

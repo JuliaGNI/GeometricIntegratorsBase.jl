@@ -45,11 +45,17 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
         # warn, and return what has been computed so far. The `break` happens before the `copy!`,
         # so `sol` holds valid data up to `n-1`. Only this one exception type is caught — anything
         # else is a bug and must not be masked.
+        #
+        # The warning has to say where the valid data ends, because nothing in `sol` marks it: the
+        # entries from `n` on are the zeros `Solution` allocated, which for most problems is
+        # indistinguishable from computed data. The NaN branch below does not need to say so — it
+        # copies first, so the offending entry carries a NaN a caller can see.
         try
             integrate!(solstep, int)
         catch e
             e isa NonlinearSolverException || rethrow()
-            @warn "Nonlinear solver failed at timestep n=$(n): $(e.msg)"
+            @warn "Nonlinear solver failed at timestep n=$(n): $(e.msg). " *
+                  "The solution is valid up to n=$(n-1); later entries were never computed."
             break
         end
 
