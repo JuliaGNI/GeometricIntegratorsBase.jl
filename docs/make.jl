@@ -23,7 +23,7 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "Extrapolation Methods" => "extrapolation.md",
-        "Euler Methods" => "euler.md",
+        "Integrators" => "integrators.md",
         "Dependencies" => [
             "Equations" => "deps/equations.md",
             "Problems" => "deps/problems.md",

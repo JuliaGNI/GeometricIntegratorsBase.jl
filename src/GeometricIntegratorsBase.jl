@@ -84,8 +84,13 @@ export NoProjection, projection
 include("projection.jl")
 
 export ExplicitEuler, ImplicitEuler
+export SymplecticEulerMethod, SymplecticEulerA, SymplecticEulerB
+export ImplicitMidpoint, CrankNicolson
 
-include("euler/explicit_euler.jl")
-include("euler/implicit_euler.jl")
+include("integrators/explicit_euler.jl")
+include("integrators/implicit_euler.jl")
+include("integrators/symplectic_euler.jl")
+include("integrators/implicit_midpoint.jl")
+include("integrators/crank_nicolson.jl")
 
 end
