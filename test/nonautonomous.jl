@@ -13,7 +13,9 @@ using GeometricSolutions
 
 export nonautonomous_odeproblem, nonautonomous_ode_solution
 export nonautonomous_podeproblem, nonautonomous_hodeproblem
-export nonautonomous_hamiltonian
+export nonautonomous_iodeproblem, nonautonomous_lodeproblem
+export nonautonomous_iode_odeproblem
+export nonautonomous_hamiltonian, nonautonomous_lagrangian
 
 
 const t₀ = 0.0
@@ -88,6 +90,85 @@ end
 function nonautonomous_hodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
     HODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, nonautonomous_hamiltonian,
         timespan, timestep, q₀, p₀)
+end
+
+
+@doc raw"""
+The non-autonomous, regular Lagrangian
+```math
+L (t, q, v) = (1 + t) \, \frac{v^{2} - q^{2}}{2} ,
+```
+whose momentum map and force,
+```math
+\vartheta (t, q, v) = (1 + t) \, v , \qquad f (t, q, v) = - (1 + t) \, q ,
+```
+are *both* explicitly time dependent, so that a wrong stage time in either of them is detected.
+
+Since ``\vartheta`` is regular, the implicit equation is equivalent to the partitioned system
+``\dot{q} = p / (1+t)``, ``\dot{p} = - (1+t) \, q``, which is available as
+[`nonautonomous_iode_odeproblem`](@ref) and serves as a reference solution.
+"""
+function nonautonomous_iode_ϑ(p, t, q, v, params)
+    p[1] = (1 + t) * v[1]
+    nothing
+end
+
+function nonautonomous_iode_f(f, t, q, v, params)
+    f[1] = -(1 + t) * q[1]
+    nothing
+end
+
+function nonautonomous_iode_g(g, t, q, v, λ, params)
+    g[1] = λ[1]
+    nothing
+end
+
+function nonautonomous_iode_v(v, t, q, p, params)
+    v[1] = p[1] / (1 + t)
+    nothing
+end
+
+function nonautonomous_lagrangian(t, q, v, params)
+    (1 + t) * (v[1]^2 - q[1]^2) / 2
+end
+
+function nonautonomous_iode_ω(ω, t, q, params)
+    ω[1, 1] = 0
+    ω[1, 2] = -1
+    ω[2, 1] = +1
+    ω[2, 2] = 0
+    nothing
+end
+
+function nonautonomous_iodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    IODEProblem(nonautonomous_iode_ϑ, nonautonomous_iode_f, nonautonomous_iode_g,
+        timespan, timestep, q₀, p₀; v̄=nonautonomous_iode_v)
+end
+
+function nonautonomous_lodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    LODEProblem(nonautonomous_iode_ϑ, nonautonomous_iode_f, nonautonomous_iode_g,
+        nonautonomous_iode_ω, nonautonomous_lagrangian,
+        timespan, timestep, q₀, p₀; v̄=nonautonomous_iode_v)
+end
+
+
+@doc raw"""
+The first order system ``x = (q, p)`` that [`nonautonomous_iodeproblem`](@ref) is equivalent to,
+```math
+\dot{x}_{1} = \frac{x_{2}}{1 + t} , \qquad \dot{x}_{2} = - (1 + t) \, x_{1} .
+```
+For a regular momentum map the implicit midpoint and Crank-Nicolson methods applied to the
+implicit equation are the same map as applied to this system, so integrating both and comparing
+pins down every stage time of the implicit variants exactly, not just to leading order.
+"""
+function nonautonomous_iode_ode_v(v, t, x, params)
+    v[1] = x[2] / (1 + t)
+    v[2] = -(1 + t) * x[1]
+    nothing
+end
+
+function nonautonomous_iode_odeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    ODEProblem(nonautonomous_iode_ode_v, timespan, timestep, vcat(q₀, p₀))
 end
 
 end
