@@ -9,12 +9,7 @@ using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
 using SimpleSolvers: Newton
 using ..HarmonicOscillator
-
-
-# maximum relative energy error along an ODE solution
-function max_energy_error(sol, prob)
-    maximum(abs, compute_energy_error(sol.t, sol.q, parameters(prob))[2])
-end
+using ..NonautonomousProblems
 
 
 @testset "$(rpad("ImplicitMidpoint Method Tests", 80))" begin
@@ -43,7 +38,6 @@ end
         @test axes(cache.x) == axes(initial_conditions(ode).q)
         @test axes(cache.q) == axes(initial_conditions(ode).q)
         @test axes(cache.v) == axes(initial_conditions(ode).q)
-        @test axes(cache.v̄) == axes(initial_conditions(ode).q)
 
         @test nlsolution(cache) === cache.x
 
@@ -82,6 +76,21 @@ end
         ]
 
         @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=2E-1))
+    end
+
+    @testset "Non-Autonomous Convergence Order" begin
+        # the harmonic oscillator is autonomous, so it cannot detect a wrong stage time.
+        # evaluating the vector field anywhere but at t̄ + Δt/2 costs an order of accuracy,
+        # which this problem does detect
+        errs = [
+            begin
+                prob = nonautonomous_odeproblem(; timestep=Δt)
+                relative_maximum_error(integrate(prob, ImplicitMidpoint()),
+                    nonautonomous_ode_solution(prob)).q
+            end for Δt in (0.1, 0.05, 0.025)
+        ]
+
+        @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=3E-1))
     end
 
     @testset "Energy Conservation" begin

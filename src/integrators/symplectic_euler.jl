@@ -65,11 +65,11 @@ struct SymplecticEulerCache{DT} <: PODEIntegratorCache{DT}
     end
 end
 
-function Cache{ST}(problem::AbstractProblem, method::SymplecticEulerMethod; kwargs...) where {ST}
+function Cache{ST}(problem::AbstractProblemPODE, method::SymplecticEulerMethod; kwargs...) where {ST}
     SymplecticEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblem, ::SymplecticEulerMethod) = SymplecticEulerCache{ST}
+@inline CacheType(ST, ::AbstractProblemPODE, ::SymplecticEulerMethod) = SymplecticEulerCache{ST}
 
 
 function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerA,<:AbstractProblemPODE})

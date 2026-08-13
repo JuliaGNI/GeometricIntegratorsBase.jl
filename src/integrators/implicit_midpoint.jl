@@ -22,14 +22,12 @@ struct ImplicitMidpointCache{DT} <: ODEIntegratorCache{DT}
     x::Vector{DT}
     q::Vector{DT}
     v::Vector{DT}
-    v̄::Vector{DT}
 
     function ImplicitMidpointCache{DT}(ics) where {DT}
         x = zeros(DT, length(vec(ics.q)))
         q = zeros(DT, axes(ics.q))
         v = zeros(DT, axes(ics.q))
-        v̄ = zeros(DT, axes(ics.q))
-        new(x, q, v, v̄)
+        new(x, q, v)
     end
 end
 
@@ -61,24 +59,21 @@ end
 function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
-    v̄ = cache(int, ST).v̄
 
     # compute midpoint q = q̄ + Δt/2 * x (v = x)
-    v̄ .= x
-    q .= sol.q .+ (timestep(int) / 2) .* v̄
+    q .= sol.q .+ (timestep(int) / 2) .* x
 
     # compute v = v(q) at the midpoint
     equations(int).v(v, sol.t - timestep(int) / 2, q, params)
 end
 
 
-function residual!(b::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitMidpoint}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitMidpoint}) where {ST}
     # get cache for internal stages
     v = cache(int, ST).v
-    v̄ = cache(int, ST).v̄
 
-    # compute b = - (v-v)
-    b .= v .- v̄
+    # compute residual b = v - x
+    b .= v .- x
 end
 
 
@@ -90,7 +85,7 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
     components!(x, sol, params, int)
 
     # compute residual vector
-    residual!(b, int)
+    residual!(b, x, int)
 end
 
 

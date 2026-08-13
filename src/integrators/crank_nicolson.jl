@@ -63,6 +63,13 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNi
     nlsolution(int) .= ig.q̇
 end
 
+@doc raw"""
+Compute the stages of the Crank-Nicolson method from the nonlinear solver solution `x`.
+
+Requires `v̄` in the cache at working precision to hold ``v(t_{n}, q_{n})``, which
+`integrate_step!` computes at the beginning of every time step. Calling this function before
+that would silently use a stale or zero `v̄`.
+"""
 function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
@@ -83,7 +90,7 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricI
     # get cache for internal stages
     v = cache(int, ST).v
 
-    # compute b = - (v-x)
+    # compute residual b = v - x
     b .= v .- x
 end
 
@@ -111,6 +118,8 @@ end
 
 function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:AbstractProblemODE})
     # compute vector field at the previous time step
+    # this cannot be taken from the vector field stored in the solution step, as that is
+    # computed with initialguess(problem).v, which may be a surrogate for equations(int).v
     equations(int).v(cache(int).v̄, sol.t - timestep(int), sol.q, params)
 
     # call nonlinear solver

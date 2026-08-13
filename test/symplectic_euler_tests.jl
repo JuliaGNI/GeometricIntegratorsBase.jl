@@ -8,11 +8,41 @@ using GeometricIntegratorsBase: SymplecticEulerCache, CacheType, nlsolution, sol
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
 using ..HarmonicOscillator
+using ..NonautonomousProblems
+using ..NonautonomousProblems: nonautonomous_pode_v, nonautonomous_pode_f
 
 
-# maximum relative energy error along a partitioned solution
-function max_energy_error(sol, prob)
-    maximum(abs, compute_energy_error(sol.t, sol.q, sol.p, parameters(prob))[2])
+# Reference implementations of the two schemes, written out directly so that the stage times
+# are stated here rather than taken from the code under test. The times are read off the
+# solution rather than recomputed, so that any disagreement is due to the scheme alone.
+function reference_symplectic_euler_A(prob, sol)
+    q, p = copy(initial_conditions(prob).q), copy(initial_conditions(prob).p)
+    v, f = zero(q), zero(p)
+    h = timestep(prob)
+
+    for n in 1:lastindex(sol.t)
+        nonautonomous_pode_f(f, sol.t[n-1], q, p, parameters(prob))
+        p .+= h .* f
+        nonautonomous_pode_v(v, sol.t[n], q, p, parameters(prob))
+        q .+= h .* v
+    end
+
+    (q=q, p=p)
+end
+
+function reference_symplectic_euler_B(prob, sol)
+    q, p = copy(initial_conditions(prob).q), copy(initial_conditions(prob).p)
+    v, f = zero(q), zero(p)
+    h = timestep(prob)
+
+    for n in 1:lastindex(sol.t)
+        nonautonomous_pode_v(v, sol.t[n-1], q, p, parameters(prob))
+        q .+= h .* v
+        nonautonomous_pode_f(f, sol.t[n], q, p, parameters(prob))
+        p .+= h .* f
+    end
+
+    (q=q, p=p)
 end
 
 
@@ -92,6 +122,35 @@ end
         @test solA.p != solB.p
     end
 
+    @testset "Non-Autonomous Stage Times" begin
+        # the harmonic oscillator is autonomous and cannot tell t̄ from t̄ + Δt apart, so the
+        # stage times are pinned down here against a reference implementation of each scheme
+        pode = nonautonomous_podeproblem()
+
+        solA = integrate(pode, SymplecticEulerA())
+        solB = integrate(pode, SymplecticEulerB())
+
+        refA = reference_symplectic_euler_A(pode, solA)
+        refB = reference_symplectic_euler_B(pode, solB)
+
+        @test solA.q[end] == refA.q
+        @test solA.p[end] == refA.p
+        @test solB.q[end] == refB.q
+        @test solB.p[end] == refB.p
+
+        # the reference implementations must themselves be distinguishable, otherwise the
+        # comparison above would hold for either choice of stage times
+        @test refA.q != refB.q
+        @test refA.p != refB.p
+
+        # HODE and PODE agree on a non-autonomous problem too
+        hode = nonautonomous_hodeproblem()
+        for method in (SymplecticEulerA(), SymplecticEulerB())
+            @test integrate(pode, method).q == integrate(hode, method).q
+            @test integrate(pode, method).p == integrate(hode, method).p
+        end
+    end
+
     @testset "Convergence Order" begin
         # both methods are first order, so halving the timestep should halve the error
         for method in (SymplecticEulerA(), SymplecticEulerB())
@@ -118,13 +177,17 @@ end
             err_long = max_energy_error(integrate(pode_long, method), pode_long)
 
             @test err_short < 5E-2
-            @test err_long ≈ err_short atol = 1E-6
+
+            # the longer run samples the same oscillation more densely and so comes closer to
+            # the peak of the envelope, which leaves the two maxima differing by ~3E-7 here.
+            # a relative tolerance keeps the margin independent of the problem parameters;
+            # any genuine drift would show up as a ratio of about ten, not as 1E-5
+            @test err_long ≈ err_short rtol = 1E-3
         end
 
         # for reference: the explicit Euler method on the equivalent ODE blows up
         ode_long = odeproblem(; timespan=(0.0, 1000.0))
-        sol = integrate(ode_long, ExplicitEuler())
-        @test maximum(abs, compute_energy_error(sol.t, sol.q, parameters(ode_long))[2]) > 1E3
+        @test max_energy_error(integrate(ode_long, ExplicitEuler()), ode_long) > 1E3
     end
 
     @testset "Data Type Consistency" begin

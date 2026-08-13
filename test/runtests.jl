@@ -1,6 +1,7 @@
 using SafeTestsets
 
 include("harmonic_oscillator.jl")
+include("nonautonomous.jl")
 
 @safetestset "Initial Guess Tests                                                             " begin
     include("initialguess_tests.jl")

@@ -9,12 +9,7 @@ using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
 using SimpleSolvers: Newton
 using ..HarmonicOscillator
-
-
-# maximum relative energy error along an ODE solution
-function max_energy_error(sol, prob)
-    maximum(abs, compute_energy_error(sol.t, sol.q, parameters(prob))[2])
-end
+using ..NonautonomousProblems
 
 # nonlinear test problem q̇ = -q² with exact solution q(t) = 1 / (1 + t)
 riccati_v(v, t, q, params) = (v[1] = -q[1]^2; nothing)
@@ -91,6 +86,21 @@ riccati_error(sol) = maximum(abs(sol.q[n][1] - 1 / (1 + sol.t[n])) for n in axes
         errs = [riccati_error(integrate(riccati_problem(; timestep=Δt), CrankNicolson()))
                 for Δt in (0.1, 0.05, 0.025)]
         @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=2E-1))
+    end
+
+    @testset "Non-Autonomous Convergence Order" begin
+        # both the harmonic oscillator and the Riccati problem above are autonomous, so
+        # neither detects a wrong stage time. taking v̄ or v at the wrong end of the interval
+        # costs an order of accuracy, which this problem does detect
+        errs = [
+            begin
+                prob = nonautonomous_odeproblem(; timestep=Δt)
+                relative_maximum_error(integrate(prob, CrankNicolson()),
+                    nonautonomous_ode_solution(prob)).q
+            end for Δt in (0.1, 0.05, 0.025)
+        ]
+
+        @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=3E-1))
     end
 
     @testset "Comparison with ImplicitMidpoint" begin

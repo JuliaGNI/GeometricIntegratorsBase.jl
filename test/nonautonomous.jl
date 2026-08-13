@@ -1,0 +1,93 @@
+@doc raw"""
+# Non-Autonomous Test Problems
+
+Every problem in [`HarmonicOscillator`](@ref) is autonomous, so none of them can tell the
+stage times of an integrator apart: evaluating a vector field at ``t_{n}`` or at ``t_{n+1}``
+gives the same result there. The problems collected here have explicitly time dependent
+vector fields and pin those times down.
+"""
+module NonautonomousProblems
+
+using GeometricEquations
+using GeometricSolutions
+
+export nonautonomous_odeproblem, nonautonomous_ode_solution
+export nonautonomous_podeproblem, nonautonomous_hodeproblem
+export nonautonomous_hamiltonian
+
+
+const t₀ = 0.0
+const Δt = 0.1
+const nt = 10
+const timespan = (t₀, Δt * nt)
+
+const x₀ = [1.0]
+const q₀ = [1.0]
+const p₀ = [0.5]
+
+
+@doc raw"""
+The linear, non-autonomous scalar equation
+```math
+\dot{q} = \cos (t) \, q ,
+```
+whose exact solution is ``q(t) = q_{0} \exp ( \sin t - \sin t_{0} )``.
+
+A method that evaluates the vector field at the wrong stage time loses an order of accuracy
+on this problem, so the convergence order tests discriminate directly.
+"""
+function nonautonomous_ode_v(v, t, q, params)
+    v[1] = cos(t) * q[1]
+    nothing
+end
+
+function nonautonomous_odeproblem(x₀=x₀; timespan=timespan, timestep=Δt)
+    ODEProblem(nonautonomous_ode_v, timespan, timestep, x₀)
+end
+
+nonautonomous_ode_solution(t, q₀, t₀) = q₀ .* exp(sin(t) - sin(t₀))
+
+function nonautonomous_ode_solution(prob::ODEProblem)
+    sol = GeometricSolution(prob)
+    for n in eachtimestep(sol)
+        sol[n].q .= nonautonomous_ode_solution(sol[n].t, sol[0].q, sol[0].t)
+    end
+    return sol
+end
+
+
+@doc raw"""
+A separable, non-autonomous Hamiltonian system with
+```math
+H (t, q, p) = \frac{p^{2}}{2} + (1 + t) \, \frac{q^{2}}{2} ,
+```
+so that ``v (t, p) = p`` and ``f (t, q) = - (1 + t) \, q``.
+
+Separability makes it a legitimate problem for the symplectic Euler methods, while the time
+dependence of ``f`` distinguishes the stage times of the A and B variants.
+"""
+function nonautonomous_pode_v(v, t, q, p, params)
+    v[1] = p[1]
+    nothing
+end
+
+function nonautonomous_pode_f(f, t, q, p, params)
+    f[1] = -(1 + t) * q[1]
+    nothing
+end
+
+function nonautonomous_hamiltonian(t, q, p, params)
+    p[1]^2 / 2 + (1 + t) * q[1]^2 / 2
+end
+
+function nonautonomous_podeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    PODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, timespan, timestep, q₀, p₀;
+        invariants=(h=nonautonomous_hamiltonian,))
+end
+
+function nonautonomous_hodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    HODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, nonautonomous_hamiltonian,
+        timespan, timestep, q₀, p₀)
+end
+
+end
