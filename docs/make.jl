@@ -24,6 +24,7 @@ makedocs(;
         "Home" => "index.md",
         "Extrapolation Methods" => "extrapolation.md",
         "Integrators" => "integrators.md",
+        "Solvers" => "solvers.md",
         "Dependencies" => [
             "Equations" => "deps/equations.md",
             "Problems" => "deps/problems.md",
