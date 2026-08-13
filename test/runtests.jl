@@ -1,6 +1,7 @@
 using SafeTestsets
 
 include("harmonic_oscillator.jl")
+include("nonautonomous.jl")
 
 @safetestset "Initial Guess Tests                                                             " begin
     include("initialguess_tests.jl")
@@ -31,4 +32,13 @@ end
 end
 @safetestset "ImplicitEuler Tests                                                             " begin
     include("implicit_euler_tests.jl")
+end
+@safetestset "SymplecticEuler Tests                                                           " begin
+    include("symplectic_euler_tests.jl")
+end
+@safetestset "ImplicitMidpoint Tests                                                          " begin
+    include("implicit_midpoint_tests.jl")
+end
+@safetestset "CrankNicolson Tests                                                             " begin
+    include("crank_nicolson_tests.jl")
 end

@@ -18,7 +18,7 @@ export odeensemble, podeensemble, hodeensemble
 
 export hamiltonian, lagrangian
 
-export compute_energy_error, exact_solution
+export compute_energy_error, max_energy_error, exact_solution
 
 
 const t₀ = 0.0
@@ -455,16 +455,36 @@ function exact_solution(probs::Union{ODEEnsemble,PODEEnsemble,HODEEnsemble})
 end
 
 
-function compute_energy_error(t, q::DataSeries{T}, params) where {T}
-    h = DataSeries(T, q.nt)
-    e = DataSeries(T, q.nt)
+"""
+Computes the energy of a solution and its relative error `(H(t) - H(0)) / H(0)`.
 
-    for i in axes(q, 2)
-        h[i] = hamiltonian(t[i], q[:, i], params)
-        e[i] = (h[i] - h[0]) / h[0]
+Arguments: `(t, q, params)` for an ODE solution and `(t, q, p, params)` for a partitioned one.
+
+Returns a tuple of two `ScalarDataSeries` holding the time series of the energy and of its
+relative error.
+"""
+function compute_energy_error(t, q::DataSeries, params)
+    compute_invariant_error(t, q, params, hamiltonian)
+end
+
+function compute_energy_error(t, q::DataSeries, p::DataSeries, params)
+    compute_invariant_error(t, q, p, params, hamiltonian)
+end
+
+
+"""
+Computes the maximum absolute relative energy error along a solution `sol` of `prob`.
+
+Branches on whether the solution carries a momentum, so it applies to ODE and partitioned
+solutions alike.
+"""
+function max_energy_error(sol, prob)
+    err = if hasproperty(sol, :p)
+        compute_energy_error(sol.t, sol.q, sol.p, parameters(prob))[2]
+    else
+        compute_energy_error(sol.t, sol.q, parameters(prob))[2]
     end
-
-    (h, e)
+    maximum(abs, err)
 end
 
 end

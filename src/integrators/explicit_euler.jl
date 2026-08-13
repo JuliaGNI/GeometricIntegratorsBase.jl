@@ -1,6 +1,9 @@
-"""
+@doc raw"""
 Explicit Euler Method.
 
+```math
+q_{n+1} = q_{n} + h \, v (t_{n}, q_{n})
+```
 """
 struct ExplicitEuler <: ODEMethod end
 # $(reference(Val(:ExplicitEuler)))
@@ -36,8 +39,11 @@ end
 
 
 function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ExplicitEuler,<:AbstractProblemODE})
-    # compute vector field
-    equations(int).v(cache(int).v, sol.t, sol.q, params)
+    # on entry, sol.t holds tₙ₊₁ while sol.q still holds qₙ
+    t̄ = sol.t - timestep(int)
+
+    # compute vector field v = v(t̄, q̄)
+    equations(int).v(cache(int).v, t̄, sol.q, params)
 
     # compute final update
     update!(sol, params, nothing, int)
