@@ -44,7 +44,10 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
         # never sees it. So it is treated exactly as the NaN check below treats a bad iterate:
         # warn, and return what has been computed so far. The `break` happens before the `copy!`,
         # so `sol` holds valid data up to `n-1`. Only this one exception type is caught — anything
-        # else is a bug and must not be masked.
+        # else is a bug and must not be masked. `NonlinearSolverException` is named in the explicit
+        # `import SimpleSolvers:` list rather than picked up from `using`, so the dependency does not
+        # rest on it staying exported, and `e.msg` is reached only after the `isa` has established
+        # that the field is there.
         #
         # The warning has to say where the valid data ends, because nothing in `sol` marks it: the
         # entries from `n` on are the zeros `Solution` allocated, which for most problems is

@@ -19,7 +19,7 @@ import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable, TimeVariable
 import GeometricBase: NoSolver
-import SimpleSolvers: NonlinearSolverMethod
+import SimpleSolvers: NonlinearSolverException, NonlinearSolverMethod
 
 
 # The problem unions of GeometricEquations also cover the constrained variants, that is

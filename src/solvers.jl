@@ -12,13 +12,20 @@ hook (`GeometricIntegrators` calls it for DIRK) and its signature must not chang
 Neither form is called inside this package. They are the hook downstream methods reach for, which
 is why the tests assert both signatures and the choice below.
 
+`T` is constrained so that the typed method cannot quietly intercept a call meant for the untyped
+one: a caller passing a *method type* rather than an instance — `default_linesearch(ImplicitEuler)`
+— falls through to the untyped hook and gets a `Backtracking{Float64}`, as it did before the typed
+method existed, rather than an error from inside `Backtracking`. `Real` rather than `AbstractFloat`,
+because `Backtracking` is buildable at any real type that `T(::Float64)` accepts, which includes
+the `ForwardDiff.Dual` a caller differentiating through an integration would arrive with.
+
 `expand = true` is deliberately not set. The expansion phase of `Backtracking` is opt-in upstream
 because it costs a merit evaluation — a full residual evaluation here — on a direction whose scale
 is wrong, and gains nothing on one whose scale is right: a Newton step already sits at its model
 minimum. Every method in this package solves with `Newton()`.
 """
 default_linesearch(method=nothing) = Backtracking()
-default_linesearch(::Type{T}, method=nothing) where {T<:Number} = Backtracking(T)
+default_linesearch(::Type{T}, method=nothing) where {T<:Real} = Backtracking(T)
 
 """
 The window, in iterations, after which a nonlinear solve that is not descending towards `f_abstol`
