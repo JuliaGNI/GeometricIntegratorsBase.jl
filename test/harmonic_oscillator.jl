@@ -455,16 +455,22 @@ function exact_solution(probs::Union{ODEEnsemble,PODEEnsemble,HODEEnsemble})
 end
 
 
-function compute_energy_error(t, q::DataSeries{T}, params) where {T}
-    h = DataSeries(T, q.nt)
-    e = DataSeries(T, q.nt)
+"""
+Computes the energy of a solution and its relative error `(H(t) - H(0)) / H(0)`.
 
-    for i in axes(q, 2)
-        h[i] = hamiltonian(t[i], q[:, i], params)
-        e[i] = (h[i] - h[0]) / h[0]
-    end
+Arguments: `(t, q, params)` for an ODE solution and `(t, q, p, params)` for a partitioned one.
 
-    (h, e)
+Returns a tuple of two `ScalarDataSeries` holding the time series of the energy and of its
+relative error.
+"""
+function compute_energy_error(t, q::DataSeries, params)
+    h = compute_invariant(t, q, params, hamiltonian)
+    (h, compute_relative_error(h))
+end
+
+function compute_energy_error(t, q::DataSeries, p::DataSeries, params)
+    h = compute_invariant(t, q, p, params, hamiltonian)
+    (h, compute_relative_error(h))
 end
 
 end
