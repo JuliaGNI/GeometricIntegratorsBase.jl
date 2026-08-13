@@ -275,6 +275,19 @@ function lodeproblem(q₀=q₀, p₀=p₀; parameters=default_parameters, timesp
 end
 
 
+function exact_solution!(sol::GeometricSolution, prob::Union{IODEProblem,LODEProblem})
+    for n in eachtimestep(sol)
+        sol[n].q = [exact_solution_q(sol[n].t, sol[0].q, sol[0].p, sol[0].t, parameters(prob))]
+        sol[n].p = [exact_solution_p(sol[n].t, sol[0].q, sol[0].p, sol[0].t, parameters(prob))]
+    end
+    return sol
+end
+
+function exact_solution(prob::Union{IODEProblem,LODEProblem})
+    exact_solution!(GeometricSolution(prob), prob)
+end
+
+
 function oscillator_dae_u(u, t, x, λ, params)
     @unpack k = params
     u[1] = k * x[1] * λ[1]
