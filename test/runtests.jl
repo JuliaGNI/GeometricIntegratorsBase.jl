@@ -1,7 +1,10 @@
 using SafeTestsets
 
-include("harmonic_oscillator.jl")
-include("nonautonomous.jl")
+# the test problems, included at top level so that every test set below can reach the modules
+# they define as `..HarmonicOscillator` and so on
+include("examples/harmonic_oscillator.jl")
+include("examples/nonautonomous.jl")
+include("examples/nonlinear.jl")
 
 @safetestset "Initial Guess Tests                                                             " begin
     include("initialguess_tests.jl")
@@ -27,18 +30,21 @@ end
 @safetestset "Projection Tests                                                                " begin
     include("projection_tests.jl")
 end
-@safetestset "Euler Tests                                                                     " begin
-    include("euler_tests.jl")
+@safetestset "Common Integrator Tests                                                         " begin
+    include("integrators/common_tests.jl")
+end
+@safetestset "ExplicitEuler Tests                                                             " begin
+    include("integrators/explicit_euler_tests.jl")
 end
 @safetestset "ImplicitEuler Tests                                                             " begin
-    include("implicit_euler_tests.jl")
+    include("integrators/implicit_euler_tests.jl")
 end
 @safetestset "SymplecticEuler Tests                                                           " begin
-    include("symplectic_euler_tests.jl")
+    include("integrators/symplectic_euler_tests.jl")
 end
 @safetestset "ImplicitMidpoint Tests                                                          " begin
-    include("implicit_midpoint_tests.jl")
+    include("integrators/implicit_midpoint_tests.jl")
 end
 @safetestset "CrankNicolson Tests                                                             " begin
-    include("crank_nicolson_tests.jl")
+    include("integrators/crank_nicolson_tests.jl")
 end

@@ -3,7 +3,6 @@ using GeometricEquations
 using GeometricSolutions
 using Test
 
-using GeometricSolutions: relative_maximum_error
 using GeometricIntegratorsBase: SymplecticEulerCache, CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
@@ -11,6 +10,8 @@ using ..HarmonicOscillator
 using ..NonautonomousProblems
 using ..NonautonomousProblems: nonautonomous_pode_v, nonautonomous_pode_f
 
+
+const METHODS = (SymplecticEulerA(), SymplecticEulerB())
 
 # Reference implementations of the two schemes, written out directly so that the stage times
 # are stated here rather than taken from the code under test. The times are read off the
@@ -46,10 +47,13 @@ function reference_symplectic_euler_B(prob, sol)
 end
 
 
+# Accuracy, convergence order, data types, the agreement of the PODE and HODE formulations and
+# the rejection of unsupported problem types are asserted for every method of the package in
+# `common_tests.jl`.
 @testset "$(rpad("SymplecticEuler Method Tests", 80))" begin
 
     @testset "Method Properties" begin
-        for method in (SymplecticEulerA(), SymplecticEulerB())
+        for method in METHODS
             @test method isa GeometricIntegratorsBase.SymplecticEulerMethod
 
             @test isexplicit(method)
@@ -70,7 +74,7 @@ end
     @testset "Cache Structure" begin
         pode = podeproblem()
 
-        for method in (SymplecticEulerA(), SymplecticEulerB())
+        for method in METHODS
             cache = Cache{Float64}(pode, method)
             @test cache isa SymplecticEulerCache{Float64}
 
@@ -82,30 +86,6 @@ end
 
             @test CacheType(Float64, pode, method) == SymplecticEulerCache{Float64}
             @test CacheType(Float32, pode, method) == SymplecticEulerCache{Float32}
-        end
-    end
-
-    @testset "Integration Accuracy" begin
-        pode = podeproblem()
-        ref = exact_solution(pode)
-
-        for method in (SymplecticEulerA(), SymplecticEulerB())
-            sol = integrate(pode, method)
-            err = relative_maximum_error(sol, ref)
-            @test err.q < 5E-2
-            @test err.p < 5E-2
-        end
-    end
-
-    @testset "HODE and PODE Agreement" begin
-        pode = podeproblem()
-        hode = hodeproblem()
-
-        for method in (SymplecticEulerA(), SymplecticEulerB())
-            psol = integrate(pode, method)
-            hsol = integrate(hode, method)
-            @test psol.q == hsol.q
-            @test psol.p == hsol.p
         end
     end
 
@@ -142,27 +122,6 @@ end
         # comparison above would hold for either choice of stage times
         @test refA.q != refB.q
         @test refA.p != refB.p
-
-        # HODE and PODE agree on a non-autonomous problem too
-        hode = nonautonomous_hodeproblem()
-        for method in (SymplecticEulerA(), SymplecticEulerB())
-            @test integrate(pode, method).q == integrate(hode, method).q
-            @test integrate(pode, method).p == integrate(hode, method).p
-        end
-    end
-
-    @testset "Convergence Order" begin
-        # both methods are first order, so halving the timestep should halve the error
-        for method in (SymplecticEulerA(), SymplecticEulerB())
-            errs = [
-                begin
-                    prob = podeproblem(; timestep=Δt)
-                    relative_maximum_error(integrate(prob, method), exact_solution(prob)).q
-                end for Δt in (0.1, 0.05, 0.025)
-            ]
-
-            @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 2; atol=2E-1))
-        end
     end
 
     @testset "Energy Conservation" begin
@@ -172,7 +131,7 @@ end
         pode_short = podeproblem(; timespan=(0.0, 100.0))
         pode_long = podeproblem(; timespan=(0.0, 1000.0))
 
-        for method in (SymplecticEulerA(), SymplecticEulerB())
+        for method in METHODS
             err_short = max_energy_error(integrate(pode_short, method), pode_short)
             err_long = max_energy_error(integrate(pode_long, method), pode_long)
 
@@ -188,18 +147,6 @@ end
         # for reference: the explicit Euler method on the equivalent ODE blows up
         ode_long = odeproblem(; timespan=(0.0, 1000.0))
         @test max_energy_error(integrate(ode_long, ExplicitEuler()), ode_long) > 1E3
-    end
-
-    @testset "Data Type Consistency" begin
-        pode = podeproblem()
-
-        for method in (SymplecticEulerA(), SymplecticEulerB())
-            sol = integrate(pode, method)
-            @test eltype(sol.q[0]) == Float64
-            @test eltype(sol.p[0]) == Float64
-            @test all(isfinite, sol.q[end])
-            @test all(isfinite, sol.p[end])
-        end
     end
 
 end

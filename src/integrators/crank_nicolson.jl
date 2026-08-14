@@ -11,6 +11,25 @@ The nonlinear solver solves for the vector field at the new time step,
 The method is symmetric and second order, but not symplectic (it is conjugate to a symplectic
 method).
 
+For a partitioned differential equation, that is a `PODEProblem` or `HODEProblem`,
+```math
+\dot{q} = v (t, q, p) ,
+\qquad
+\dot{p} = f (t, q, p) ,
+```
+the trapezoidal rule is applied to both components,
+```math
+\begin{aligned}
+q_{n+1} &= q_{n} + \frac{h}{2} \, ( \bar{V} + V ) , &
+p_{n+1} &= p_{n} + \frac{h}{2} \, ( \bar{F} + F ) ,
+\end{aligned}
+```
+where ``\bar{V} = v(t_{n}, q_{n}, p_{n})`` and ``\bar{F} = f(t_{n}, q_{n}, p_{n})`` are computed
+once per time step, as they are given by the solution at the beginning of the time step, while
+``V = v(t_{n+1}, q_{n+1}, p_{n+1})`` and ``F = f(t_{n+1}, q_{n+1}, p_{n+1})`` are solved for. The
+solver solution vector holds both of them, so the nonlinear system is twice the size of the one
+for an ordinary differential equation.
+
 For an implicit differential equation, that is an `IODEProblem` or `LODEProblem`,
 ```math
 \begin{aligned}
@@ -47,8 +66,10 @@ isimplicit(method::CrankNicolson) = true
 issymmetric(method::CrankNicolson) = true
 issymplectic(method::CrankNicolson) = false
 
-# besides ordinary differential equations the method is implemented for implicit ones, so the
-# corresponding traits are set explicitly, as they cannot follow from the supertype
+# besides ordinary differential equations the method is implemented for partitioned and implicit
+# ones, so the corresponding traits are set explicitly, as they cannot follow from the supertype
+ispodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
+ishodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
 isiodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
 islodemethod(::Union{CrankNicolson,Type{<:CrankNicolson}}) = true
 
@@ -86,6 +107,52 @@ function Cache{ST}(problem::ProblemODE, method::CrankNicolson; kwargs...) where 
 end
 
 @inline CacheType(ST, ::ProblemODE, ::CrankNicolson) = CrankNicolsonCache{ST}
+
+
+@doc raw"""
+Crank-Nicolson integrator cache for partitioned differential equations.
+
+As in [`CrankNicolsonCache`](@ref), the vector fields at the beginning of the time step are
+constant during the solve, so they are read from the cache at working precision.
+
+### Fields
+
+* `x`: nonlinear solver solution vector, holding ``V`` and ``F``
+* `q`, `p`: solution at the end of the time step
+* `v`, `f`: vector fields at the end of the time step
+* `v̄`, `f̄`: vector fields at the beginning of the time step, ``v(t_{n}, q_{n}, p_{n})`` and
+  ``f(t_{n}, q_{n}, p_{n})``, which are constant throughout the nonlinear solve
+"""
+struct CrankNicolsonPODECache{DT} <: PODEIntegratorCache{DT}
+    x::Vector{DT}
+
+    q::Vector{DT}
+    p::Vector{DT}
+    v::Vector{DT}
+    f::Vector{DT}
+
+    v̄::Vector{DT}
+    f̄::Vector{DT}
+
+    function CrankNicolsonPODECache{DT}(ics) where {DT}
+        x = zeros(DT, length(vec(ics.q)) + length(vec(ics.p)))
+        q = zeros(DT, axes(ics.q))
+        p = zeros(DT, axes(ics.p))
+        v = zeros(DT, axes(ics.q))
+        f = zeros(DT, axes(ics.p))
+        v̄ = zeros(DT, axes(ics.q))
+        f̄ = zeros(DT, axes(ics.p))
+        new(x, q, p, v, f, v̄, f̄)
+    end
+end
+
+nlsolution(cache::CrankNicolsonPODECache) = cache.x
+
+function Cache{ST}(problem::ProblemPODE, method::CrankNicolson; kwargs...) where {ST}
+    CrankNicolsonPODECache{ST}(initial_conditions(problem); kwargs...)
+end
+
+@inline CacheType(ST, ::ProblemPODE, ::CrankNicolson) = CrankNicolsonPODECache{ST}
 
 
 @doc raw"""
@@ -138,6 +205,8 @@ end
 
 solversize(::CrankNicolson, problem::ProblemODE) = length(vec(initial_conditions(problem).q))
 solversize(::CrankNicolson, problem::ProblemIODE) = 2 * length(vec(initial_conditions(problem).q))
+solversize(::CrankNicolson, problem::ProblemPODE) =
+    length(vec(initial_conditions(problem).q)) + length(vec(initial_conditions(problem).p))
 
 default_solver(::CrankNicolson) = Newton()
 default_iguess(::CrankNicolson) = HermiteExtrapolation()
@@ -212,6 +281,113 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankN
     # this cannot be taken from the vector field stored in the solution step, as that is
     # computed with initialguess(problem).v, which may be a surrogate for equations(int).v
     equations(int).v(cache(int).v̄, sol.t - timestep(int), sol.q, params)
+
+    # call nonlinear solver
+    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+
+    # compute final update
+    update!(sol, params, nlsolution(int), int)
+end
+
+
+function initial_guess!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE})
+    local D = length(cache(int).q)
+    local x = nlsolution(int)
+
+    # temporary solution, extrapolated to the end of the time step
+    ig = (t=sol.t, q=cache(int).q, p=cache(int).p, q̇=cache(int).v, ṗ=cache(int).f)
+
+    # compute initial guess
+    solutionstep!(ig, history, problem(int), iguess(int))
+
+    # assemble initial guess for nonlinear solver solution vector
+    # in contrast to the implicit case, the solver variables are the vector fields of the solution
+    # itself, so the extrapolated q̇ and ṗ are guesses for them as they are
+    for k in 1:D
+        x[k] = ig.q̇[k]
+        x[D+k] = ig.ṗ[k]
+    end
+end
+
+@doc raw"""
+Compute the stages of the Crank-Nicolson method for a partitioned differential equation from the
+nonlinear solver solution `x`.
+
+Requires `v̄` and `f̄` in the cache at working precision to hold ``v(t_{n}, q_{n}, p_{n})`` and
+``f(t_{n}, q_{n}, p_{n})``, which `integrate_step!` computes at the beginning of every time step.
+Calling this function before that would silently use stale or zero values.
+"""
+function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE}) where {ST}
+    q = cache(int, ST).q
+    p = cache(int, ST).p
+    v = cache(int, ST).v
+    f = cache(int, ST).f
+
+    # v̄ and f̄ are constant during the solve, so they are read from the cache at working
+    # precision, which also holds them during the automatic differentiation of the residual
+    v̄ = cache(int).v̄
+    f̄ = cache(int).f̄
+
+    local D = length(q)
+
+    # compute q = q̄ + Δt/2 * (v̄ + x[1:D]) and p = p̄ + Δt/2 * (f̄ + x[D+1:2D]),
+    # as the solver solution vector holds the vector fields (v, f) at the end of the time step
+    for k in 1:D
+        q[k] = sol.q[k] + (timestep(int) / 2) * (v̄[k] + x[k])
+        p[k] = sol.p[k] + (timestep(int) / 2) * (f̄[k] + x[D+k])
+    end
+
+    # compute v = v(t, q, p) and f = f(t, q, p) at the end of the time step
+    equations(int).v(v, sol.t, q, p, params)
+    equations(int).f(f, sol.t, q, p, params)
+end
+
+
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE}) where {ST}
+    # get cache for internal stages
+    v = cache(int, ST).v
+    f = cache(int, ST).f
+
+    local D = length(cache(int, ST).q)
+
+    # compute residual b = (v, f) - x
+    for k in 1:D
+        b[k] = v[k] - x[k]
+        b[D+k] = f[k] - x[D+k]
+    end
+end
+
+
+# Compute stages of Crank-Nicolson methods for partitioned differential equations.
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE}) where {ST}
+    axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
+
+    # compute stages from nonlinear solver solution x
+    components!(x, sol, params, int)
+
+    # compute residual vector
+    residual!(b, x, int)
+end
+
+
+function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE}) where {DT}
+    # compute vector fields at internal stages
+    # this has to precede the update, as the stages are computed relative to sol.q and sol.p
+    components!(x, sol, params, int)
+
+    # compute final update
+    sol.q .+= (timestep(int) / 2) .* (cache(int).v̄ .+ cache(int, DT).v)
+    sol.p .+= (timestep(int) / 2) .* (cache(int).f̄ .+ cache(int, DT).f)
+end
+
+
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankNicolson,<:ProblemPODE})
+    # compute vector fields at the previous time step
+    # this cannot be taken from the vector fields stored in the solution step, as those are
+    # computed with initialguess(problem).v and .f, which may be surrogates for the vector
+    # fields of the equation
+    equations(int).v(cache(int).v̄, sol.t - timestep(int), sol.q, sol.p, params)
+    equations(int).f(cache(int).f̄, sol.t - timestep(int), sol.q, sol.p, params)
 
     # call nonlinear solver
     solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))

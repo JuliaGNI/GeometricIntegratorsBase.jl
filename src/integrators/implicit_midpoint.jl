@@ -9,6 +9,31 @@ q_{n+1} = q_{n} + h \, v \bigg( t_{n} + \frac{h}{2} , \frac{q_{n} + q_{n+1}}{2} 
 The nonlinear solver solves for the stage vector field ``V = v(t_{n} + h/2, q_{n} + h V / 2)``,
 so that the update reads ``q_{n+1} = q_{n} + h V``.
 
+For a partitioned differential equation, that is a `PODEProblem` or `HODEProblem`,
+```math
+\dot{q} = v (t, q, p) ,
+\qquad
+\dot{p} = f (t, q, p) ,
+```
+the same quadrature is applied to both components. With the stage time ``\tilde{t} = t_{n} + h/2``
+and the midpoints ``Q = q_{n} + h V / 2`` and ``P = p_{n} + h F / 2``, the nonlinear solver solves
+```math
+V = v (\tilde{t}, Q, P) ,
+\qquad
+F = f (\tilde{t}, Q, P) ,
+```
+for the stage vector fields ``V`` and ``F``, and the updates read
+```math
+q_{n+1} = q_{n} + h \, V ,
+\qquad
+p_{n+1} = p_{n} + h \, F .
+```
+Both components are coupled through ``v`` and ``f``, so the solver solution vector holds both
+stage vector fields and the nonlinear system is twice the size of the one for an ordinary
+differential equation. Even for a separable Hamiltonian the method does not decouple into two
+explicit substeps the way the symplectic Euler methods do: it is the Gauss method with a single
+stage, applied to the partitioned system.
+
 For an implicit differential equation, that is an `IODEProblem` or `LODEProblem`,
 ```math
 \begin{aligned}
@@ -42,8 +67,10 @@ isimplicit(method::ImplicitMidpoint) = true
 issymmetric(method::ImplicitMidpoint) = true
 issymplectic(method::ImplicitMidpoint) = true
 
-# besides ordinary differential equations the method is implemented for implicit ones, so the
-# corresponding traits are set explicitly, as they cannot follow from the supertype
+# besides ordinary differential equations the method is implemented for partitioned and implicit
+# ones, so the corresponding traits are set explicitly, as they cannot follow from the supertype
+ispodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
+ishodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
 isiodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
 islodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
 
@@ -77,6 +104,43 @@ function Cache{ST}(problem::ProblemODE, method::ImplicitMidpoint; kwargs...) whe
 end
 
 @inline CacheType(ST, ::ProblemODE, ::ImplicitMidpoint) = ImplicitMidpointCache{ST}
+
+
+@doc raw"""
+Implicit midpoint integrator cache for partitioned differential equations.
+
+### Fields
+
+* `x`: nonlinear solver solution vector, holding the stage vector fields ``V`` and ``F``
+* `q`: midpoint of the time step, ``Q = q_{n} + h V / 2``
+* `p`: midpoint of the time step, ``P = p_{n} + h F / 2``
+* `v`: stage vector field ``V``
+* `f`: stage vector field ``F``
+"""
+struct ImplicitMidpointPODECache{DT} <: PODEIntegratorCache{DT}
+    x::Vector{DT}
+    q::Vector{DT}
+    p::Vector{DT}
+    v::Vector{DT}
+    f::Vector{DT}
+
+    function ImplicitMidpointPODECache{DT}(ics) where {DT}
+        x = zeros(DT, length(vec(ics.q)) + length(vec(ics.p)))
+        q = zeros(DT, axes(ics.q))
+        p = zeros(DT, axes(ics.p))
+        v = zeros(DT, axes(ics.q))
+        f = zeros(DT, axes(ics.p))
+        new(x, q, p, v, f)
+    end
+end
+
+nlsolution(cache::ImplicitMidpointPODECache) = cache.x
+
+function Cache{ST}(problem::ProblemPODE, method::ImplicitMidpoint; kwargs...) where {ST}
+    ImplicitMidpointPODECache{ST}(initial_conditions(problem); kwargs...)
+end
+
+@inline CacheType(ST, ::ProblemPODE, ::ImplicitMidpoint) = ImplicitMidpointPODECache{ST}
 
 
 @doc raw"""
@@ -119,6 +183,11 @@ end
 # the solver solves for the stage vector field in the case of an ordinary and for the stage
 # velocity in the case of an implicit differential equation, so the size is the same for both
 solversize(::ImplicitMidpoint, problem::Union{ProblemODE,ProblemIODE}) = length(vec(initial_conditions(problem).q))
+
+# for a partitioned differential equation both stage vector fields are solved for, so the
+# nonlinear system is twice as large
+solversize(::ImplicitMidpoint, problem::ProblemPODE) =
+    length(vec(initial_conditions(problem).q)) + length(vec(initial_conditions(problem).p))
 
 default_solver(::ImplicitMidpoint) = Newton()
 default_iguess(::ImplicitMidpoint) = HermiteExtrapolation()
@@ -178,6 +247,96 @@ end
 
 
 function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE})
+    # call nonlinear solver
+    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+
+    # compute final update
+    update!(sol, params, nlsolution(int), int)
+end
+
+
+function initial_guess!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE})
+    local D = length(cache(int).q)
+    local x = nlsolution(int)
+
+    # temporary solution, extrapolated to the midpoint of the time step
+    ig = (t=sol.t - timestep(int) / 2, q=cache(int).q, p=cache(int).p, q̇=cache(int).v, ṗ=cache(int).f)
+
+    # compute initial guess
+    solutionstep!(ig, history, problem(int), iguess(int))
+
+    # assemble initial guess for nonlinear solver solution vector
+    # in contrast to the implicit case, the solver variables are the vector fields of the solution
+    # itself, so the extrapolated q̇ and ṗ are guesses for them as they are
+    for k in 1:D
+        x[k] = ig.q̇[k]
+        x[D+k] = ig.ṗ[k]
+    end
+end
+
+function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+    q = cache(int, ST).q
+    p = cache(int, ST).p
+    v = cache(int, ST).v
+    f = cache(int, ST).f
+
+    local D = length(q)
+
+    # stage time at the midpoint of the time step
+    t̃ = sol.t - timestep(int) / 2
+
+    # compute midpoints q = q̄ + Δt/2 * x[1:D] and p = p̄ + Δt/2 * x[D+1:2D],
+    # as the solver solution vector holds the stage vector fields (v, f)
+    for k in 1:D
+        q[k] = sol.q[k] + (timestep(int) / 2) * x[k]
+        p[k] = sol.p[k] + (timestep(int) / 2) * x[D+k]
+    end
+
+    # compute v = v(t̃, q, p) and f = f(t̃, q, p) at the midpoint
+    equations(int).v(v, t̃, q, p, params)
+    equations(int).f(f, t̃, q, p, params)
+end
+
+
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+    # get cache for internal stages
+    v = cache(int, ST).v
+    f = cache(int, ST).f
+
+    local D = length(cache(int, ST).q)
+
+    # compute residual b = (v, f) - x
+    for k in 1:D
+        b[k] = v[k] - x[k]
+        b[D+k] = f[k] - x[D+k]
+    end
+end
+
+
+# Compute stages of implicit midpoint methods for partitioned differential equations.
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+    axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
+
+    # compute stages from nonlinear solver solution x
+    components!(x, sol, params, int)
+
+    # compute residual vector
+    residual!(b, x, int)
+end
+
+
+function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {DT}
+    # compute vector fields at internal stages
+    # this has to precede the update, as the stages are computed relative to sol.q and sol.p
+    components!(x, sol, params, int)
+
+    # compute final update
+    sol.q .+= timestep(int) .* cache(int, DT).v
+    sol.p .+= timestep(int) .* cache(int, DT).f
+end
+
+
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE})
     # call nonlinear solver
     solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
 

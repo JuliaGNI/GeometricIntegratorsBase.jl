@@ -65,14 +65,14 @@ struct SymplecticEulerCache{DT} <: PODEIntegratorCache{DT}
     end
 end
 
-function Cache{ST}(problem::AbstractProblemPODE, method::SymplecticEulerMethod; kwargs...) where {ST}
+function Cache{ST}(problem::ProblemPODE, method::SymplecticEulerMethod; kwargs...) where {ST}
     SymplecticEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblemPODE, ::SymplecticEulerMethod) = SymplecticEulerCache{ST}
+@inline CacheType(ST, ::ProblemPODE, ::SymplecticEulerMethod) = SymplecticEulerCache{ST}
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerA,<:AbstractProblemPODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerA,<:ProblemPODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
     t̄ = sol.t - timestep(int)
 
@@ -86,7 +86,7 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:Symple
 end
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerB,<:AbstractProblemPODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerB,<:ProblemPODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
     t̄ = sol.t - timestep(int)
 

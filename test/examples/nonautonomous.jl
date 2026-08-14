@@ -13,6 +13,7 @@ using GeometricSolutions
 
 export nonautonomous_odeproblem, nonautonomous_ode_solution
 export nonautonomous_podeproblem, nonautonomous_hodeproblem
+export nonautonomous_pode_odeproblem
 export nonautonomous_iodeproblem, nonautonomous_lodeproblem
 export nonautonomous_iode_odeproblem
 export nonautonomous_hamiltonian, nonautonomous_lagrangian
@@ -90,6 +91,26 @@ end
 function nonautonomous_hodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
     HODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, nonautonomous_hamiltonian,
         timespan, timestep, q₀, p₀)
+end
+
+
+@doc raw"""
+The first order system ``x = (q, p)`` that [`nonautonomous_podeproblem`](@ref) is identical to,
+```math
+\dot{x}_{1} = x_{2} , \qquad \dot{x}_{2} = - (1 + t) \, x_{1} .
+```
+A method that is implemented for partitioned and for ordinary differential equations alike has to
+produce the very same map on the two, which pins down every stage time of the partitioned variant
+exactly, not just to leading order.
+"""
+function nonautonomous_pode_ode_v(v, t, x, params)
+    v[1] = x[2]
+    v[2] = -(1 + t) * x[1]
+    nothing
+end
+
+function nonautonomous_pode_odeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+    ODEProblem(nonautonomous_pode_ode_v, timespan, timestep, vcat(q₀, p₀))
 end
 
 

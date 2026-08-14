@@ -4,7 +4,7 @@ using PProf
 using GeometricIntegratorsBase
 using GeometricIntegratorsBase: Solution, solutionstep, enforce_periodicity!, ntime
 
-include("harmonic_oscillator.jl")
+include("examples/harmonic_oscillator.jl")
 
 using ..HarmonicOscillator
 

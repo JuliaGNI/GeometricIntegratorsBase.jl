@@ -25,11 +25,11 @@ struct ExplicitEulerCache{DT} <: ODEIntegratorCache{DT}
     end
 end
 
-function Cache{ST}(problem::AbstractProblem, method::ExplicitEuler; kwargs...) where {ST}
+function Cache{ST}(problem::ProblemODE, method::ExplicitEuler; kwargs...) where {ST}
     ExplicitEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblem, ::ExplicitEuler) = ExplicitEulerCache{ST}
+@inline CacheType(ST, ::ProblemODE, ::ExplicitEuler) = ExplicitEulerCache{ST}
 
 
 function update!(sol, params, _, int::GeometricIntegrator{<:ExplicitEuler})
@@ -38,7 +38,7 @@ function update!(sol, params, _, int::GeometricIntegrator{<:ExplicitEuler})
 end
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ExplicitEuler,<:AbstractProblemODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ExplicitEuler,<:ProblemODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q still holds qₙ
     t̄ = sol.t - timestep(int)
 
