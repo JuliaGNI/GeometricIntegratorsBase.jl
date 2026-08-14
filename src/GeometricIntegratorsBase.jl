@@ -29,6 +29,7 @@ import SimpleSolvers: NonlinearSolverException, NonlinearSolverMethod
 # package dispatch on the unconstrained unions below.
 const ProblemODE{DT,TT} = Union{ODEProblem{DT,TT},SubstepProblem{DT,TT}}
 const ProblemIODE{DT,TT} = Union{IODEProblem{DT,TT},LODEProblem{DT,TT}}
+const ProblemPODE{DT,TT} = Union{PODEProblem{DT,TT},HODEProblem{DT,TT}}
 
 
 export update!, reset!

@@ -67,6 +67,19 @@ end
         end
     end
 
+    @testset "Unsupported Problem Types" begin
+        # the methods neither enforce a constraint nor know about the additional equations of a
+        # differential algebraic problem, so those must be rejected rather than integrated as if
+        # the constraint were absent. in contrast to the implicit methods the error is a
+        # MethodError from `integrate_step!` rather than the ArgumentError of `initsolver`, which
+        # an explicit method never reaches: its `default_solver` is `NoSolver`
+        for method in (SymplecticEulerA(), SymplecticEulerB())
+            for prob in (pdaeproblem(), hdaeproblem())
+                @test_throws MethodError integrate(prob, method)
+            end
+        end
+    end
+
     @testset "Cache Structure" begin
         pode = podeproblem()
 
