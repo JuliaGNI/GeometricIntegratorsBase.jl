@@ -57,4 +57,26 @@ end
     # the implicit method evaluates at the end of the step instead, and so must differ
     @test integrate(nonautonomous, ImplicitEuler()).q[end] != sol.q[end]
 
+    @testset "Unsupported Problem Types" begin
+        # neither method enforces a constraint or knows about the additional equations of a
+        # differential algebraic problem, so those must be rejected rather than integrated as if
+        # the constraint were absent. `DAEProblem` in particular is a member of the
+        # `AbstractProblemODE` union and used to be integrated silently, which is the failure
+        # mode the unconstrained unions in `src/GeometricIntegratorsBase.jl` exist to prevent
+        for method in (ExplicitEuler(), ImplicitEuler())
+            for prob in (daeproblem(), pdaeproblem(), hdaeproblem())
+                err = try
+                    integrate(prob, method)
+                    nothing
+                catch e
+                    e
+                end
+
+                @test err isa ArgumentError
+                @test occursin(string(nameof(typeof(method))), err.msg)
+                @test occursin(string(nameof(typeof(equation(prob)))), err.msg)
+            end
+        end
+    end
+
 end

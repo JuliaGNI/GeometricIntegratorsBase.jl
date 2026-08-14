@@ -107,6 +107,24 @@ Performs one integration step of an integrator.
 function integrate_step! end
 
 
+# A method that implements no `integrate_step!` for the problem at hand does not support it.
+# Without this fallback the rejection surfaces as whatever exception the first unimplemented
+# piece of the machinery happens to raise — a `MethodError` from deep inside the time stepping
+# loop, or, where a method's `initial_guess!` is not constrained to the problem types it
+# implements, a `FieldError` from the cache — none of which say what is wrong. Methods that do
+# use a nonlinear solver are caught earlier, by the same check in `initsolver`, so the wording
+# here is that of `src/solvers.jl` verbatim: the rejection reads the same for every method,
+# whether or not it solves.
+#
+# Every `integrate_step!` of an actual method is more specific than this, so nothing that is
+# implemented is intercepted.
+function integrate_step!(sol, history, params, int::GeometricIntegrator)
+    throw(ArgumentError(string(
+        nameof(typeof(method(int))), " does not support problems of type ",
+        nameof(typeof(equation(problem(int)))), ".")))
+end
+
+
 """
 ```julia
 internal_variables(::Integrator) = NamedTuple()

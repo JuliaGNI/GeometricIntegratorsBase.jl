@@ -70,12 +70,21 @@ end
     @testset "Unsupported Problem Types" begin
         # the methods neither enforce a constraint nor know about the additional equations of a
         # differential algebraic problem, so those must be rejected rather than integrated as if
-        # the constraint were absent. in contrast to the implicit methods the error is a
-        # MethodError from `integrate_step!` rather than the ArgumentError of `initsolver`, which
-        # an explicit method never reaches: its `default_solver` is `NoSolver`
+        # the constraint were absent, and the error has to say so. an explicit method never
+        # reaches the check in `initsolver` — its `default_solver` is `NoSolver` — so the
+        # rejection comes from the `integrate_step!` fallback instead, in the same words
         for method in (SymplecticEulerA(), SymplecticEulerB())
             for prob in (pdaeproblem(), hdaeproblem())
-                @test_throws MethodError integrate(prob, method)
+                err = try
+                    integrate(prob, method)
+                    nothing
+                catch e
+                    e
+                end
+
+                @test err isa ArgumentError
+                @test occursin(string(nameof(typeof(method))), err.msg)
+                @test occursin(string(nameof(typeof(equation(prob)))), err.msg)
             end
         end
     end

@@ -31,14 +31,14 @@ end
 
 nlsolution(cache::ImplicitEulerCache) = cache.x
 
-function Cache{ST}(problem::AbstractProblem, method::ImplicitEuler; kwargs...) where {ST}
+function Cache{ST}(problem::ProblemODE, method::ImplicitEuler; kwargs...) where {ST}
     ImplicitEulerCache{ST}(initial_conditions(problem); kwargs...)
 end
 
-@inline CacheType(ST, ::AbstractProblem, ::ImplicitEuler) = ImplicitEulerCache{ST}
+@inline CacheType(ST, ::ProblemODE, ::ImplicitEuler) = ImplicitEulerCache{ST}
 
 
-solversize(::ImplicitEuler, problem::AbstractProblemODE) = length(vec(initial_conditions(problem).q))
+solversize(::ImplicitEuler, problem::ProblemODE) = length(vec(initial_conditions(problem).q))
 
 default_solver(::ImplicitEuler) = Newton()
 default_iguess(::ImplicitEuler) = HermiteExtrapolation()
@@ -105,7 +105,7 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
 end
 
 
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitEuler,<:AbstractProblemODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitEuler,<:ProblemODE})
     # call nonlinear solver
     solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
 

@@ -11,6 +11,7 @@ using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplecti
 using SimpleSolvers: Newton
 using ..HarmonicOscillator
 using ..NonautonomousProblems
+using ..NonlinearProblems
 
 
 @testset "$(rpad("ImplicitMidpoint Method Tests", 80))" begin
@@ -195,9 +196,14 @@ using ..NonautonomousProblems
             # a partitioned problem whose two components are collected into a single state vector
             # is an ordinary differential equation, and the method applied to either of the two is
             # the very same map. this pins the stage times down exactly, whereas a convergence
-            # order test only detects them to leading order
+            # order test only detects them to leading order.
+            # the harmonic oscillator and the non-autonomous problem are both linear and separable,
+            # so the solve converges in a single Newton step and the blocks of the residual
+            # Jacobian that couple the two components vanish. the nonlinear problem has neither
+            # property and pins down the coupled residual and the solver iterates as well
             for (pode, ode) in ((podeproblem(), odeproblem()),
-                (nonautonomous_podeproblem(), nonautonomous_pode_odeproblem()))
+                (nonautonomous_podeproblem(), nonautonomous_pode_odeproblem()),
+                (nonlinear_podeproblem(), nonlinear_pode_odeproblem()))
 
                 sp = integrate(pode, ImplicitMidpoint(); x_abstol=1e-14, f_abstol=1e-14)
                 so = integrate(ode, ImplicitMidpoint(); x_abstol=1e-14, f_abstol=1e-14)

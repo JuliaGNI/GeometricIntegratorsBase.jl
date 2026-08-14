@@ -25,6 +25,25 @@ using ..HarmonicOscillator
         @test default_iguess(method) isa HermiteExtrapolation
     end
 
+    @testset "Unsupported Problem Types" begin
+        # the method neither enforces a constraint nor knows about the additional equations of a
+        # differential algebraic problem, so those must be rejected rather than integrated as if
+        # the constraint were absent, and the error has to say so. `DAEProblem` is a member of
+        # the `AbstractProblemODE` union and used to be integrated silently
+        for prob in (daeproblem(), pdaeproblem(), hdaeproblem())
+            err = try
+                integrate(prob, ImplicitEuler())
+                nothing
+            catch e
+                e
+            end
+
+            @test err isa ArgumentError
+            @test occursin("ImplicitEuler", err.msg)
+            @test occursin(string(nameof(typeof(equation(prob)))), err.msg)
+        end
+    end
+
     @testset "Cache Structure" begin
         ode = odeproblem()
         method = ImplicitEuler()
