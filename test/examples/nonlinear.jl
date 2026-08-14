@@ -1,17 +1,19 @@
 @doc raw"""
 # Nonlinear Test Problems
 
-Every partitioned problem in [`HarmonicOscillator`](@ref) and [`NonautonomousProblems`](@ref) is
-linear and separable, that is ``v = v(t,p)`` and ``f = f(t,q)``. Two things go untested on such a
-problem: the nonlinear solve converges in a single Newton step, and the off-diagonal blocks
+Every problem in [`HarmonicOscillator`](@ref) and [`NonautonomousProblems`](@ref) is linear, and
+every partitioned one is separable on top of that, that is ``v = v(t,p)`` and ``f = f(t,q)``.
+Three things go untested on such problems: the nonlinear solve converges in a single Newton step,
+methods that coincide on a linear problem are indistinguishable, and the off-diagonal blocks
 ``\partial v / \partial q`` and ``\partial f / \partial p`` of the residual Jacobian vanish, so
 the two halves of the solver solution vector of a partitioned integrator are never actually
-coupled. The problems collected here are nonlinear and non-separable and exercise both.
+coupled. The problems collected here exercise all three.
 """
 module NonlinearProblems
 
 using GeometricEquations
 
+export riccati_problem, riccati_error
 export nonlinear_podeproblem, nonlinear_hodeproblem, nonlinear_pode_odeproblem
 
 
@@ -22,6 +24,27 @@ const timespan = (t₀, Δt * nt)
 
 const q₀ = [0.5]
 const p₀ = [0.3]
+
+
+@doc raw"""
+The Riccati equation
+```math
+\dot{q} = - q^{2} ,
+```
+whose exact solution is ``q(t) = 1 / (1 + t)`` for ``q(0) = 1``.
+
+The ordinary counterpart of the partitioned problem below. It tells the midpoint rule and the
+trapezoidal rule apart, which are the same map on a linear problem, and it makes the nonlinear
+solve take more than the single Newton step a linear problem needs.
+"""
+riccati_v(v, t, q, params) = (v[1] = -q[1]^2; nothing)
+
+riccati_problem(; timestep=Δt) = ODEProblem(riccati_v, (0.0, 1.0), timestep, [1.0])
+
+"""
+Maximum absolute error of a solution of [`riccati_problem`](@ref) against its exact solution.
+"""
+riccati_error(sol) = maximum(abs(sol.q[n][1] - 1 / (1 + sol.t[n])) for n in axes(sol.q, 1))
 
 
 @doc raw"""
