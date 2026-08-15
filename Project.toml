@@ -1,6 +1,6 @@
 name = "GeometricIntegratorsBase"
 uuid = "71212ab4-08a2-48eb-a02b-4cbad0e9c44a"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["Michael Kraus <michael.kraus@ipp.mpg.de> and contributors"]
 
 [workspace]
@@ -23,7 +23,7 @@ GeometricSolutions = "0.6.3"
 LinearAlgebra = "1"
 OffsetArrays = "1"
 SafeTestsets = "0.1.0"
-SimpleSolvers = "0.11"
+SimpleSolvers = "0.12.1"
 Unicode = "1"
 julia = "1.10"
 

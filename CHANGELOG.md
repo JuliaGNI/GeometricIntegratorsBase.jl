@@ -7,6 +7,71 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## 0.6.3
+
+### Breaking Changes
+
+* Requires SimpleSolvers 0.12.1. 0.12 is breaking for a caller of this package in one way that
+  matters: a `NonlinearSolver` no longer emits line-search warnings from inside its iteration, so a
+  rejected line search reaches its caller through the returned status and nobody at all if the
+  caller drops it. That is what the change below is for. The other two breaks of 0.12 —
+  `NonlinearSolverStatus` gaining a field, and a `LinesearchMethod` implementing
+  `solve_with_status` rather than `solve` — do not reach this package, which constructs neither.
+
+  Nothing measurable moves. 0.12's other behavioural change, `Bisection` bisecting toward a minimum
+  rather than toward whichever root the value bracket held, does not apply here either:
+  `default_linesearch` is `Backtracking` and every method in this package solves with `Newton()`.
+  The full suite passes unedited, including the two assertions that would have caught a change in
+  what a solve says — `test/integrators/common_tests.jl`, which requires a converged solve to be
+  *silent*, and `test/integrator_tests.jl`, which pins the exact wording of the failure warning.
+
+### New Features
+
+* Every nonlinear solve now goes through `solve_with_status!` rather than `solve!`, and the
+  `SimpleSolvers.NonlinearSolverStatus` it returns is handed to a new `check_solver_status`. This
+  is the seven `integrate_step!` methods of `ImplicitEuler`, `ImplicitMidpoint` and
+  `CrankNicolson`, and it replaces the pair of commented-out stubs (`# println(status(solver))`,
+  `# println(meets_stopping_criteria(status(solver)))`) that had sat under the solve since before
+  the status existed in its current form.
+
+  `solve_with_status!` is used in its state-taking form, added in SimpleSolvers 0.12.1 at this
+  package's request. The other two forms build a `NonlinearSolverState` per call, which in a
+  time-stepping loop is one allocation per step and would also have detached the status from
+  `solverstate(int)` — the object a caller reads a solve through afterwards, as
+  GeometricIntegrators' SPARK tests do.
+
+  **The migration costs nothing.** That is worth stating because it was not true of the first cut:
+  `solve_with_status!` was `solve!` followed by `status(s, state)`, and `solve!` had *already* built
+  a status internally to hand to its own warning path and then discarded it — so reading the outcome
+  cost a second `NonlinearSolverStatus`, i.e. five `l2norm` passes per solve, per step. The review of
+  the upstream pull request caught it, and 0.12.1 ships both entry points sharing one body that
+  returns the status the loop built. So the status is now genuinely free: it is the value
+  SimpleSolvers computes for its own report either way, handed back instead of thrown away.
+
+* `check_solver_status(status, int)` is **silent by default, deliberately**, and the docstring says
+  why at length: SimpleSolvers reports a solve that did not converge itself, once per solve and
+  with a back-off (occurrences 1, 2, 4, 8, …) that exists precisely because a time-stepping loop is
+  the case that floods. Warning here as well would say the same thing twice per step. What the
+  function buys is that the status is never silently dropped and that there is *one* place to
+  change the policy for all of them — overriding it is how a downstream family of methods becomes
+  strict about non-convergence, in the same way that overriding `default_options` is how it changes
+  solver options in one place. It is exported for that reason.
+
+* The line-search tally is covered by `test/solver_tests.jl`. It is the one thing the migration
+  exists for and the one thing nothing asserted: the suite pinned the wording of the
+  non-convergence warning and required a converged solve to be silent, but a *rejected line search*
+  — the diagnostic 0.12 stopped logging from inside the iteration — was checked by nothing, which
+  is why widening the compat entry alone passed CI green. The new assertion drives a solve onto an
+  ascent direction with a sign-flipped Jacobian and requires the rejection to be readable off the
+  status that reaches `check_solver_status`.
+
+  It asks `dominant_linesearch_outcome(status, false)` rather than `linesearch_failures(status) > 0`
+  because the latter is vacuous here: a converged solve reaches the merit's round-off floor on its
+  last step, `LINESEARCH_FLOOR` counts as a failure, and the bare count is therefore positive for a
+  solve where nothing went wrong. The converged solve is asserted the same question alongside it,
+  so the two readings differ for the reason claimed.
+
+
 ## 0.6.2
 
 ### Breaking Changes
@@ -428,6 +493,31 @@ collection:
 
 The items below are the unresolved entries of `todo.md`, kept here so that they are visible
 alongside the releases that created them.
+
+### `check_solver_status` acts on nothing — open, by decision
+
+0.6.3 routes every step's solve through `solve_with_status!` and hands the status to
+`check_solver_status`, whose default body returns it and does nothing else. That was the deliberate
+choice for the release — SimpleSolvers is left as the single reporting voice, so no existing run
+changes what it prints — but it means the status is *available* rather than *used*, and the
+interesting thing to do with it is still undone.
+
+The obvious next step is one level up, in `integrate!`: it already recognises two ways a step can
+go wrong (a `NonlinearSolverException`, and NaNs in the iterate), warns naming the time step, and
+returns the trajectory computed so far rather than discarding it. A step whose solve merely failed
+to converge is a third, is now detectable for the first time, and currently produces a trajectory
+that continues past the point where it stopped being trustworthy with nothing in `sol` to mark it.
+Doing this is a behaviour change for any run that currently limps along, which is why it was not
+folded into a compat bump.
+
+### A repeating non-convergence is reported on 1, 2, 4, 8, … — open
+
+SimpleSolvers 0.12 replaced the `maxlog` caps on its solver report with a back-off, so a diagnosis
+that repeats is reported on its 1st, 2nd, 4th, 8th … occurrence. In a time-stepping loop that is
+the right shape — the alternative is one message per step — but it means occurrence 10 of a
+failing solve is silent, and nothing in this package compensates or counts. A caller who wants
+"how many of my 10 000 steps did not converge" cannot get it from the log, and `check_solver_status`
+is where a tally would go.
 
 ### `default_options` restatements downstream — open
 
