@@ -57,6 +57,20 @@ so that a compat-only bump can be told apart from an interface change.
   strict about non-convergence, in the same way that overriding `default_options` is how it changes
   solver options in one place. It is exported for that reason.
 
+* The line-search tally is covered by `test/solver_tests.jl`. It is the one thing the migration
+  exists for and the one thing nothing asserted: the suite pinned the wording of the
+  non-convergence warning and required a converged solve to be silent, but a *rejected line search*
+  — the diagnostic 0.12 stopped logging from inside the iteration — was checked by nothing, which
+  is why widening the compat entry alone passed CI green. The new assertion drives a solve onto an
+  ascent direction with a sign-flipped Jacobian and requires the rejection to be readable off the
+  status that reaches `check_solver_status`.
+
+  It asks `dominant_linesearch_outcome(status, false)` rather than `linesearch_failures(status) > 0`
+  because the latter is vacuous here: a converged solve reaches the merit's round-off floor on its
+  last step, `LINESEARCH_FLOOR` counts as a failure, and the bare count is therefore positive for a
+  solve where nothing went wrong. The converged solve is asserted the same question alongside it,
+  so the two readings differ for the reason claimed.
+
 
 ## 0.6.2
 
