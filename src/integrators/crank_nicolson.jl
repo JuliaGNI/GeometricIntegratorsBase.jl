@@ -283,7 +283,8 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankN
     equations(int).v(cache(int).v̄, sol.t - timestep(int), sol.q, params)
 
     # call nonlinear solver
-    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    check_solver_status(solverstatus, int)
 
     # compute final update
     update!(sol, params, nlsolution(int), int)
@@ -390,7 +391,8 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankN
     equations(int).f(cache(int).f̄, sol.t - timestep(int), sol.q, sol.p, params)
 
     # call nonlinear solver
-    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    check_solver_status(solverstatus, int)
 
     # compute final update
     update!(sol, params, nlsolution(int), int)
@@ -501,7 +503,8 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:CrankN
     # call nonlinear solver
     # in contrast to the explicit case, nothing is precomputed at the beginning of the time
     # step: the velocity there is determined implicitly and is part of the solver solution
-    solve!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    check_solver_status(solverstatus, int)
 
     # compute final update
     update!(sol, params, nlsolution(int), int)

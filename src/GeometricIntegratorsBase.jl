@@ -83,6 +83,8 @@ export cache, nlsolution
 include("cache.jl")
 
 
+export check_solver_status
+
 include("solvers.jl")
 
 

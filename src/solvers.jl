@@ -109,3 +109,42 @@ end
 # This accounts for the SimpleSolvers interface, expecting a single parameter argument,
 # whereas the typical `residual!` methods expect a number of additional arguments.
 residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
+
+"""
+    check_solver_status(status, int)
+
+Act on the outcome of the nonlinear solve of one time step. Every `integrate_step!` that solves
+calls this with the `SimpleSolvers.NonlinearSolverStatus` that `solve_with_status!` returned, and
+returns whatever it returns.
+
+**It is silent by default, and that is the point of it rather than an omission.** SimpleSolvers
+reports a solve that did not converge itself, from the end of its own `solve!`, and since 0.12 the
+status is the *programmatic* counterpart of that report rather than a replacement for it — a caller
+that wants to act on a rejected line search reads `SimpleSolvers.dominant_linesearch_outcome`
+instead of scraping the log. Warning here as well would say the same thing twice per time step, and
+SimpleSolvers' own report already backs off (occurrences 1, 2, 4, 8, …) precisely because a
+time-stepping loop is the case that floods.
+
+What it buys is that the status is never silently dropped: it arrives somewhere named, on every one
+of the call sites, and there is one place — this one — to change the policy for all of them.
+Overriding it is how a downstream family of methods becomes strict about non-convergence, in the
+same way that overriding [`default_options`](@ref) is how it changes solver options in one place:
+
+```julia
+function GeometricIntegratorsBase.check_solver_status(status, int::GeometricIntegrator{<:MyMethod})
+    SimpleSolvers.isconverged(status) || throw(NonlinearSolverException("step did not converge"))
+    status
+end
+```
+
+`NonlinearSolverException` is the type to throw, because `integrate!` already catches exactly that
+one, warns with the time step it failed at, and returns the trajectory computed so far instead of
+discarding it — see `src/integrate.jl`. Anything else propagates and loses the solution.
+
+Both arguments of the fallback are untyped on purpose. `status` is, so that this package does not
+have to enumerate SimpleSolvers' status types to stay reachable — every solver method produces a
+`NonlinearSolverStatus` today, but the hook has no reason to care. `int` is, so that *every*
+integrator reaches the default; an override narrows one or both, which is what makes it a per-method
+policy rather than a global one.
+"""
+check_solver_status(status, int) = status

@@ -5,6 +5,7 @@ import GeometricIntegratorsBase: DEFAULT_F_STALL_WINDOW
 import GeometricIntegratorsBase: default_linesearch, default_options, initsolver
 
 using SimpleSolvers: Backtracking, F_STALL_REPORT_MINIMUM
+using SimpleSolvers: NewtonSolver, NonlinearSolverStatus, SolverState, isconverged, solve_with_status!
 
 using ..HarmonicOscillator
 
@@ -52,3 +53,34 @@ caches = CacheDict(prob, TestMethod())
 # the window has to stay above the count below which SimpleSolvers holds the no-progress
 # proportion to be no evidence of anything: giving up on less than it will report on is incoherent
 @test DEFAULT_F_STALL_WINDOW > F_STALL_REPORT_MINIMUM
+
+
+# `check_solver_status` is the one place the outcome of a step's solve is acted on. Its default is
+# silent — SimpleSolvers reports a failed solve itself, and saying so again would double every
+# message in a time-stepping loop — so what is asserted here is exactly that: that it says nothing
+# for a converged *and* for a non-converged status, and that it hands the status straight back, so
+# that a call site can chain it and an override can decide on the same value the caller sees.
+# The second argument is passed as `nothing` because the fallback is untyped in it and must stay
+# so; that it can be narrowed to dispatch per method family is a property of Julia, not of this
+# function, and is not what these assertions are for.
+let
+    F!(y, x, params) = y .= x .^ 2 .- 2
+    x = [1.0]
+    s = NewtonSolver(x, similar(x); F=F!, verbosity=0)
+    state = SolverState(s)
+    st = solve_with_status!(x, s, state)
+
+    @test st isa NonlinearSolverStatus
+    @test isconverged(st)
+
+    # returns its first argument unchanged, and says nothing while doing it
+    @test @test_nowarn(check_solver_status(st, nothing)) === st
+
+    # a non-converged status is *also* silent by default: the report is SimpleSolvers' to make
+    y = [1.0]
+    s2 = NewtonSolver(y, similar(y); F=F!, verbosity=0, max_iterations=1, min_iterations=1)
+    state2 = SolverState(s2)
+    st2 = solve_with_status!(y, s2, state2)
+    @test !isconverged(st2)
+    @test @test_nowarn(check_solver_status(st2, nothing)) === st2
+end
