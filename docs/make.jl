@@ -6,6 +6,8 @@ using GeometricSolutions
 
 DocMeta.setdocmeta!(GeometricIntegratorsBase, :DocTestSetup, :(using GeometricIntegratorsBase); recursive=true)
 
+cp(normpath(@__FILE__, "../../CHANGELOG.md"), normpath(@__FILE__, "../src/releasenotes.md"); force=true)
+
 links = InterLinks(
     "GeometricEquations" => "https://JuliaGNI.github.io/GeometricEquations.jl/stable/",
 )
@@ -30,6 +32,7 @@ makedocs(;
             "Problems" => "deps/problems.md",
             "Solutions" => "deps/solutions.md",
         ],
+        "Release Notes" => "releasenotes.md",
     ],
     modules=[
         GeometricIntegratorsBase,
