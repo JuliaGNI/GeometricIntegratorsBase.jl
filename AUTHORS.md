@@ -9,6 +9,6 @@ GeometricIntegratorsBase' development is coordinated by a group of *principal de
 
 ## Contributors
 
-The following people contributed to GeometricIntegrators and are listed in alphabetical order:
+The following people contributed to GeometricIntegratorsBase and are listed in alphabetical order:
 
 * Michael Kraus
