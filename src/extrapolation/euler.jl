@@ -27,28 +27,26 @@ where
 """
 struct EulerExtrapolation <: Extrapolation
     s::Int
-    function EulerExtrapolation(s=default_extrapolation_stages)
+    function EulerExtrapolation(s = default_extrapolation_stages)
         s ≥ 0 || throw(ArgumentError("Number of stages s must be non-negative, got $s"))
         new(s)
     end
 end
 
-
 function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
-    t₁::TT, x₁::AbstractArray{DT},
-    problem::AbstractProblemODE,
-    extrap::EulerExtrapolation) where {DT,TT}
-
+        t₁::TT, x₁::AbstractArray{DT},
+        problem::AbstractProblemODE,
+        extrap::EulerExtrapolation) where {DT, TT}
     axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
-    F = collect(1:(extrap.s+1))
+    F = collect(1:(extrap.s + 1))
     σ = (t₁ - t₀) ./ F
     pts = [copy(x₀) for _ in F]
 
     vᵢ = zero(x₀)
 
     for i in F
-        for k in 0:(F[i]-1)
+        for k in 0:(F[i] - 1)
             initialguess(problem).v(vᵢ, t₀ + k * σ[i], pts[i], parameters(problem))
             pts[i] .+= σ[i] * vᵢ
         end
@@ -59,12 +57,13 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT},
     return x₁
 end
 
-function extrapolate!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::EulerExtrapolation)
+function extrapolate!(sol, history, problem::Union{AbstractProblemODE, SODEProblem}, extrap::EulerExtrapolation)
     extrapolate!(value(history.t), history.q, value(sol.t), sol.q, problem, extrap)
     return sol
 end
 
-function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::EulerExtrapolation)
+function solutionstep!(sol, history, problem::Union{AbstractProblemODE, SODEProblem},
+        extrap::EulerExtrapolation)
     extrapolate!(history[1].t, history[1].q, sol.t, sol.q, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, parameters(problem))
     # update_vectorfields!(sol, problem)

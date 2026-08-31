@@ -9,7 +9,6 @@ using ..HarmonicOscillator
 using ..NonautonomousProblems
 using ..NonlinearProblems
 
-
 # Properties every integrator in this package has to have, asserted for all of them from one
 # place rather than restated in each method's test file. What belongs here is what is stated in
 # the same words for every method — that unsupported problems are rejected, that a supported one
@@ -18,20 +17,19 @@ using ..NonlinearProblems
 # rationale is particular to a method: its traits, its cache layout, its energy behaviour, and
 # the schemes it is or is not supposed to coincide with. Those stay in the per-method files.
 
-
 # All problem types the test problems cover, by the name this file refers to them by.
 const PROBLEMS = (
-    ode=odeproblem,
-    pode=podeproblem,
-    hode=hodeproblem,
-    iode=iodeproblem,
-    lode=lodeproblem,
-    sode=sodeproblem,
-    dae=daeproblem,
-    pdae=pdaeproblem,
-    hdae=hdaeproblem,
-    idae=idaeproblem,
-    ldae=ldaeproblem,
+    ode = odeproblem,
+    pode = podeproblem,
+    hode = hodeproblem,
+    iode = iodeproblem,
+    lode = lodeproblem,
+    sode = sodeproblem,
+    dae = daeproblem,
+    pdae = pdaeproblem,
+    hdae = hdaeproblem,
+    idae = idaeproblem,
+    ldae = ldaeproblem
 )
 
 # Every integrator, with the problem types it implements, the order it converges at, and the
@@ -39,12 +37,14 @@ const PROBLEMS = (
 # method here is what subjects it to everything below, so a new integrator that forgets to
 # reject a constrained problem, or that is a half order off, is caught without writing a test.
 const INTEGRATORS = (
-    (method=ExplicitEuler(), order=1, accuracy=5E-2, problems=(:ode,)),
-    (method=ImplicitEuler(), order=1, accuracy=5E-2, problems=(:ode,)),
-    (method=SymplecticEulerA(), order=1, accuracy=5E-2, problems=(:pode, :hode)),
-    (method=SymplecticEulerB(), order=1, accuracy=5E-2, problems=(:pode, :hode)),
-    (method=ImplicitMidpoint(), order=2, accuracy=1E-3, problems=(:ode, :pode, :hode, :iode, :lode)),
-    (method=CrankNicolson(), order=2, accuracy=1E-3, problems=(:ode, :pode, :hode, :iode, :lode)),
+    (method = ExplicitEuler(), order = 1, accuracy = 5E-2, problems = (:ode,)),
+    (method = ImplicitEuler(), order = 1, accuracy = 5E-2, problems = (:ode,)),
+    (method = SymplecticEulerA(), order = 1, accuracy = 5E-2, problems = (:pode, :hode)),
+    (method = SymplecticEulerB(), order = 1, accuracy = 5E-2, problems = (:pode, :hode)),
+    (method = ImplicitMidpoint(), order = 2, accuracy = 1E-3,
+        problems = (:ode, :pode, :hode, :iode, :lode)),
+    (method = CrankNicolson(), order = 2, accuracy = 1E-3,
+        problems = (:ode, :pode, :hode, :iode, :lode))
 )
 
 # Pairs of formulations of one and the same equation: a partitioned or implicit problem and the
@@ -55,29 +55,36 @@ const INTEGRATORS = (
 # residual Jacobian that couple the two components vanish; the nonlinear problem has neither
 # property and pins down the coupled residual and the solver iterates as well.
 const EQUIVALENT_FORMULATIONS = (
-    (kind=:pode, problem=podeproblem, ode=odeproblem, autonomous=true),
-    (kind=:pode, problem=nonautonomous_podeproblem, ode=nonautonomous_pode_odeproblem, autonomous=false),
-    (kind=:pode, problem=nonlinear_podeproblem, ode=nonlinear_pode_odeproblem, autonomous=true),
-    (kind=:hode, problem=nonlinear_hodeproblem, ode=nonlinear_pode_odeproblem, autonomous=true),
-    (kind=:iode, problem=iodeproblem, ode=odeproblem, autonomous=true),
-    (kind=:iode, problem=nonautonomous_iodeproblem, ode=nonautonomous_iode_odeproblem, autonomous=false),
-    (kind=:lode, problem=nonautonomous_lodeproblem, ode=nonautonomous_iode_odeproblem, autonomous=false),
+    (kind = :pode, problem = podeproblem, ode = odeproblem, autonomous = true),
+    (kind = :pode, problem = nonautonomous_podeproblem,
+        ode = nonautonomous_pode_odeproblem, autonomous = false),
+    (kind = :pode, problem = nonlinear_podeproblem,
+        ode = nonlinear_pode_odeproblem, autonomous = true),
+    (kind = :hode, problem = nonlinear_hodeproblem,
+        ode = nonlinear_pode_odeproblem, autonomous = true),
+    (kind = :iode, problem = iodeproblem, ode = odeproblem, autonomous = true),
+    (kind = :iode, problem = nonautonomous_iodeproblem,
+        ode = nonautonomous_iode_odeproblem, autonomous = false),
+    (kind = :lode, problem = nonautonomous_lodeproblem,
+        ode = nonautonomous_iode_odeproblem, autonomous = false)
 )
 
 # Pairs of a problem and the same problem enriched by a Hamiltonian, or by ω and a Lagrangian.
 # The additional data does not enter the integration, so both have to give the same solution.
 const ENRICHED_FORMULATIONS = (
-    (plain=:pode, problem=podeproblem, enriched=:hode, enrichment=hodeproblem),
-    (plain=:pode, problem=nonautonomous_podeproblem, enriched=:hode, enrichment=nonautonomous_hodeproblem),
-    (plain=:pode, problem=nonlinear_podeproblem, enriched=:hode, enrichment=nonlinear_hodeproblem),
-    (plain=:iode, problem=iodeproblem, enriched=:lode, enrichment=lodeproblem),
-    (plain=:iode, problem=nonautonomous_iodeproblem, enriched=:lode, enrichment=nonautonomous_lodeproblem),
+    (plain = :pode, problem = podeproblem, enriched = :hode, enrichment = hodeproblem),
+    (plain = :pode, problem = nonautonomous_podeproblem,
+        enriched = :hode, enrichment = nonautonomous_hodeproblem),
+    (plain = :pode, problem = nonlinear_podeproblem,
+        enriched = :hode, enrichment = nonlinear_hodeproblem),
+    (plain = :iode, problem = iodeproblem, enriched = :lode, enrichment = lodeproblem),
+    (plain = :iode, problem = nonautonomous_iodeproblem,
+        enriched = :lode, enrichment = nonautonomous_lodeproblem)
 )
 
 # The timesteps the convergence order is measured over, and the factor the error is expected to
 # shrink by from one to the next, which is 2^order for a method of that order.
 const TIMESTEPS = (0.1, 0.05, 0.025)
-
 
 methodname(method) = string(nameof(typeof(method)))
 
@@ -90,14 +97,13 @@ end
 
 # The order of a method is the factor its error shrinks by when the timestep is halved.
 function convergence_ratios(method, problem)
-    errs = [
-        begin
-            prob = problem(; timestep=Δt)
-            maxerror(integrate(prob, method), exact_solution(prob))
-        end for Δt in TIMESTEPS
-    ]
+    errs = [begin
+                prob = problem(; timestep = Δt)
+                maxerror(integrate(prob, method), exact_solution(prob))
+            end
+            for Δt in TIMESTEPS]
 
-    errs[1:end-1] ./ errs[2:end]
+    errs[1:(end - 1)] ./ errs[2:end]
 end
 
 # The final state of a reference solution of a first order system, accurate enough not to enter
@@ -105,11 +111,11 @@ end
 # error of order 1E-6, some three orders below the error of a second order method at the smallest
 # timestep measured. It is a *fixed* method rather than the one under test, so that the reference
 # is available for the methods that do not implement the first order formulation themselves.
-reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMidpoint()).q[end]
-
+function reference_final_state(problem)
+    integrate(problem(; timestep = 1E-3), ImplicitMidpoint()).q[end]
+end
 
 @testset "$(rpad("Common Integrator Tests", 80))" begin
-
     @testset "Unsupported Problem Types" begin
         # no method in this package enforces a constraint or knows about the additional equations
         # of a differential algebraic problem, so those must be rejected rather than integrated as
@@ -118,6 +124,7 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
         # `initsolver` raises it for a method that solves, the `integrate_step!` fallback for one
         # that does not
         for integrator in INTEGRATORS, (kind, problem) in pairs(PROBLEMS)
+
             kind in integrator.problems && continue
 
             prob = problem()
@@ -138,6 +145,7 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
         # the solution covers the whole time span, is finite throughout, and is of the data type
         # of the problem rather than of whatever the solver happened to compute in
         for integrator in INTEGRATORS, kind in integrator.problems
+
             prob = PROBLEMS[kind]()
             sol = integrate(prob, integrator.method)
 
@@ -154,15 +162,17 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
 
     @testset "Integration Accuracy" begin
         for integrator in INTEGRATORS, kind in integrator.problems
+
             prob = PROBLEMS[kind]()
-            @test maxerror(integrate(prob, integrator.method), exact_solution(prob)) < integrator.accuracy
+            @test maxerror(integrate(prob, integrator.method), exact_solution(prob)) <
+                  integrator.accuracy
 
             # a converged solve is silent, so tight tolerances must not produce solver warnings
             isimplicit(integrator.method) || continue
 
             sol = @test_nowarn integrate(prob, integrator.method;
-                x_abstol=1e-12,
-                f_abstol=1e-12,
+                x_abstol = 1e-12,
+                f_abstol = 1e-12
             )
             @test maxerror(sol, exact_solution(prob)) < integrator.accuracy
         end
@@ -171,8 +181,9 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
     @testset "Convergence Order" begin
         # halving the timestep reduces the error by 2^order, so the ratio identifies the order
         for integrator in INTEGRATORS, kind in integrator.problems
+
             ratios = convergence_ratios(integrator.method, PROBLEMS[kind])
-            @test all(isapprox.(ratios, 2^integrator.order; atol=2E-1))
+            @test all(isapprox.(ratios, 2^integrator.order; atol = 2E-1))
         end
     end
 
@@ -184,14 +195,13 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
         for integrator in INTEGRATORS
             :ode in integrator.problems || continue
 
-            errs = [
-                begin
-                    prob = nonautonomous_odeproblem(; timestep=Δt)
-                    maxerror(integrate(prob, integrator.method), nonautonomous_ode_solution(prob))
-                end for Δt in TIMESTEPS
-            ]
+            errs = [begin
+                        prob = nonautonomous_odeproblem(; timestep = Δt)
+                        maxerror(integrate(prob, integrator.method), nonautonomous_ode_solution(prob))
+                    end
+                    for Δt in TIMESTEPS]
 
-            @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 2^integrator.order; atol=3E-1))
+            @test all(isapprox.(errs[1:(end - 1)] ./ errs[2:end], 2^integrator.order; atol = 3E-1))
         end
 
         # the partitioned and implicit formulations have no closed form solution here, so the
@@ -204,14 +214,13 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
             for integrator in INTEGRATORS
                 formulation.kind in integrator.problems || continue
 
-                errs = [
-                    begin
-                        sol = integrate(formulation.problem(; timestep=Δt), integrator.method)
-                        max(abs(sol.q[end][1] - ref[1]), abs(sol.p[end][1] - ref[2]))
-                    end for Δt in TIMESTEPS
-                ]
+                errs = [begin
+                            sol = integrate(formulation.problem(; timestep = Δt), integrator.method)
+                            max(abs(sol.q[end][1] - ref[1]), abs(sol.p[end][1] - ref[2]))
+                        end
+                        for Δt in TIMESTEPS]
 
-                @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 2^integrator.order; atol=3E-1))
+                @test all(isapprox.(errs[1:(end - 1)] ./ errs[2:end], 2^integrator.order; atol = 3E-1))
             end
         end
     end
@@ -219,10 +228,11 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
     @testset "Equivalence with the ODE Formulation" begin
         for integrator in INTEGRATORS, formulation in EQUIVALENT_FORMULATIONS
             # only a method implemented for both formulations can be compared on them
-            (:ode in integrator.problems && formulation.kind in integrator.problems) || continue
+            (:ode in integrator.problems && formulation.kind in integrator.problems) ||
+                continue
 
-            sp = integrate(formulation.problem(), integrator.method; x_abstol=1e-14, f_abstol=1e-14)
-            so = integrate(formulation.ode(), integrator.method; x_abstol=1e-14, f_abstol=1e-14)
+            sp = integrate(formulation.problem(), integrator.method; x_abstol = 1e-14, f_abstol = 1e-14)
+            so = integrate(formulation.ode(), integrator.method; x_abstol = 1e-14, f_abstol = 1e-14)
 
             @test maximum(abs(sp.q[n][1] - so.q[n][1]) for n in axes(sp.q, 1)) < 1E-12
             @test maximum(abs(sp.p[n][1] - so.q[n][2]) for n in axes(sp.q, 1)) < 1E-12
@@ -231,6 +241,7 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
 
     @testset "Hamiltonian and Lagrangian Formulations" begin
         for integrator in INTEGRATORS, formulation in ENRICHED_FORMULATIONS
+
             (formulation.plain in integrator.problems &&
              formulation.enriched in integrator.problems) || continue
 
@@ -241,5 +252,4 @@ reference_final_state(problem) = integrate(problem(; timestep=1E-3), ImplicitMid
             @test plain.p == enriched.p
         end
     end
-
 end

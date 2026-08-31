@@ -16,7 +16,6 @@ using GeometricEquations
 export riccati_problem, riccati_error
 export nonlinear_podeproblem, nonlinear_hodeproblem, nonlinear_pode_odeproblem
 
-
 const t₀ = 0.0
 const Δt = 0.1
 const nt = 10
@@ -24,7 +23,6 @@ const timespan = (t₀, Δt * nt)
 
 const q₀ = [0.5]
 const p₀ = [0.3]
-
 
 @doc raw"""
 The Riccati equation
@@ -39,13 +37,12 @@ solve take more than the single Newton step a linear problem needs.
 """
 riccati_v(v, t, q, params) = (v[1] = -q[1]^2; nothing)
 
-riccati_problem(; timestep=Δt) = ODEProblem(riccati_v, (0.0, 1.0), timestep, [1.0])
+riccati_problem(; timestep = Δt) = ODEProblem(riccati_v, (0.0, 1.0), timestep, [1.0])
 
 """
 Maximum absolute error of a solution of [`riccati_problem`](@ref) against its exact solution.
 """
 riccati_error(sol) = maximum(abs(sol.q[n][1] - 1 / (1 + sol.t[n])) for n in axes(sol.q, 1))
-
 
 @doc raw"""
 A nonlinear, non-separable partitioned system,
@@ -73,15 +70,14 @@ end
 # only needed to construct the `HODEProblem`, never evaluated by a test
 nonlinear_hamiltonian(t, q, p, params) = p[1]^2 / 2 + (1 - cos(q[1]))
 
-function nonlinear_podeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonlinear_podeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     PODEProblem(nonlinear_pode_v, nonlinear_pode_f, timespan, timestep, q₀, p₀)
 end
 
-function nonlinear_hodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonlinear_hodeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     HODEProblem(nonlinear_pode_v, nonlinear_pode_f, nonlinear_hamiltonian,
         timespan, timestep, q₀, p₀)
 end
-
 
 @doc raw"""
 The first order system ``x = (q, p)`` that [`nonlinear_podeproblem`](@ref) is identical to,
@@ -100,7 +96,7 @@ function nonlinear_pode_ode_v(v, t, x, params)
     nothing
 end
 
-function nonlinear_pode_odeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonlinear_pode_odeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     ODEProblem(nonlinear_pode_ode_v, timespan, timestep, vcat(q₀, p₀))
 end
 

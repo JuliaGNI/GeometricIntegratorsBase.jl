@@ -31,14 +31,13 @@ end
 
 @inline CacheType(ST, ::ProblemODE, ::ExplicitEuler) = ExplicitEulerCache{ST}
 
-
 function update!(sol, params, _, int::GeometricIntegrator{<:ExplicitEuler})
     # compute final update
     sol.q .+= timestep(int) .* cache(int).v
 end
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ExplicitEuler,<:ProblemODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:ExplicitEuler, <:ProblemODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q still holds qₙ
     t̄ = sol.t - timestep(int)
 

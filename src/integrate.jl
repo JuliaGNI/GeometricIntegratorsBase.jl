@@ -2,7 +2,6 @@
 # General integration functions for all integrators                           #
 #*****************************************************************************#
 
-
 """
 Parts of one integration step that are common to most if not all typical integrators
 """
@@ -28,7 +27,8 @@ function integrate!(solstep::SolutionStep, int::AbstractIntegrator)
     return solstep
 end
 
-function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int, solstep, curstate)
+function integrate!(sol::GeometricSolution, int::AbstractIntegrator,
+        n₁::Int, n₂::Int, solstep, curstate)
     # loop over time steps
     for n in n₁:n₂
         # reset solution step
@@ -74,21 +74,22 @@ function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, 
     return sol
 end
 
-
 """
 Solve for time steps n with n₁ ≤ n ≤ n₂.
 ```julia
 integrate!(solution, integrator, n₁, n₂)
 ```
 """
-function integrate!(sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int; kwargs...)
+function integrate!(
+        sol::GeometricSolution, int::AbstractIntegrator, n₁::Int, n₂::Int; kwargs...)
     # check time steps range for consistency
     n₁ ≥ 1 || throw(ArgumentError("n₁ must be ≥ 1, got $n₁"))
     n₂ ≥ n₁ || throw(ArgumentError("n₂ must be ≥ n₁, got n₂=$n₂ < n₁=$n₁"))
-    n₂ ≤ ntime(sol) || throw(ArgumentError("n₂ must be ≤ ntime(sol)=$(ntime(sol)), got $n₂"))
+    n₂ ≤ ntime(sol) ||
+        throw(ArgumentError("n₂ must be ≤ ntime(sol)=$(ntime(sol)), got $n₂"))
 
     # copy initial condition from solution to solutionstep and initialize
-    solstep = solutionstep(int, sol[n₁-1]; kwargs...)
+    solstep = solutionstep(int, sol[n₁ - 1]; kwargs...)
     curstate = current(solstep)
 
     integrate!(sol, int, n₁, n₂, solstep, curstate)
@@ -105,7 +106,6 @@ integrate!(solution, integrator)
 function integrate!(sol::GeometricSolution, int::AbstractIntegrator; kwargs...)
     integrate!(sol, int, 1, ntime(sol); kwargs...)
 end
-
 
 # Create solution and run integrator
 # TODO: Needs to be refactored as this is type piracy.

@@ -3,7 +3,6 @@ using Test
 
 import ..HarmonicOscillator: odeproblem
 
-
 prob = odeproblem()
 
 struct TestMethod <: GeometricMethod end

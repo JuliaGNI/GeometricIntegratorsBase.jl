@@ -19,14 +19,13 @@ GeometricIntegrator(problem::EquationProblem, method::GeometricMethod; solver = 
 
 """
 struct GeometricIntegrator{
-    MT<:GeometricMethod,
-    PT<:AbstractProblem,
-    CT<:CacheDict{PT,MT},
-    ST<:Union{<:AbstractSolver,NoSolver},
-    IT<:Union{InitialGuess,Extrapolation},
-    SST<:AbstractSolverState
+    MT <: GeometricMethod,
+    PT <: AbstractProblem,
+    CT <: CacheDict{PT, MT},
+    ST <: Union{<:AbstractSolver, NoSolver},
+    IT <: Union{InitialGuess, Extrapolation},
+    SST <: AbstractSolverState
 } <: AbstractIntegrator
-
     problem::PT
     method::MT
     caches::CT
@@ -36,25 +35,25 @@ struct GeometricIntegrator{
 end
 
 function GeometricIntegrator(
-    problem::AbstractProblem,
-    integratormethod::GeometricMethod,
-    solvermethod::SolverMethod,
-    iguess::Union{InitialGuess,Extrapolation};
-    method=initmethod(integratormethod, problem),
-    caches=CacheDict(problem, method),
-    options...
+        problem::AbstractProblem,
+        integratormethod::GeometricMethod,
+        solvermethod::SolverMethod,
+        iguess::Union{InitialGuess, Extrapolation};
+        method = initmethod(integratormethod, problem),
+        caches = CacheDict(problem, method),
+        options...
 )
     solver = initsolver(solvermethod, method, caches; merge(default_options(method, problem), options)...)
     GeometricIntegrator(problem, method, caches, solver, iguess, SolverState(solver))
 end
 
 function GeometricIntegrator(
-    problem::AbstractProblem,
-    integratormethod::GeometricMethod;
-    method=initmethod(integratormethod, problem),
-    solver=default_solver(method),
-    initialguess=default_iguess(method),
-    kwargs...
+        problem::AbstractProblem,
+        integratormethod::GeometricMethod;
+        method = initmethod(integratormethod, problem),
+        solver = default_solver(method),
+        initialguess = default_iguess(method),
+        kwargs...
 )
     GeometricIntegrator(problem, method, solver, initialguess; kwargs...)
 end
@@ -100,12 +99,10 @@ function integrate(problems::EnsembleProblem, method::GeometricMethod; kwargs...
     return solutions
 end
 
-
 """
 Performs one integration step of an integrator.
 """
 function integrate_step! end
-
 
 # A method that implements no `integrate_step!` for the problem at hand does not support it.
 # Without this fallback the rejection surfaces as whatever exception the first unimplemented
@@ -123,7 +120,6 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator)
         nameof(typeof(method(int))), " does not support problems of type ",
         nameof(typeof(equation(problem(int)))), ".")))
 end
-
 
 """
 ```julia

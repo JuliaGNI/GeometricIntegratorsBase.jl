@@ -69,11 +69,10 @@ issymplectic(method::ImplicitMidpoint) = true
 
 # besides ordinary differential equations the method is implemented for partitioned and implicit
 # ones, so the corresponding traits are set explicitly, as they cannot follow from the supertype
-ispodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
-ishodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
-isiodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
-islodemethod(::Union{ImplicitMidpoint,Type{<:ImplicitMidpoint}}) = true
-
+ispodemethod(::Union{ImplicitMidpoint, Type{<:ImplicitMidpoint}}) = true
+ishodemethod(::Union{ImplicitMidpoint, Type{<:ImplicitMidpoint}}) = true
+isiodemethod(::Union{ImplicitMidpoint, Type{<:ImplicitMidpoint}}) = true
+islodemethod(::Union{ImplicitMidpoint, Type{<:ImplicitMidpoint}}) = true
 
 @doc raw"""
 Implicit midpoint integrator cache.
@@ -104,7 +103,6 @@ function Cache{ST}(problem::ProblemODE, method::ImplicitMidpoint; kwargs...) whe
 end
 
 @inline CacheType(ST, ::ProblemODE, ::ImplicitMidpoint) = ImplicitMidpointCache{ST}
-
 
 @doc raw"""
 Implicit midpoint integrator cache for partitioned differential equations.
@@ -142,7 +140,6 @@ end
 
 @inline CacheType(ST, ::ProblemPODE, ::ImplicitMidpoint) = ImplicitMidpointPODECache{ST}
 
-
 @doc raw"""
 Implicit midpoint integrator cache for implicit differential equations.
 
@@ -179,23 +176,25 @@ end
 
 @inline CacheType(ST, ::ProblemIODE, ::ImplicitMidpoint) = ImplicitMidpointIODECache{ST}
 
-
 # the solver solves for the stage vector field in the case of an ordinary and for the stage
 # velocity in the case of an implicit differential equation, so the size is the same for both
-solversize(::ImplicitMidpoint, problem::Union{ProblemODE,ProblemIODE}) = length(vec(initial_conditions(problem).q))
+function solversize(::ImplicitMidpoint, problem::Union{ProblemODE, ProblemIODE})
+    length(vec(initial_conditions(problem).q))
+end
 
 # for a partitioned differential equation both stage vector fields are solved for, so the
 # nonlinear system is twice as large
-solversize(::ImplicitMidpoint, problem::ProblemPODE) =
+function solversize(::ImplicitMidpoint, problem::ProblemPODE)
     length(vec(initial_conditions(problem).q)) + length(vec(initial_conditions(problem).p))
+end
 
 default_solver(::ImplicitMidpoint) = Newton()
 default_iguess(::ImplicitMidpoint) = HermiteExtrapolation()
 
-
-function initial_guess!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE})
+function initial_guess!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemODE})
     # temporary solution, extrapolated to the midpoint of the time step
-    ig = (t=sol.t - timestep(int) / 2, q=cache(int).q, q̇=cache(int).v)
+    ig = (t = sol.t - timestep(int) / 2, q = cache(int).q, q̇ = cache(int).v)
 
     # compute initial guess
     solutionstep!(ig, history, problem(int), iguess(int))
@@ -204,7 +203,8 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:Implici
     nlsolution(int) .= ig.q̇
 end
 
-function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE}) where {ST}
+function components!(x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemODE}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
 
@@ -215,8 +215,8 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
     equations(int).v(v, sol.t - timestep(int) / 2, q, params)
 end
 
-
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST},
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemODE}) where {ST}
     # get cache for internal stages
     v = cache(int, ST).v
 
@@ -224,9 +224,9 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricI
     b .= v .- x
 end
 
-
 # Compute stages of implicit midpoint methods.
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemODE}) where {ST}
     axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # compute stages from nonlinear solver solution x
@@ -236,8 +236,8 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
     residual!(b, x, int)
 end
 
-
-function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE}) where {DT}
+function update!(sol, params, x::AbstractVector{DT},
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemODE}) where {DT}
     # compute vector field at internal stages
     components!(x, sol, params, int)
 
@@ -245,23 +245,25 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
     sol.q .+= timestep(int) .* cache(int, DT).v
 end
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemODE})
     # call nonlinear solver
-    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (
+        sol, params, int))
     check_solver_status(solverstatus, int)
 
     # compute final update
     update!(sol, params, nlsolution(int), int)
 end
 
-
-function initial_guess!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE})
+function initial_guess!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemPODE})
     local D = length(cache(int).q)
     local x = nlsolution(int)
 
     # temporary solution, extrapolated to the midpoint of the time step
-    ig = (t=sol.t - timestep(int) / 2, q=cache(int).q, p=cache(int).p, q̇=cache(int).v, ṗ=cache(int).f)
+    ig = (t = sol.t - timestep(int) / 2, q = cache(int).q,
+        p = cache(int).p, q̇ = cache(int).v, ṗ = cache(int).f)
 
     # compute initial guess
     solutionstep!(ig, history, problem(int), iguess(int))
@@ -271,11 +273,12 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:Implici
     # itself, so the extrapolated q̇ and ṗ are guesses for them as they are
     for k in 1:D
         x[k] = ig.q̇[k]
-        x[D+k] = ig.ṗ[k]
+        x[D + k] = ig.ṗ[k]
     end
 end
 
-function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+function components!(x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemPODE}) where {ST}
     q = cache(int, ST).q
     p = cache(int, ST).p
     v = cache(int, ST).v
@@ -290,7 +293,7 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
     # as the solver solution vector holds the stage vector fields (v, f)
     for k in 1:D
         q[k] = sol.q[k] + (timestep(int) / 2) * x[k]
-        p[k] = sol.p[k] + (timestep(int) / 2) * x[D+k]
+        p[k] = sol.p[k] + (timestep(int) / 2) * x[D + k]
     end
 
     # compute v = v(t̃, q, p) and f = f(t̃, q, p) at the midpoint
@@ -298,8 +301,8 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
     equations(int).f(f, t̃, q, p, params)
 end
 
-
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST},
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemPODE}) where {ST}
     # get cache for internal stages
     v = cache(int, ST).v
     f = cache(int, ST).f
@@ -309,13 +312,13 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, int::GeometricI
     # compute residual b = (v, f) - x
     for k in 1:D
         b[k] = v[k] - x[k]
-        b[D+k] = f[k] - x[D+k]
+        b[D + k] = f[k] - x[D + k]
     end
 end
 
-
 # Compute stages of implicit midpoint methods for partitioned differential equations.
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemPODE}) where {ST}
     axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # compute stages from nonlinear solver solution x
@@ -325,8 +328,8 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
     residual!(b, x, int)
 end
 
-
-function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE}) where {DT}
+function update!(sol, params, x::AbstractVector{DT},
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemPODE}) where {DT}
     # compute vector fields at internal stages
     # this has to precede the update, as the stages are computed relative to sol.q and sol.p
     components!(x, sol, params, int)
@@ -336,20 +339,22 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
     sol.p .+= timestep(int) .* cache(int, DT).f
 end
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemPODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemPODE})
     # call nonlinear solver
-    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (
+        sol, params, int))
     check_solver_status(solverstatus, int)
 
     # compute final update
     update!(sol, params, nlsolution(int), int)
 end
 
-
-function initial_guess!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE})
+function initial_guess!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemIODE})
     # temporary solution, extrapolated to the midpoint of the time step
-    ig = (t=sol.t - timestep(int) / 2, q=cache(int).q, p=cache(int).θ, q̇=cache(int).v, ṗ=cache(int).f)
+    ig = (t = sol.t - timestep(int) / 2, q = cache(int).q,
+        p = cache(int).θ, q̇ = cache(int).v, ṗ = cache(int).f)
 
     # compute initial guess
     solutionstep!(ig, history, problem(int), iguess(int))
@@ -363,7 +368,8 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{<:Implici
     nlsolution(int) .= ig.q̇
 end
 
-function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE}) where {ST}
+function components!(x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemIODE}) where {ST}
     q = cache(int, ST).q
     v = cache(int, ST).v
     θ = cache(int, ST).θ
@@ -383,8 +389,8 @@ function components!(x::AbstractVector{ST}, sol, params, int::GeometricIntegrato
     equations(int).f(f, t̃, q, v, params)
 end
 
-
-function residual!(b::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE}) where {ST}
+function residual!(b::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemIODE}) where {ST}
     # get cache for internal stages
     θ = cache(int, ST).θ
     f = cache(int, ST).f
@@ -393,9 +399,9 @@ function residual!(b::AbstractVector{ST}, sol, params, int::GeometricIntegrator{
     b .= θ .- sol.p .- (timestep(int) / 2) .* f
 end
 
-
 # Compute stages of implicit midpoint methods for implicit differential equations.
-function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE}) where {ST}
+function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params,
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemIODE}) where {ST}
     axes(x) == axes(b) || throw(ArgumentError("x and b must have the same axes"))
 
     # compute stages from nonlinear solver solution x
@@ -405,8 +411,8 @@ function residual!(b::AbstractVector{ST}, x::AbstractVector{ST}, sol, params, in
     residual!(b, sol, params, int)
 end
 
-
-function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE}) where {DT}
+function update!(sol, params, x::AbstractVector{DT},
+        int::GeometricIntegrator{<:ImplicitMidpoint, <:ProblemIODE}) where {DT}
     # compute vector fields at internal stages
     # this has to precede the update, as the stages are computed relative to sol.q and sol.p
     components!(x, sol, params, int)
@@ -416,10 +422,11 @@ function update!(sol, params, x::AbstractVector{DT}, int::GeometricIntegrator{<:
     sol.p .+= timestep(int) .* cache(int, DT).f
 end
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:ImplicitMidpoint,<:ProblemIODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:ImplicitMidpoint, <:ProblemIODE})
     # call nonlinear solver
-    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (sol, params, int))
+    solverstatus = solve_with_status!(nlsolution(int), solver(int), solverstate(int), (
+        sol, params, int))
     check_solver_status(solverstatus, int)
 
     # compute final update

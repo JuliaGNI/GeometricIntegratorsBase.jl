@@ -15,12 +15,14 @@ function aitken_neville!(x::AbstractArray, t::TT, ti::AbstractVector{TT}, xi::Ab
     length(ti) == length(xi) || throw(ArgumentError("ti and xi must have the same length"))
 
     for _xi in xi
-        axes(x) == axes(_xi) || throw(ArgumentError("All xi entries must have the same axes as x"))
+        axes(x) == axes(_xi) ||
+            throw(ArgumentError("All xi entries must have the same axes as x"))
     end
 
     for j in eachindex(ti)
-        for i in eachindex(ti)[begin:end-j]
-            @. xi[i] = xi[i+1] + (xi[i] - xi[i+1]) * (ti[i+j] - t) / (ti[i+j] - ti[i])
+        for i in eachindex(ti)[begin:(end - j)]
+            @. xi[i] = xi[i + 1] +
+                       (xi[i] - xi[i + 1]) * (ti[i + j] - t) / (ti[i + j] - ti[i])
         end
     end
 

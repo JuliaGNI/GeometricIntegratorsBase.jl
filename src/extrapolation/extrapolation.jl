@@ -9,8 +9,8 @@ default_extrapolation() = MidpointExtrapolation(default_extrapolation_stages)
 
 struct NoExtrapolation <: Extrapolation end
 
-
-function extrapolate!(newsol, oldsol, ::GeometricProblem, extrap::Union{NoExtrapolation,NoInitialGuess})
+function extrapolate!(newsol, oldsol, ::GeometricProblem, extrap::Union{
+        NoExtrapolation, NoInitialGuess})
     for k in keys(newsol)
         if k != :t
             newsol[k] .= oldsol[k]
@@ -19,14 +19,14 @@ function extrapolate!(newsol, oldsol, ::GeometricProblem, extrap::Union{NoExtrap
     return newsol
 end
 
-solutionstep!(sol, history, ::GeometricProblem, extrap::Union{NoExtrapolation,NoInitialGuess}) = sol
-
+function solutionstep!(sol, history, ::GeometricProblem, extrap::Union{
+        NoExtrapolation, NoInitialGuess})
+    sol
+end
 
 # """
 # """
 # function extrapolate! end
-
-
 
 # function extrapolate!(t₀, q₀, q̇₀, t₁, q₁, q̇₁, t₂, q₂, q̇₂, problem::AbstractProblemODE, extrap::Extrapolation; kwargs...)
 #     solution = (

@@ -122,7 +122,6 @@ g'(1) &= f'_1 .
 """
 struct HermiteExtrapolation <: Extrapolation end
 
-
 # Evaluate the Hermite polynomial through the two samples (x₀,ẋ₀) and (x₁,ẋ₁) at the
 # normalised time c, that is at t = t₁ + c ⋅ Δt with Δt = t₁ - t₀, so that c = -1
 # corresponds to the first and c = 0 to the second sample.
@@ -130,9 +129,8 @@ struct HermiteExtrapolation <: Extrapolation end
 # s = 1 + c. The derivative values ẋ₀ and ẋ₁ are with respect to the time t, hence
 # the scaling by Δt. Passing Δt = 1 amounts to a fully normalised interpolation.
 function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    c::TT, Δt::TT, xᵢ::AbstractArray{DT}) where {DT,TT}
-
+        x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        c::TT, Δt::TT, xᵢ::AbstractArray{DT}) where {DT, TT}
     a₁ = 1 - 3c^2 - 2c^3
     a₀ = 1 - a₁
     b₁ = c * (1 + c)^2
@@ -143,9 +141,8 @@ function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT
 end
 
 function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    c::TT, Δt::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT}) where {DT,TT}
-
+        x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        c::TT, Δt::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT}) where {DT, TT}
     _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, c, Δt, xᵢ)
 
     a₁ = -6c * (1 + c) / Δt
@@ -157,12 +154,10 @@ function _extrapolate_hermite!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT
     return (xᵢ, ẋᵢ)
 end
 
-
 function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    tᵢ::TT, xᵢ::AbstractArray{DT},
-    ::HermiteExtrapolation) where {DT,TT}
-
+        t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        tᵢ::TT, xᵢ::AbstractArray{DT},
+        ::HermiteExtrapolation) where {DT, TT}
     t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
@@ -171,10 +166,9 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
 end
 
 function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    tᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
-    ::HermiteExtrapolation) where {DT,TT}
-
+        t₁::TT, x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        tᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
+        ::HermiteExtrapolation) where {DT, TT}
     t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
     Δt::TT = t₁ - t₀
@@ -182,13 +176,14 @@ function extrapolate!(t₀::TT, x₀::AbstractArray{DT}, ẋ₀::AbstractArray{D
     return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, (tᵢ - t₁) / Δt, Δt, xᵢ, ẋᵢ)
 end
 
-
-function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::HermiteExtrapolation; nowarn=false)
+function solutionstep!(sol, history, problem::Union{AbstractProblemODE, SODEProblem},
+        extrap::HermiteExtrapolation; nowarn = false)
     t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
     t₁, q₁, q̇₁ = history[1].t, history[1].q, history[1].q̇
 
     if q₀ == q₁
-        nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= q̇₁
     else
@@ -198,12 +193,17 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
     return sol
 end
 
-function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,AbstractProblemIODE}, extrap::HermiteExtrapolation; nowarn=false)
-    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p, history[2].ṗ
-    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p, history[1].ṗ
+function solutionstep!(
+        sol, history, problem::Union{AbstractProblemPODE, AbstractProblemIODE},
+        extrap::HermiteExtrapolation; nowarn = false)
+    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p,
+    history[2].ṗ
+    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p,
+    history[1].ṗ
 
     if q₀ == q₁
-        nowarn || @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= v₁
     else
@@ -211,7 +211,8 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
     end
 
     if p₀ == p₁
-        nowarn || @warn "Hermite Extrapolation: p's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Hermite Extrapolation: p's history[1] and history[2] are identical!"
         sol.p .= p₁
         sol.ṗ .= f₁
     else
@@ -220,7 +221,6 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
 
     return sol
 end
-
 
 @doc raw"""
 # Normalized Hermite's Interpolating Polynomials
@@ -295,33 +295,33 @@ g'(0) &= ẋ_1 .
 """
 struct NormalizedHermiteExtrapolation <: Extrapolation end
 
-
 function extrapolate!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    cᵢ::TT, xᵢ::AbstractArray{DT},
-    ::NormalizedHermiteExtrapolation) where {DT,TT}
-
+        x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        cᵢ::TT, xᵢ::AbstractArray{DT},
+        ::NormalizedHermiteExtrapolation) where {DT, TT}
     return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, cᵢ, one(TT), xᵢ)
 end
 
 function extrapolate!(x₀::AbstractArray{DT}, ẋ₀::AbstractArray{DT},
-    x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
-    cᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
-    ::NormalizedHermiteExtrapolation) where {DT,TT}
-
+        x₁::AbstractArray{DT}, ẋ₁::AbstractArray{DT},
+        cᵢ::TT, xᵢ::AbstractArray{DT}, ẋᵢ::AbstractArray{DT},
+        ::NormalizedHermiteExtrapolation) where {DT, TT}
     return _extrapolate_hermite!(x₀, ẋ₀, x₁, ẋ₁, cᵢ, one(TT), xᵢ, ẋᵢ)
 end
 
-function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, ::NormalizedHermiteExtrapolation; nowarn=false)
+function solutionstep!(sol, history, problem::Union{AbstractProblemODE, SODEProblem},
+        ::NormalizedHermiteExtrapolation; nowarn = false)
     t₀, q₀, q̇₀ = history[2].t, history[2].q, history[2].q̇
     t₁, q₁, q̇₁ = history[1].t, history[1].q, history[1].q̇
 
     if q₀ == q₁
-        nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= q̇₁
     else
-        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+        t₀ == t₁ &&
+            throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
         Δt = t₁ - t₀
 
@@ -331,16 +331,22 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProbl
     return sol
 end
 
-function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,AbstractProblemIODE}, ::NormalizedHermiteExtrapolation; nowarn=false)
-    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p, history[2].ṗ
-    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p, history[1].ṗ
+function solutionstep!(
+        sol, history, problem::Union{AbstractProblemPODE, AbstractProblemIODE},
+        ::NormalizedHermiteExtrapolation; nowarn = false)
+    t₀, q₀, v₀, p₀, f₀ = history[2].t, history[2].q, history[2].q̇, history[2].p,
+    history[2].ṗ
+    t₁, q₁, v₁, p₁, f₁ = history[1].t, history[1].q, history[1].q̇, history[1].p,
+    history[1].ṗ
 
     if q₀ == q₁
-        nowarn || @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Normalized Hermite Extrapolation: q's history[1] and history[2] are identical!"
         sol.q .= q₁
         sol.q̇ .= v₁
     else
-        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+        t₀ == t₁ &&
+            throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
         Δt = t₁ - t₀
 
@@ -348,11 +354,13 @@ function solutionstep!(sol, history, problem::Union{AbstractProblemPODE,Abstract
     end
 
     if p₀ == p₁
-        nowarn || @warn "Normalized Hermite Extrapolation: p's history[1] and history[2] are identical!"
+        nowarn ||
+            @warn "Normalized Hermite Extrapolation: p's history[1] and history[2] are identical!"
         sol.p .= p₁
         sol.ṗ .= f₁
     else
-        t₀ == t₁ && throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
+        t₀ == t₁ &&
+            throw(ArgumentError("t₀ and t₁ in Hermite extrapolation are identical!"))
 
         Δt = t₁ - t₀
 

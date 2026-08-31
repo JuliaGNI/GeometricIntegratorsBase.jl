@@ -16,9 +16,8 @@ const t₁ = nt * Δt
 # method = ExplicitEuler()
 # method = ImplicitEuler()
 
-
 function timeit(method)
-    ode = odeproblem(timespan=(t₀, t₁), timestep=Δt)
+    ode = odeproblem(timespan = (t₀, t₁), timestep = Δt)
     int = GeometricIntegrator(ode, method)
     sol = Solution(ode)
 
@@ -29,9 +28,8 @@ end
 # timeit(ExplicitEuler())
 # timeit(ImplicitEuler())
 
-
 function profile(method)
-    ode = odeproblem(timespan=(t₀, t₁), timestep=Δt)
+    ode = odeproblem(timespan = (t₀, t₁), timestep = Δt)
     int = GeometricIntegrator(ode, method)
     sol = Solution(ode)
 
@@ -47,9 +45,8 @@ end
 # profile(ExplicitEuler())
 # profile(ImplicitEuler())
 
-
 function profilesomemore(method)
-    ode = odeproblem(timespan=(t₀, t₁), timestep=Δt)
+    ode = odeproblem(timespan = (t₀, t₁), timestep = Δt)
     int = GeometricIntegrator(ode, method)
     sol = Solution(ode)
     solstep = SolutionStep(ode)
@@ -99,9 +96,8 @@ end
 profilesomemore(ExplicitEuler())
 profilesomemore(ImplicitEuler())
 
-
 function profileview(method)
-    ode = odeproblem(timespan=(t₀, t₁), timestep=Δt)
+    ode = odeproblem(timespan = (t₀, t₁), timestep = Δt)
     int = GeometricIntegrator(ode, method)
     sol = Solution(ode)
 
@@ -115,9 +111,6 @@ end
 
 # @profview profileview(ExplicitEuler())
 # @profview profileview(ImplicitEuler())
-
-
-
 
 # results = Profile.Allocs.fetch()
 # allocs = results.allocs

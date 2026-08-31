@@ -10,7 +10,6 @@ using ..HarmonicOscillator
 using ..NonautonomousProblems
 using ..NonautonomousProblems: nonautonomous_pode_v, nonautonomous_pode_f
 
-
 const METHODS = (SymplecticEulerA(), SymplecticEulerB())
 
 # Reference implementations of the two schemes, written out directly so that the stage times
@@ -22,13 +21,13 @@ function reference_symplectic_euler_A(prob, sol)
     h = timestep(prob)
 
     for n in 1:lastindex(sol.t)
-        nonautonomous_pode_f(f, sol.t[n-1], q, p, parameters(prob))
+        nonautonomous_pode_f(f, sol.t[n - 1], q, p, parameters(prob))
         p .+= h .* f
         nonautonomous_pode_v(v, sol.t[n], q, p, parameters(prob))
         q .+= h .* v
     end
 
-    (q=q, p=p)
+    (q = q, p = p)
 end
 
 function reference_symplectic_euler_B(prob, sol)
@@ -37,21 +36,19 @@ function reference_symplectic_euler_B(prob, sol)
     h = timestep(prob)
 
     for n in 1:lastindex(sol.t)
-        nonautonomous_pode_v(v, sol.t[n-1], q, p, parameters(prob))
+        nonautonomous_pode_v(v, sol.t[n - 1], q, p, parameters(prob))
         q .+= h .* v
         nonautonomous_pode_f(f, sol.t[n], q, p, parameters(prob))
         p .+= h .* f
     end
 
-    (q=q, p=p)
+    (q = q, p = p)
 end
-
 
 # Accuracy, convergence order, data types, the agreement of the PODE and HODE formulations and
 # the rejection of unsupported problem types are asserted for every method of the package in
 # `common_tests.jl`.
 @testset "$(rpad("SymplecticEuler Method Tests", 80))" begin
-
     @testset "Method Properties" begin
         for method in METHODS
             @test method isa GeometricIntegratorsBase.SymplecticEulerMethod
@@ -128,8 +125,8 @@ end
         # symplectic methods show a bounded, oscillatory energy error, i.e., the error over a
         # ten times longer integration is essentially the same, whereas the energy error of a
         # non-symplectic method of the same order grows without bound
-        pode_short = podeproblem(; timespan=(0.0, 100.0))
-        pode_long = podeproblem(; timespan=(0.0, 1000.0))
+        pode_short = podeproblem(; timespan = (0.0, 100.0))
+        pode_long = podeproblem(; timespan = (0.0, 1000.0))
 
         for method in METHODS
             err_short = max_energy_error(integrate(pode_short, method), pode_short)
@@ -145,8 +142,7 @@ end
         end
 
         # for reference: the explicit Euler method on the equivalent ODE blows up
-        ode_long = odeproblem(; timespan=(0.0, 1000.0))
+        ode_long = odeproblem(; timespan = (0.0, 1000.0))
         @test max_energy_error(integrate(ode_long, ExplicitEuler()), ode_long) > 1E3
     end
-
 end

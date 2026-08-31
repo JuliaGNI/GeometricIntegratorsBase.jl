@@ -88,21 +88,20 @@ where
 struct MidpointExtrapolation{TT} <: Extrapolation
     s::Int
     Δt::TT
-    MidpointExtrapolation(s=default_extrapolation_stages, Δt=1.0) = new{typeof(Δt)}(s, Δt)
+    MidpointExtrapolation(s = default_extrapolation_stages, Δt = 1.0) = new{typeof(Δt)}(s, Δt)
 end
 
 function extrapolate!(
-    t₀::TT, x₀::AbstractArray{DT},
-    t₁::TT, x₁::AbstractArray{DT},
-    problem::Union{AbstractProblemODE,SODEProblem},
-    extrap::MidpointExtrapolation) where {DT,TT}
-
+        t₀::TT, x₀::AbstractArray{DT},
+        t₁::TT, x₁::AbstractArray{DT},
+        problem::Union{AbstractProblemODE, SODEProblem},
+        extrap::MidpointExtrapolation) where {DT, TT}
     axes(x₀) == axes(x₁) || throw(ArgumentError("x₀ and x₁ must have the same axes"))
 
-    F = [2i * one(TT) for i in 1:extrap.s+1]
+    F = [2i * one(TT) for i in 1:(extrap.s + 1)]
     σ = (t₁ - t₀) ./ F
     σ² = σ .^ 2
-    pts = [zero(x₀) for _ in 1:extrap.s+1]
+    pts = [zero(x₀) for _ in 1:(extrap.s + 1)]
 
     xᵢ₁ = zero(x₀)
     xᵢ₂ = zero(x₀)
@@ -115,7 +114,7 @@ function extrapolate!(
     for i in eachindex(pts)
         xᵢ₁ .= x₀
         xᵢ₂ .= x₀ .+ σ[i] .* v₀
-        for k in 1:(F[i]-1)
+        for k in 1:(F[i] - 1)
             initialguess(problem).v(vᵢ, t₀ + k * σ[i], xᵢ₂, parameters(problem))
             xᵢₜ .= xᵢ₁ .+ 2σ[i] .* vᵢ
             xᵢ₁ .= xᵢ₂
@@ -129,33 +128,33 @@ function extrapolate!(
     return x₁
 end
 
-function _extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
+function _extrapolate!(newsol, oldsol, problem::Union{AbstractProblemODE, SODEProblem},
+        extrap::MidpointExtrapolation)
     extrapolate!(oldsol.t, oldsol.q, newsol.t, newsol.q, problem, extrap)
     return newsol
 end
 
-function solutionstep!(sol, history, problem::Union{AbstractProblemODE,SODEProblem}, extrap::MidpointExtrapolation)
+function solutionstep!(sol, history, problem::Union{AbstractProblemODE, SODEProblem},
+        extrap::MidpointExtrapolation)
     extrapolate!(history[1].t, history[1].q, sol.t, sol.q, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
 end
 
-
 function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{DT},
-    t₁::TT, q₁::AbstractVector{DT}, p₁::AbstractVector{DT},
-    problem::AbstractProblemPODE,
-    extrap::MidpointExtrapolation) where {DT,TT}
-
+        t₁::TT, q₁::AbstractVector{DT}, p₁::AbstractVector{DT},
+        problem::AbstractProblemPODE,
+        extrap::MidpointExtrapolation) where {DT, TT}
     axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
     axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
-    F = [2i * one(TT) for i in 1:extrap.s+1]
+    F = [2i * one(TT) for i in 1:(extrap.s + 1)]
     σ = (t₁ - t₀) ./ F
     σ2 = σ .^ 2
 
-    qts = [zero(q₀) for _ in 1:extrap.s+1]
-    pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:(extrap.s + 1)]
+    pts = [zero(p₀) for _ in 1:(extrap.s + 1)]
 
     qᵢ₁ = zero(q₀)
     qᵢ₂ = zero(q₀)
@@ -174,12 +173,12 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, p₀, parameters(problem))
 
-    for i in 1:extrap.s+1
+    for i in 1:(extrap.s + 1)
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for k in 1:(F[i]-1)
+        for k in 1:(F[i] - 1)
             initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
             initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
@@ -200,7 +199,8 @@ function extrapolate!(t₀::TT, q₀::AbstractVector{DT}, p₀::AbstractVector{D
 end
 
 function _extrapolate!(newsol, oldsol, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
-    extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
+    extrapolate!(
+        oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
     return newsol
 end
 
@@ -234,22 +234,20 @@ function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::Midpo
     return sol
 end
 
-
 function extrapolate!(
-    t₀::TT, q₀::AbstractArray{DT}, p₀::AbstractArray{DT},
-    t₁::TT, q₁::AbstractArray{DT}, p₁::AbstractArray{DT},
-    problem::AbstractProblemIODE,
-    extrap::MidpointExtrapolation) where {DT,TT}
-
+        t₀::TT, q₀::AbstractArray{DT}, p₀::AbstractArray{DT},
+        t₁::TT, q₁::AbstractArray{DT}, p₁::AbstractArray{DT},
+        problem::AbstractProblemIODE,
+        extrap::MidpointExtrapolation) where {DT, TT}
     axes(q₀) == axes(q₁) || throw(ArgumentError("q₀ and q₁ must have the same axes"))
     axes(p₀) == axes(p₁) || throw(ArgumentError("p₀ and p₁ must have the same axes"))
 
-    F = [2i * one(TT) for i in 1:extrap.s+1]
+    F = [2i * one(TT) for i in 1:(extrap.s + 1)]
     σ = (t₁ - t₀) ./ F
     σ2 = σ .^ 2
 
-    qts = [zero(q₀) for _ in 1:extrap.s+1]
-    pts = [zero(p₀) for _ in 1:extrap.s+1]
+    qts = [zero(q₀) for _ in 1:(extrap.s + 1)]
+    pts = [zero(p₀) for _ in 1:(extrap.s + 1)]
 
     qᵢ₁ = zero(q₀)
     qᵢ₂ = zero(q₀)
@@ -268,12 +266,12 @@ function extrapolate!(
     initialguess(problem).v(v₀, t₀, q₀, p₀, parameters(problem))
     initialguess(problem).f(f₀, t₀, q₀, v₀, parameters(problem))
 
-    for i in 1:extrap.s+1
+    for i in 1:(extrap.s + 1)
         qᵢ₁ .= q₀
         qᵢ₂ .= q₀ .+ σ[i] .* v₀
         pᵢ₁ .= p₀
         pᵢ₂ .= p₀ .+ σ[i] .* f₀
-        for k in 1:(F[i]-1)
+        for k in 1:(F[i] - 1)
             initialguess(problem).v(vᵢ, t₀ + k * σ[i], qᵢ₂, pᵢ₂, parameters(problem))
             initialguess(problem).f(fᵢ, t₀ + k * σ[i], qᵢ₂, vᵢ, parameters(problem))
             qᵢₜ .= qᵢ₁ .+ 2σ[i] .* vᵢ
@@ -294,18 +292,19 @@ function extrapolate!(
 end
 
 function _extrapolate!(newsol, oldsol, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
-    extrapolate!(oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
+    extrapolate!(
+        oldsol.t, oldsol.q, oldsol.p, newsol.t, newsol.q, newsol.p, problem, extrap)
     return newsol
 end
 
 function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::MidpointExtrapolation)
-    extrapolate!(history[1].t, history[1].q, history[1].p, sol.t, sol.q, sol.p, problem, extrap)
+    extrapolate!(
+        history[1].t, history[1].q, history[1].p, sol.t, sol.q, sol.p, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.q̇, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
 end
-
 
 # TODO: Revise this function! Adapt interface or merge functionality into solutionstep! and remove.
 function extrapolate!(newsol, oldsol, problem::GeometricProblem, extrap::MidpointExtrapolation)

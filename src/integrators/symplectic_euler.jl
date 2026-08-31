@@ -19,7 +19,6 @@ isimplicit(method::SymplecticEulerMethod) = false
 issymmetric(method::SymplecticEulerMethod) = false
 issymplectic(method::SymplecticEulerMethod) = true
 
-
 @doc raw"""
 Symplectic Euler-A Method for separable Hamiltonians.
 
@@ -50,7 +49,6 @@ separability assumption.
 """
 struct SymplecticEulerB <: SymplecticEulerMethod end
 
-
 @doc raw"""
 Symplectic Euler integrator cache.
 """
@@ -71,8 +69,8 @@ end
 
 @inline CacheType(ST, ::ProblemPODE, ::SymplecticEulerMethod) = SymplecticEulerCache{ST}
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerA,<:ProblemPODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:SymplecticEulerA, <:ProblemPODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
     t̄ = sol.t - timestep(int)
 
@@ -85,8 +83,8 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{<:Symple
     sol.q .+= timestep(int) .* cache(int).v
 end
 
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{<:SymplecticEulerB,<:ProblemPODE})
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:SymplecticEulerB, <:ProblemPODE})
     # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
     t̄ = sol.t - timestep(int)
 

@@ -4,7 +4,8 @@ using GeometricSolutions
 using Test
 
 using GeometricSolutions: relative_maximum_error
-using GeometricIntegratorsBase: CrankNicolsonCache, CrankNicolsonPODECache, CrankNicolsonIODECache
+using GeometricIntegratorsBase: CrankNicolsonCache, CrankNicolsonPODECache,
+                                CrankNicolsonIODECache
 using GeometricIntegratorsBase: CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
@@ -13,12 +14,10 @@ using ..HarmonicOscillator
 using ..NonautonomousProblems
 using ..NonlinearProblems
 
-
 # Accuracy, convergence order, data types, the agreement of the formulations of one and the same
 # equation and the rejection of unsupported problem types are asserted for every method of the
 # package in `common_tests.jl`.
 @testset "$(rpad("CrankNicolson Method Tests", 80))" begin
-
     @testset "Method Properties" begin
         method = CrankNicolson()
 
@@ -67,7 +66,8 @@ using ..NonlinearProblems
             @test cache isa CrankNicolsonPODECache{Float64}
 
             # both stage vector fields are solved for, so the solution vector holds two of them
-            @test length(cache.x) == length(initial_conditions(pode).q) + length(initial_conditions(pode).p)
+            @test length(cache.x) ==
+                  length(initial_conditions(pode).q) + length(initial_conditions(pode).p)
             @test solversize(method, pode) == length(cache.x)
 
             @test axes(cache.q) == axes(initial_conditions(pode).q)
@@ -121,7 +121,7 @@ using ..NonlinearProblems
         # the harmonic oscillator energy is quadratic and the method coincides with the midpoint
         # rule there, so it is preserved up to round-off in every formulation
         for problem in (odeproblem, podeproblem, hodeproblem, iodeproblem, lodeproblem)
-            prob = problem(; timespan=(0.0, 100.0))
+            prob = problem(; timespan = (0.0, 100.0))
             @test max_energy_error(integrate(prob, CrankNicolson()), prob) < 1E-13
         end
     end
@@ -138,10 +138,10 @@ using ..NonlinearProblems
     @testset "Nonlinear Problem" begin
         # the harmonic oscillator is linear, where the trapezoidal rule and the midpoint rule are
         # the same map. the method is second order on a nonlinear problem too
-        errs = [riccati_error(integrate(riccati_problem(; timestep=Δt), CrankNicolson()))
+        errs = [riccati_error(integrate(riccati_problem(; timestep = Δt), CrankNicolson()))
                 for Δt in (0.1, 0.05, 0.025)]
 
-        @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=2E-1))
+        @test all(isapprox.(errs[1:(end - 1)] ./ errs[2:end], 4; atol = 2E-1))
         @test errs[1] < 1E-3
     end
 
@@ -159,9 +159,8 @@ using ..NonlinearProblems
         # coefficients of a linear one depend on time
         for prob in (riccati_problem(), nonlinear_podeproblem(),
             nonautonomous_podeproblem(), nonautonomous_iodeproblem())
-
-            @test integrate(prob, CrankNicolson()).q != integrate(prob, ImplicitMidpoint()).q
+            @test integrate(prob, CrankNicolson()).q !=
+                  integrate(prob, ImplicitMidpoint()).q
         end
     end
-
 end

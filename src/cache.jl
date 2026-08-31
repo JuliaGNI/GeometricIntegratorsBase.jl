@@ -4,12 +4,13 @@ abstract type Cache{DT} end
 struct NoCache{DT} <: Cache{DT} end
 
 Cache{DT}(::AbstractProblem, ::GeometricMethod) where {DT} = NoCache{DT}()
-Cache(problem::AbstractProblem, method::GeometricMethod) = Cache{datatype(problem)}(problem, method)
+function Cache(problem::AbstractProblem, method::GeometricMethod)
+    Cache{datatype(problem)}(problem, method)
+end
 
 CacheType(T, problem::AbstractProblem, method::GeometricMethod) = NoCache{T}
 
 reset!(::Cache, args...) = nothing
-
 
 abstract type IntegratorCache{DT} <: Cache{DT} end
 
@@ -24,19 +25,18 @@ abstract type DELEIntegratorCache{DT} <: IntegratorCache{DT} end
 # cache(::AbstractIntegrator, DT) = nothing
 # cache(::AbstractIntegrator) = nothing
 
-copy_internal_variables!(::SolutionStep, ::Union{IntegratorCache,NoCache}) = nothing
+copy_internal_variables!(::SolutionStep, ::Union{IntegratorCache, NoCache}) = nothing
 
 nlsolution(::NoCache) = missing
 nlsolution(::IntegratorCache) = missing
 
-
-struct CacheDict{PT,MT}
+struct CacheDict{PT, MT}
     problem::PT
     method::MT
-    caches::Dict{UInt64,Cache}
+    caches::Dict{UInt64, Cache}
 
     function CacheDict(prob::AbstractProblem, method::GeometricMethod)
-        new{typeof(prob),typeof(method)}(prob, method, Dict{UInt64,Cache}())
+        new{typeof(prob), typeof(method)}(prob, method, Dict{UInt64, Cache}())
     end
 end
 

@@ -31,35 +31,35 @@ default_solver(::GeometricMethod) = NoSolver()
 default_iguess(::GeometricMethod) = NoInitialGuess()
 default_projection(::GeometricMethod) = NoProjection()
 
-isodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-ispodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-ishodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-isiodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-islodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-issodemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
+isodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+ispodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+ishodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+isiodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+islodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+issodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
 
-isdaemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-ispdaemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-ishdaemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-isidaemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-isldaemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
+isdaemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+ispdaemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+ishdaemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+isidaemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+isldaemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
 
-isodemethod(::Union{ODEMethod,Type{<:ODEMethod}}) = true
-ispodemethod(::Union{PODEMethod,Type{<:PODEMethod}}) = true
-ishodemethod(::Union{HODEMethod,Type{<:HODEMethod}}) = true
-isiodemethod(::Union{IODEMethod,Type{<:IODEMethod}}) = true
-islodemethod(::Union{LODEMethod,Type{<:LODEMethod}}) = true
-issodemethod(::Union{SODEMethod,Type{<:SODEMethod}}) = true
+isodemethod(::Union{ODEMethod, Type{<:ODEMethod}}) = true
+ispodemethod(::Union{PODEMethod, Type{<:PODEMethod}}) = true
+ishodemethod(::Union{HODEMethod, Type{<:HODEMethod}}) = true
+isiodemethod(::Union{IODEMethod, Type{<:IODEMethod}}) = true
+islodemethod(::Union{LODEMethod, Type{<:LODEMethod}}) = true
+issodemethod(::Union{SODEMethod, Type{<:SODEMethod}}) = true
 
-isdaemethod(::Union{DAEMethod,Type{<:DAEMethod}}) = true
+isdaemethod(::Union{DAEMethod, Type{<:DAEMethod}}) = true
 
-isdelemethod(::Union{GeometricMethod,Type{<:GeometricMethod}}) = false
-ispdaemethod(::Union{PDAEMethod,Type{<:PDAEMethod}}) = true
-ishdaemethod(::Union{HDAEMethod,Type{<:HDAEMethod}}) = true
-isidaemethod(::Union{IDAEMethod,Type{<:IDAEMethod}}) = true
-isldaemethod(::Union{LDAEMethod,Type{<:LDAEMethod}}) = true
+isdelemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
+ispdaemethod(::Union{PDAEMethod, Type{<:PDAEMethod}}) = true
+ishdaemethod(::Union{HDAEMethod, Type{<:HDAEMethod}}) = true
+isidaemethod(::Union{IDAEMethod, Type{<:IDAEMethod}}) = true
+isldaemethod(::Union{LDAEMethod, Type{<:LDAEMethod}}) = true
 
-isdelemethod(::Union{DELEMethod,Type{<:DELEMethod}}) = true
+isdelemethod(::Union{DELEMethod, Type{<:DELEMethod}}) = true
 
 isexplicit(::GeometricMethod) = missing
 isimplicit(::GeometricMethod) = missing
@@ -72,13 +72,18 @@ isexplicit(t::Type{<:GeometricMethod}) = applicable(t) ? isexplicit(t()) : missi
 isimplicit(t::Type{<:GeometricMethod}) = applicable(t) ? isimplicit(t()) : missing
 issymmetric(t::Type{<:GeometricMethod}) = applicable(t) ? issymmetric(t()) : missing
 issymplectic(t::Type{<:GeometricMethod}) = applicable(t) ? issymplectic(t()) : missing
-isenergypreserving(t::Type{<:GeometricMethod}) = applicable(t) ? isenergypreserving(t()) : missing
-isstifflyaccurate(t::Type{<:GeometricMethod}) = applicable(t) ? isstifflyaccurate(t()) : missing
+function isenergypreserving(t::Type{<:GeometricMethod})
+    applicable(t) ? isenergypreserving(t()) : missing
+end
+function isstifflyaccurate(t::Type{<:GeometricMethod})
+    applicable(t) ? isstifflyaccurate(t()) : missing
+end
 
 reference(::GeometricMethod) = missing
 
-print_reference(io, method::GeometricMethod) =
+function print_reference(io, method::GeometricMethod)
     ismissing(reference(method)) || print(io, reference(method))
+end
 
 # function check_symplecticity end
 function symplecticity_conditions end

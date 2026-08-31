@@ -18,7 +18,6 @@ export nonautonomous_iodeproblem, nonautonomous_lodeproblem
 export nonautonomous_iode_odeproblem
 export nonautonomous_hamiltonian, nonautonomous_lagrangian
 
-
 const t₀ = 0.0
 const Δt = 0.1
 const nt = 10
@@ -27,7 +26,6 @@ const timespan = (t₀, Δt * nt)
 const x₀ = [1.0]
 const q₀ = [1.0]
 const p₀ = [0.5]
-
 
 @doc raw"""
 The linear, non-autonomous scalar equation
@@ -44,7 +42,7 @@ function nonautonomous_ode_v(v, t, q, params)
     nothing
 end
 
-function nonautonomous_odeproblem(x₀=x₀; timespan=timespan, timestep=Δt)
+function nonautonomous_odeproblem(x₀ = x₀; timespan = timespan, timestep = Δt)
     ODEProblem(nonautonomous_ode_v, timespan, timestep, x₀)
 end
 
@@ -57,7 +55,6 @@ function nonautonomous_ode_solution(prob::ODEProblem)
     end
     return sol
 end
-
 
 @doc raw"""
 A separable, non-autonomous Hamiltonian system with
@@ -83,16 +80,15 @@ function nonautonomous_hamiltonian(t, q, p, params)
     p[1]^2 / 2 + (1 + t) * q[1]^2 / 2
 end
 
-function nonautonomous_podeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_podeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     PODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, timespan, timestep, q₀, p₀;
-        invariants=(h=nonautonomous_hamiltonian,))
+        invariants = (h = nonautonomous_hamiltonian,))
 end
 
-function nonautonomous_hodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_hodeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     HODEProblem(nonautonomous_pode_v, nonautonomous_pode_f, nonautonomous_hamiltonian,
         timespan, timestep, q₀, p₀)
 end
-
 
 @doc raw"""
 The first order system ``x = (q, p)`` that [`nonautonomous_podeproblem`](@ref) is identical to,
@@ -109,10 +105,9 @@ function nonautonomous_pode_ode_v(v, t, x, params)
     nothing
 end
 
-function nonautonomous_pode_odeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_pode_odeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     ODEProblem(nonautonomous_pode_ode_v, timespan, timestep, vcat(q₀, p₀))
 end
-
 
 @doc raw"""
 The non-autonomous, regular Lagrangian
@@ -161,17 +156,16 @@ function nonautonomous_iode_ω(ω, t, q, params)
     nothing
 end
 
-function nonautonomous_iodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_iodeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     IODEProblem(nonautonomous_iode_ϑ, nonautonomous_iode_f, nonautonomous_iode_g,
-        timespan, timestep, q₀, p₀; v̄=nonautonomous_iode_v)
+        timespan, timestep, q₀, p₀; v̄ = nonautonomous_iode_v)
 end
 
-function nonautonomous_lodeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_lodeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     LODEProblem(nonautonomous_iode_ϑ, nonautonomous_iode_f, nonautonomous_iode_g,
         nonautonomous_iode_ω, nonautonomous_lagrangian,
-        timespan, timestep, q₀, p₀; v̄=nonautonomous_iode_v)
+        timespan, timestep, q₀, p₀; v̄ = nonautonomous_iode_v)
 end
-
 
 @doc raw"""
 The first order system ``x = (q, p)`` that [`nonautonomous_iodeproblem`](@ref) is equivalent to,
@@ -188,7 +182,7 @@ function nonautonomous_iode_ode_v(v, t, x, params)
     nothing
 end
 
-function nonautonomous_iode_odeproblem(q₀=q₀, p₀=p₀; timespan=timespan, timestep=Δt)
+function nonautonomous_iode_odeproblem(q₀ = q₀, p₀ = p₀; timespan = timespan, timestep = Δt)
     ODEProblem(nonautonomous_iode_ode_v, timespan, timestep, vcat(q₀, p₀))
 end
 

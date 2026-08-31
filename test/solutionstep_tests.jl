@@ -8,7 +8,6 @@ using GeometricIntegratorsBase: enforce_periodicity!, internal, nhistory
 
 using ..HarmonicOscillator
 
-
 Δt = 0.1
 t0 = 0.0
 t1 = t0 + Δt
@@ -36,8 +35,6 @@ idae = idaeproblem()
 lode = lodeproblem()
 ldae = ldaeproblem()
 
-
-
 @testset "$(rpad("Solution Step Constructors",80))" begin
     @test typeof(SolutionStep(ode)) <: SolutionStep{ODE}
     @test typeof(SolutionStep(dae)) <: SolutionStep{DAE}
@@ -51,11 +48,10 @@ ldae = ldaeproblem()
     @test typeof(SolutionStep(ldae)) <: SolutionStep{LDAE}
 end
 
-
 @testset "$(rpad("SolutionStep Accessor Functions",80))" begin
 
     # Test with ODE solution step
-    solstep_ode = SolutionStep(ode; nhistory=3)
+    solstep_ode = SolutionStep(ode; nhistory = 3)
 
     # Test nhistory
     @test nhistory(solstep_ode) == 3
@@ -141,9 +137,8 @@ end
     @inferred test_current(solstep_ode, Val(:q))
     @inferred test_current(solstep_ode, Val(:q̇))
 
-
     # Test with PODE solution step
-    solstep_pode = SolutionStep(pode; nhistory=2)
+    solstep_pode = SolutionStep(pode; nhistory = 2)
 
     @test nhistory(solstep_pode) == 2
     # @test keys(solstep_pode) == Val.((:q, :p, :q̇, :ṗ))
@@ -162,7 +157,7 @@ end
     @test haskey(sol_pode_current, :p)
 
     # Test with DAE solution step
-    solstep_dae = SolutionStep(dae; nhistory=1)
+    solstep_dae = SolutionStep(dae; nhistory = 1)
 
     @test nhistory(solstep_dae) == 1
     # @test keys(solstep_dae) == Val.((:q, :λ, :μ, :q̇))
@@ -176,12 +171,9 @@ end
     @test haskey(st_dae_current, :q̇)
     @test !haskey(st_dae_current, :λ̇)
     @test !haskey(st_dae_current, :μ̇)
-
 end
 
-
 @testset "$(rpad("ODE Solution Step",80))" begin
-
     solstep = SolutionStep(ode)
 
     @test hasproperty(solstep, :t)
@@ -202,8 +194,10 @@ end
     @test solstep.q == solution(solstep)[0].q == solution(solstep, 0).q
     @test solstep.q̄ == solution(solstep)[1].q == solution(solstep, 1).q
 
-    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q == current(solstep).q̇
-    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q == previous(solstep).q̇
+    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q ==
+          current(solstep).q̇
+    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q ==
+          previous(solstep).q̇
 
     @test solstep.t == initial_conditions(ode).t
     @test solstep.q == initial_conditions(ode).q
@@ -219,13 +213,13 @@ end
 
     @test state(current(solstep)) == (
         # t=initial_conditions(ode).t,
-        q=initial_conditions(ode).q,
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = initial_conditions(ode).q,
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test state(previous(solstep)) == (
         # t=zero(initial_conditions(ode).t),
-        q=zero(initial_conditions(ode).q),
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = zero(initial_conditions(ode).q),
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test time(current(solstep)) == initial_conditions(ode).t
     @test time(previous(solstep)) == initial_conditions(ode).t
@@ -239,18 +233,18 @@ end
 
     @test state(current(solstep)) == (
         # t=initial_conditions(ode).t + Δt,
-        q=initial_conditions(ode).q,
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = initial_conditions(ode).q,
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test state(previous(solstep)) == (
         # t=initial_conditions(ode).t,
-        q=initial_conditions(ode).q,
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = initial_conditions(ode).q,
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test time(current(solstep)) == initial_conditions(ode).t + Δt
     @test time(previous(solstep)) == initial_conditions(ode).t
 
-    update!(solstep, (q=Δx,))
+    update!(solstep, (q = Δx,))
 
     @test solstep.t == initial_conditions(ode).t + Δt
     @test solstep.q == initial_conditions(ode).q .+ Δx
@@ -259,20 +253,22 @@ end
 
     @test state(current(solstep)) == (
         # t=initial_conditions(ode).t + Δt,
-        q=initial_conditions(ode).q .+ Δx,
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = initial_conditions(ode).q .+ Δx,
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test state(previous(solstep)) == (
         # t=initial_conditions(ode).t,
-        q=initial_conditions(ode).q,
-        q̇=VectorfieldVariable(initial_conditions(ode).q),
+        q = initial_conditions(ode).q,
+        q̇ = VectorfieldVariable(initial_conditions(ode).q)
     )
     @test time(current(solstep)) == initial_conditions(ode).t + Δt
     @test time(previous(solstep)) == initial_conditions(ode).t
 
     # test for periodicity treatment
 
-    ode_periodic = ODEProblem(functions(ode).v, timespan(ode), timestep(ode), initial_conditions(ode).q; invariants=invariants(ode), parameters=parameters(ode), periodicity=([0, -Inf], [2π, +Inf]))
+    ode_periodic = ODEProblem(functions(ode).v, timespan(ode), timestep(ode),
+        initial_conditions(ode).q; invariants = invariants(ode),
+        parameters = parameters(ode), periodicity = ([0, -Inf], [2π, +Inf]))
 
     solstep = SolutionStep(ode_periodic)
 
@@ -284,7 +280,7 @@ end
     @test solstep.q ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
     @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
 
-    update!(solstep, (q=[3π, 0.0],))
+    update!(solstep, (q = [3π, 0.0],))
 
     @test solstep.q ≈ [initial_conditions(ode).q[1] + 3π, initial_conditions(ode).q[2]] atol = 1E-14
     @test solstep.q̄ ≈ [initial_conditions(ode).q[1], initial_conditions(ode).q[2]] atol = 1E-14
@@ -293,8 +289,6 @@ end
 
     @test solstep.q == [initial_conditions(ode).q[1] + π, initial_conditions(ode).q[2]]
     @test solstep.q̄ == [initial_conditions(ode).q[1] - 2π, initial_conditions(ode).q[2]]
-
-
 
     #     solstep = SolutionStep(ode)
 
@@ -312,9 +306,7 @@ end
 
 end
 
-
 @testset "$(rpad("PODE Solution Step",80))" begin
-
     solstep = SolutionStep(pode)
 
     @test hasproperty(solstep, :t)
@@ -342,10 +334,14 @@ end
     @test solstep.q̄ == solution(solstep)[1].q == solution(solstep, 1).q
     @test solstep.p̄ == solution(solstep)[1].p == solution(solstep, 1).p
 
-    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q == current(solstep).q̇
-    @test solstep.ṗ == vectorfield(solstep)[0].p == vectorfield(solstep, 0).p == current(solstep).ṗ
-    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q == previous(solstep).q̇
-    @test solstep.ṗ̄ == vectorfield(solstep)[1].p == vectorfield(solstep, 1).p == previous(solstep).ṗ
+    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q ==
+          current(solstep).q̇
+    @test solstep.ṗ == vectorfield(solstep)[0].p == vectorfield(solstep, 0).p ==
+          current(solstep).ṗ
+    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q ==
+          previous(solstep).q̇
+    @test solstep.ṗ̄ == vectorfield(solstep)[1].p == vectorfield(solstep, 1).p ==
+          previous(solstep).ṗ
 
     @test solstep.t == initial_conditions(pode).t
     @test solstep.q == initial_conditions(pode).q
@@ -365,17 +361,17 @@ end
 
     @test state(current(solstep)) == (
         # t=initial_conditions(pode).t,
-        q=initial_conditions(pode).q,
-        p=initial_conditions(pode).p,
-        q̇=VectorfieldVariable(initial_conditions(pode).q),
-        ṗ=VectorfieldVariable(initial_conditions(pode).p),
+        q = initial_conditions(pode).q,
+        p = initial_conditions(pode).p,
+        q̇ = VectorfieldVariable(initial_conditions(pode).q),
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test state(previous(solstep)) == (
         # t=zero(initial_conditions(pode).t),
-        q=zero(initial_conditions(pode).q),
-        p=zero(initial_conditions(pode).p),
-        q̇=VectorfieldVariable(initial_conditions(pode).q),
-        ṗ=VectorfieldVariable(initial_conditions(pode).p),
+        q = zero(initial_conditions(pode).q),
+        p = zero(initial_conditions(pode).p),
+        q̇ = VectorfieldVariable(initial_conditions(pode).q),
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test time(current(solstep)) == initial_conditions(pode).t
     @test time(previous(solstep)) == initial_conditions(pode).t
@@ -383,17 +379,17 @@ end
     reset!(solstep, initialstate(pode).t + Δt)
     @test state(current(solstep)) == (
         # t=initial_conditions(pode).t + Δt,
-        q=initial_conditions(pode).q,
-        p=initial_conditions(pode).p,
-        q̇=VectorfieldVariable(initial_conditions(pode).q),
-        ṗ=VectorfieldVariable(initial_conditions(pode).p),
+        q = initial_conditions(pode).q,
+        p = initial_conditions(pode).p,
+        q̇ = VectorfieldVariable(initial_conditions(pode).q),
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test state(previous(solstep)) == (
         # t=initial_conditions(pode).t,
-        q=initial_conditions(pode).q,
-        p=initial_conditions(pode).p,
-        q̇=VectorfieldVariable(initial_conditions(pode).q),
-        ṗ=VectorfieldVariable(initial_conditions(pode).p),
+        q = initial_conditions(pode).q,
+        p = initial_conditions(pode).p,
+        q̇ = VectorfieldVariable(initial_conditions(pode).q),
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test time(current(solstep)) == initial_conditions(pode).t + Δt
     @test time(previous(solstep)) == initial_conditions(pode).t
@@ -411,7 +407,6 @@ end
     #     cut_periodic_solution!(solstep, (q = [2π],))
     #     @test solstep.q == [0.]
     #     @test solstep.p == [2π]
-
 
     #     solstep = SolutionStep(pode)
 
@@ -431,9 +426,7 @@ end
 
 end
 
-
 @testset "$(rpad("DAE Solution Step",80))" begin
-
     solstep = SolutionStep(dae)
 
     @test hasproperty(solstep, :t)
@@ -467,8 +460,10 @@ end
     @test solstep.λ̄ == solution(solstep)[1].λ == solution(solstep, 1).λ
     @test solstep.μ̄ == solution(solstep)[1].μ == solution(solstep, 1).μ
 
-    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q == current(solstep).q̇
-    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q == previous(solstep).q̇
+    @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q ==
+          current(solstep).q̇
+    @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q ==
+          previous(solstep).q̇
 
     @test solstep.t == initial_conditions(dae).t
     @test solstep.q == initial_conditions(dae).q
@@ -492,17 +487,17 @@ end
 
     @test state(current(solstep)) == (
         # t=initial_conditions(dae).t,
-        q=initial_conditions(dae).q,
-        λ=initial_conditions(dae).λ,
-        μ=zero(initial_conditions(dae).μ),
-        q̇=VectorfieldVariable(initial_conditions(dae).q),
+        q = initial_conditions(dae).q,
+        λ = initial_conditions(dae).λ,
+        μ = zero(initial_conditions(dae).μ),
+        q̇ = VectorfieldVariable(initial_conditions(dae).q)
     )
     @test state(previous(solstep)) == (
         # t=zero(initial_conditions(dae).t),
-        q=zero(initial_conditions(dae).q),
-        λ=zero(initial_conditions(dae).λ),
-        μ=zero(initial_conditions(dae).μ),
-        q̇=VectorfieldVariable(initial_conditions(dae).q),
+        q = zero(initial_conditions(dae).q),
+        λ = zero(initial_conditions(dae).λ),
+        μ = zero(initial_conditions(dae).μ),
+        q̇ = VectorfieldVariable(initial_conditions(dae).q)
     )
     @test time(current(solstep)) == initial_conditions(dae).t
     @test time(previous(solstep)) == initial_conditions(dae).t
@@ -510,17 +505,17 @@ end
     reset!(solstep, initialstate(dae).t + Δt)
     @test state(current(solstep)) == (
         # t=initial_conditions(dae).t + Δt,
-        q=initial_conditions(dae).q,
-        λ=initial_conditions(dae).λ,
-        μ=zero(initial_conditions(dae).μ),
-        q̇=VectorfieldVariable(initial_conditions(dae).q),
+        q = initial_conditions(dae).q,
+        λ = initial_conditions(dae).λ,
+        μ = zero(initial_conditions(dae).μ),
+        q̇ = VectorfieldVariable(initial_conditions(dae).q)
     )
     @test state(previous(solstep)) == (
         # t=initial_conditions(dae).t,
-        q=initial_conditions(dae).q,
-        λ=initial_conditions(dae).λ,
-        μ=zero(initial_conditions(dae).μ),
-        q̇=VectorfieldVariable(initial_conditions(dae).q),
+        q = initial_conditions(dae).q,
+        λ = initial_conditions(dae).λ,
+        μ = zero(initial_conditions(dae).μ),
+        q̇ = VectorfieldVariable(initial_conditions(dae).q)
     )
     @test time(current(solstep)) == initial_conditions(dae).t + Δt
     @test time(previous(solstep)) == initial_conditions(dae).t
@@ -545,7 +540,6 @@ end
     #     cut_periodic_solution!(solstep, (q = [2π, 0.],))
     #     @test solstep.q == [0., 2π]
 
-
     #     solstep = SolutionStep(dae)
 
     #     k = HarmonicOscillator.k
@@ -561,7 +555,6 @@ end
     #     @test solstep.q̄[1:2] ≈ [A * sin(- ω * timestep(dae) + ϕ), ω * A * cos(- ω * timestep(dae) + ϕ)]
 
 end
-
 
 # @testset "$(rpad("PDAE Solution Step",80))" begin
 
@@ -621,7 +614,6 @@ end
 #     @test solstep.q == [0.]
 #     @test solstep.p == [2π]
 
-
 #     solstep = SolutionStep(pdae)
 
 #     k = HarmonicOscillator.k
@@ -640,12 +632,11 @@ end
 
 # end
 
-
 # Create a simple equation type for testing
-struct TestEquation <: GeometricEquation{Nothing,Nothing,Nothing} end
+struct TestEquation <: GeometricEquation{Nothing, Nothing, Nothing} end
 
 # Helper function to create a basic SolutionStep for testing
-function create_test_solutionstep(; nhistory=2)
+function create_test_solutionstep(; nhistory = 2)
     # Create initial conditions with both regular and periodic variables
     q_val = [1.0, 2.0, 3.0]
     p_val = [0.5, 1.5, 2.5]
@@ -660,11 +651,10 @@ function create_test_solutionstep(; nhistory=2)
     q = StateVariable(q_val, (q_range_min, q_range_max), q_periodic)
     p = StateVariable(p_val, (fill(-Inf, 3), fill(Inf, 3)), BitArray(fill(false, 3)))
 
-    ics = State(t, (q=q, p=p))
+    ics = State(t, (q = q, p = p))
 
-    return SolutionStep{TestEquation}(ics, NullParameters(); nhistory=nhistory)
+    return SolutionStep{TestEquation}(ics, NullParameters(); nhistory = nhistory)
 end
-
 
 @testset "SolutionStep Update and Periodicity Functions" begin
     @testset "update! function" begin
@@ -688,7 +678,7 @@ end
             @test solstep.t ≈ orig_t + Δt
 
             # Apply update
-            result = update!(solstep, (q=Δq, p=Δp))
+            result = update!(solstep, (q = Δq, p = Δp))
 
             # Check that function returns the solution step
             @test result === solstep
@@ -710,7 +700,7 @@ end
 
             # Update only q
             Δq = [0.1, 0.2, 0.3]
-            update!(solstep, (q=Δq,))
+            update!(solstep, (q = Δq,))
 
             @test solstep.q ≈ orig_q + Δq
             @test solstep.p ≈ orig_p  # p should remain unchanged
@@ -733,15 +723,15 @@ end
             solstep = create_test_solutionstep()
 
             # Test with invalid key
-            @test_throws ArgumentError update!(solstep, (invalid_key=[1.0, 2.0],))
+            @test_throws ArgumentError update!(solstep, (invalid_key = [1.0, 2.0],))
 
             # Test with subset of invalid keys
-            @test_throws ArgumentError update!(solstep, (q=[0.1, 0.2, 0.3], invalid_key=[1.0, 2.0]))
+            @test_throws ArgumentError update!(solstep, (
+                q = [0.1, 0.2, 0.3], invalid_key = [1.0, 2.0]))
         end
     end
 
     @testset "enforce_periodicity! functions" begin
-
         @testset "Non-periodic variables (no-op)" begin
             solstep = create_test_solutionstep()
 
@@ -854,9 +844,9 @@ end
             q_state = StateVariable(q_val, (q_range_min, q_range_max), q_periodic)
             q_with_error = StateWithError(q_state)
 
-            ics = State(TimeVariable(0.0), (q=q_with_error,))
+            ics = State(TimeVariable(0.0), (q = q_with_error,))
 
-            solstep = SolutionStep{TestEquation}(ics, NullParameters(); nhistory=2)
+            solstep = SolutionStep{TestEquation}(ics, NullParameters(); nhistory = 2)
 
             # Set periodic component out of range
             solstep.q[1] = -0.5
@@ -900,7 +890,7 @@ end
 
             # Update with increment that takes periodic component out of range
             # Starting at q[1] = 1.0, add 6.0 to get 7.0 > 2π
-            update!(solstep, (q=[6.0, 0.0, 0.0],))
+            update!(solstep, (q = [6.0, 0.0, 0.0],))
 
             # Before periodicity enforcement
             @test solstep.q[1] ≈ 7.0
@@ -918,7 +908,7 @@ end
 
             # Simulate multiple time steps with updates and periodicity
             for i in 1:5
-                update!(solstep, (q=[0.0, 1.5, 0.0],))  # Add 1.5 to periodic component
+                update!(solstep, (q = [0.0, 1.5, 0.0],))  # Add 1.5 to periodic component
                 enforce_periodicity!(solstep)
 
                 # Should always be in range

@@ -4,7 +4,8 @@ using GeometricSolutions
 using Test
 
 using GeometricSolutions: relative_maximum_error
-using GeometricIntegratorsBase: ImplicitMidpointCache, ImplicitMidpointPODECache, ImplicitMidpointIODECache
+using GeometricIntegratorsBase: ImplicitMidpointCache, ImplicitMidpointPODECache,
+                                ImplicitMidpointIODECache
 using GeometricIntegratorsBase: CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
@@ -12,12 +13,10 @@ using SimpleSolvers: Newton
 using ..HarmonicOscillator
 using ..NonlinearProblems
 
-
 # Accuracy, convergence order, data types, the agreement of the formulations of one and the same
 # equation and the rejection of unsupported problem types are asserted for every method of the
 # package in `common_tests.jl`.
 @testset "$(rpad("ImplicitMidpoint Method Tests", 80))" begin
-
     @testset "Method Properties" begin
         method = ImplicitMidpoint()
 
@@ -64,7 +63,8 @@ using ..NonlinearProblems
             @test cache isa ImplicitMidpointPODECache{Float64}
 
             # both stage vector fields are solved for, so the solution vector holds two of them
-            @test length(cache.x) == length(initial_conditions(pode).q) + length(initial_conditions(pode).p)
+            @test length(cache.x) ==
+                  length(initial_conditions(pode).q) + length(initial_conditions(pode).p)
             @test solversize(method, pode) == length(cache.x)
 
             @test axes(cache.q) == axes(initial_conditions(pode).q)
@@ -78,7 +78,8 @@ using ..NonlinearProblems
             @test CacheType(Float32, pode, method) == ImplicitMidpointPODECache{Float32}
 
             # the Hamiltonian formulation is integrated with the very same cache
-            @test Cache{Float64}(hodeproblem(), method) isa ImplicitMidpointPODECache{Float64}
+            @test Cache{Float64}(hodeproblem(), method) isa
+                  ImplicitMidpointPODECache{Float64}
         end
 
         @testset "IODE/LODE Problems" begin
@@ -103,7 +104,8 @@ using ..NonlinearProblems
             @test CacheType(Float32, iode, method) == ImplicitMidpointIODECache{Float32}
 
             # the Lagrangian formulation is integrated with the very same cache
-            @test Cache{Float64}(lodeproblem(), method) isa ImplicitMidpointIODECache{Float64}
+            @test Cache{Float64}(lodeproblem(), method) isa
+                  ImplicitMidpointIODECache{Float64}
         end
     end
 
@@ -111,7 +113,7 @@ using ..NonlinearProblems
         # the method conserves quadratic invariants exactly, so the energy of the harmonic
         # oscillator is preserved up to round-off, even over long times and in every formulation
         for problem in (odeproblem, podeproblem, hodeproblem, iodeproblem, lodeproblem)
-            prob = problem(; timespan=(0.0, 100.0))
+            prob = problem(; timespan = (0.0, 100.0))
             @test max_energy_error(integrate(prob, ImplicitMidpoint()), prob) < 1E-13
         end
     end
@@ -120,7 +122,8 @@ using ..NonlinearProblems
         # note that the reference solution is singular for q₀ = 0
         for x₀ in ([1.0, 0.0], [0.2, 0.8], [0.5, 0.5])
             ode = odeproblem(x₀)
-            @test relative_maximum_error(integrate(ode, ImplicitMidpoint()), exact_solution(ode)).q < 1E-3
+            @test relative_maximum_error(integrate(ode, ImplicitMidpoint()), exact_solution(ode)).q <
+                  1E-3
         end
     end
 
@@ -136,11 +139,10 @@ using ..NonlinearProblems
     @testset "Nonlinear Problem" begin
         # the midpoint rule and the trapezoidal rule are the same map on a linear problem, so
         # they are only distinguishable on a nonlinear one, where both remain second order
-        errs = [riccati_error(integrate(riccati_problem(; timestep=Δt), ImplicitMidpoint()))
+        errs = [riccati_error(integrate(riccati_problem(; timestep = Δt), ImplicitMidpoint()))
                 for Δt in (0.1, 0.05, 0.025)]
 
-        @test all(isapprox.(errs[1:end-1] ./ errs[2:end], 4; atol=2E-1))
+        @test all(isapprox.(errs[1:(end - 1)] ./ errs[2:end], 4; atol = 2E-1))
         @test errs[1] < 1E-3
     end
-
 end

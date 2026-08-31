@@ -42,17 +42,16 @@ The `solutionstep(integrator, ...)` function is a convenient wrapper to construc
 a `SolutionStep` with the correct internal variables for a given integrator.
 """
 struct SolutionStep{
-    equationType<:GeometricEquation,
+    equationType <: GeometricEquation,
     nHistory,
-    stateType<:OffsetArray,
-    solutionType<:OffsetArray,
-    vectorfieldType<:OffsetArray,
-    internalType<:NamedTuple,
-    paramsType<:OptionalParameters,
-    currentType<:State,
-    previousType<:State
+    stateType <: OffsetArray,
+    solutionType <: OffsetArray,
+    vectorfieldType <: OffsetArray,
+    internalType <: NamedTuple,
+    paramsType <: OptionalParameters,
+    currentType <: State,
+    previousType <: State
 }
-
     state::stateType
     solution::solutionType
     vectorfield::vectorfieldType
@@ -63,11 +62,13 @@ struct SolutionStep{
     current::currentType
     previous::previousType
 
-    function SolutionStep{equType}(ics::State, parameters::OptionalParameters=NullParameters(); nhistory=2, internal=NamedTuple()) where {equType}
+    function SolutionStep{equType}(
+            ics::State, parameters::OptionalParameters = NullParameters();
+            nhistory = 2, internal = NamedTuple()) where {equType}
         nhistory ≥ 1 || throw(ArgumentError("nhistory must be at least 1, got $nhistory"))
 
         # create state vector according to the variables in ics
-        states = OffsetVector([State(ics; initialize=false) for _ in 0:nhistory], 0:nhistory)
+        states = OffsetVector([State(ics; initialize = false) for _ in 0:nhistory], 0:nhistory)
 
         # create solution vector from the solution variables in states
         solutions = OffsetVector([solution(st) for st in states], 0:nhistory)
@@ -80,7 +81,7 @@ struct SolutionStep{
         previous = HistoryState(states[1])
 
         # create solstep
-        solstep = new{equType,nhistory,
+        solstep = new{equType, nhistory,
             typeof(states),
             typeof(solutions),
             typeof(vectorfields),
@@ -98,7 +99,8 @@ struct SolutionStep{
     end
 end
 
-function SolutionStep(problem::GeometricProblem{superType}; kwargs...) where {superType<:GeometricEquation}
+function SolutionStep(problem::GeometricProblem{superType}; kwargs...) where {superType <:
+                                                                              GeometricEquation}
     SolutionStep{superType}(initialstate(problem), parameters(problem); kwargs...)
 end
 
@@ -108,9 +110,9 @@ end
 #     return solstep
 # end
 
-function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=default_extrapolation(), kwargs...)
+function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation = default_extrapolation(), kwargs...)
     # create solutionstep
-    solstep = SolutionStep(problem(int); internal=internal_variables(method(int), problem(int)), kwargs...)
+    solstep = SolutionStep(problem(int); internal = internal_variables(method(int), problem(int)), kwargs...)
 
     # copy initial conditions from sol
     copy!(solstep, sol)
@@ -124,14 +126,24 @@ function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation=defaul
     return solstep
 end
 
-hasstatevariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(CST, s)
-hashistoryvariable(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}, s::Symbol) where {TT,CST,HST,ET,NH,ST,SOLT,VT,IT,PT,CT<:State{TT,CST},HT<:State{TT,HST}} = hasfield(HST, s)
-stateType(::SolutionStep{ET,NH,ST,SOLT,VT,IT,PT,CT,HT}) where {ET,NH,ST,SOLT,VT,IT,PT,CT,HT} = CT
-
-
+function hasstatevariable(::SolutionStep{ET, NH, ST, SOLT, VT, IT, PT, CT, HT},
+        s::Symbol) where {TT, CST, HST, ET, NH, ST, SOLT, VT, IT, PT,
+        CT <: State{TT, CST}, HT <: State{TT, HST}}
+    hasfield(CST, s)
+end
+function hashistoryvariable(::SolutionStep{ET, NH, ST, SOLT, VT, IT, PT, CT, HT},
+        s::Symbol) where {TT, CST, HST, ET, NH, ST, SOLT, VT, IT, PT,
+        CT <: State{TT, CST}, HT <: State{TT, HST}}
+    hasfield(HST, s)
+end
+function stateType(::SolutionStep{
+        ET, NH, ST, SOLT, VT, IT, PT, CT, HT}) where {ET, NH, ST, SOLT, VT, IT, PT, CT, HT}
+    CT
+end
 
 function Base.hasproperty(sol::SolutionStep, s::Symbol)
-    hasfield(SolutionStep, s) || s === :t || s === :t̄ || hasstatevariable(sol, s) || hashistoryvariable(sol, s)
+    hasfield(SolutionStep, s) || s === :t || s === :t̄ || hasstatevariable(sol, s) ||
+        hashistoryvariable(sol, s)
 end
 
 function Base.getproperty(sol::SolutionStep, s::Symbol)
@@ -162,7 +174,6 @@ function Base.setproperty!(sol::SolutionStep, s::Symbol, x)
     end
 end
 
-
 """
     keys(solstep::SolutionStep)
 
@@ -182,7 +193,7 @@ solutionkeys(solstep::SolutionStep) = solutionkeys(current(solstep))
 
 Return the number of previous time steps stored in the solution step.
 """
-nhistory(::SolutionStep{ET,NT}) where {ET,NT} = NT
+nhistory(::SolutionStep{ET, NT}) where {ET, NT} = NT
 
 """
     state(solstep::SolutionStep)
@@ -265,7 +276,6 @@ previous(solstep::SolutionStep) = state(solstep, 1)
 eachsolution(sol::SolutionStep) = 1:nhistory(sol)
 backwardhistory(sol::SolutionStep) = nhistory(sol):-1:1
 
-
 """
     reset!(solstep::SolutionStep, Δt)
 
@@ -292,7 +302,6 @@ function GeometricBase.reset!(solstep::SolutionStep, t)
     return solstep
 end
 
-
 """
     copy!(solstep::SolutionStep, sol::NamedTuple)
 
@@ -310,7 +319,7 @@ function Base.copy!(solstep::SolutionStep, st::NamedTuple)
     return solstep
 end
 
-function Base.copy!(solstep::SolutionStep, t::Union{Real,TimeVariable}, st::NamedTuple)
+function Base.copy!(solstep::SolutionStep, t::Union{Real, TimeVariable}, st::NamedTuple)
     copy!(current(solstep), t, st)
     return solstep
 end
@@ -326,7 +335,6 @@ Copy the initial conditions of a `EquationProblem` to the current state of a sol
 function Base.copy!(solstep::SolutionStep, prob::EquationProblem)
     copy!(solstep, initialstate(prob))
 end
-
 
 # The following is a workaround for scalar solution entries that are
 # stored as plain Julia numbers instead of AbstractScalarVariable.
@@ -369,7 +377,8 @@ update!(solstep, (q = [0.1, 0.2], p = [0.05, 0.1]))
 """
 function update!(solstep::SolutionStep, Δ::NamedTuple)
     for k in keys(Δ)
-        k ∈ keys(solstep) || throw(ArgumentError("Key $(k) is not present in the solution step"))
+        k ∈ keys(solstep) ||
+            throw(ArgumentError("Key $(k) is not present in the solution step"))
     end
 
     sol = current(solstep)
@@ -380,7 +389,6 @@ function update!(solstep::SolutionStep, Δ::NamedTuple)
 
     return solstep
 end
-
 
 """
     enforce_periodicity!(solstep::SolutionStep)
@@ -439,8 +447,8 @@ For each component `i` of the state variable:
     end
 end
 
-
-function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::Extrapolation=default_extrapolation())
+function initialize!(solstep::SolutionStep, problem::GeometricProblem,
+        extrap::Extrapolation = default_extrapolation())
     for i in eachsolution(solstep)
         state(solstep, i).time .= state(solstep, i - 1).t .- timestep(problem)
         extrapolate!(state(solstep, i), state(solstep, i - 1), problem, extrap)
@@ -449,7 +457,8 @@ function initialize!(solstep::SolutionStep, problem::GeometricProblem, extrap::E
     return solstep
 end
 
-function initialize!(solstep::SolutionStep, problem::DELEProblem, extrap::Extrapolation=default_extrapolation())
+function initialize!(solstep::SolutionStep, problem::DELEProblem,
+        extrap::Extrapolation = default_extrapolation())
     state(solstep, 1).time .= state(solstep, 0).t .- timestep(problem)
     state(solstep, 1).q .= initial_conditions(problem).q̄
 

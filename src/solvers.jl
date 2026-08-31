@@ -24,8 +24,8 @@ because it costs a merit evaluation — a full residual evaluation here — on a
 is wrong, and gains nothing on one whose scale is right: a Newton step already sits at its model
 minimum. Every method in this package solves with `Newton()`.
 """
-default_linesearch(method=nothing) = Backtracking()
-default_linesearch(::Type{T}, method=nothing) where {T<:Real} = Backtracking(T)
+default_linesearch(method = nothing) = Backtracking()
+default_linesearch(::Type{T}, method = nothing) where {T <: Real} = Backtracking(T)
 
 """
 The window, in iterations, after which a nonlinear solve that is not descending towards `f_abstol`
@@ -81,15 +81,17 @@ than at every call site. The two overrides that existed for `f_abstol` — one f
 Runge-Kutta families, one for SPARK — were both removed once the size scaling landed, since the
 sized value lands above the residual floor of each of them.
 """
-default_options(method::GeometricMethod, problem::GeometricProblem) = (
-    min_iterations=1,
-    f_abstol=max(8, solversize(method, problem)) * eps(datatype(problem)),
-    # Giving up and converging remain mutually exclusive (`no_progress` is gated on
-    # `!residual_small`), the solve still reports the residual it achieved against the tolerance
-    # it was asked for, and `default_options` is merged rather than replaced, so a caller who
-    # disagrees overrides this with one keyword.
-    f_stall_window=DEFAULT_F_STALL_WINDOW,
-)
+function default_options(method::GeometricMethod, problem::GeometricProblem)
+    (
+        min_iterations = 1,
+        f_abstol = max(8, solversize(method, problem)) * eps(datatype(problem)),
+        # Giving up and converging remain mutually exclusive (`no_progress` is gated on
+        # `!residual_small`), the solve still reports the residual it achieved against the tolerance
+        # it was asked for, and `default_options` is merged rather than replaced, so a caller who
+        # disagrees overrides this with one keyword.
+        f_stall_window = DEFAULT_F_STALL_WINDOW
+    )
+end
 
 initsolver(::SolverMethod, ::GeometricMethod, ::CacheDict; kwargs...) = NoSolver()
 
@@ -108,7 +110,7 @@ end
 
 # This accounts for the SimpleSolvers interface, expecting a single parameter argument,
 # whereas the typical `residual!` methods expect a number of additional arguments.
-residual!(y, x, parameters::Union{Tuple,NamedTuple}) = residual!(y, x, parameters...)
+residual!(y, x, parameters::Union{Tuple, NamedTuple}) = residual!(y, x, parameters...)
 
 """
     check_solver_status(status, int)

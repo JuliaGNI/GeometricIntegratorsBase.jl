@@ -10,10 +10,10 @@ import GeometricIntegratorsBase: integrate_step!
 
 import ..HarmonicOscillator: odeproblem
 
-
 struct ExplicitEulerTest <: ODEMethod end
 
-function integrate_step!(sol, hist, params, int::GeometricIntegrator{<:ExplicitEulerTest, <:GeometricProblem})
+function integrate_step!(sol, hist, params, int::GeometricIntegrator{
+        <:ExplicitEulerTest, <:GeometricProblem})
     # compute vector field
     equations(int).v(sol.q̇, sol.t, sol.q, params)
 
@@ -26,7 +26,6 @@ function integrate_step!(sol, hist, params, int::GeometricIntegrator{<:ExplicitE
 end
 
 sol = integrate(odeproblem(), ExplicitEulerTest())
-
 
 # A nonlinear solve that breaks down throws a `NonlinearSolverException` rather than returning a
 # bad iterate. The time-stepping loop has to catch it, or `integrate` — which allocates the
@@ -43,7 +42,8 @@ struct FailingTest{ET} <: ODEMethod
     exception::ET
 end
 
-function integrate_step!(sol, hist, params, int::GeometricIntegrator{<:FailingTest,<:GeometricProblem})
+function integrate_step!(sol, hist, params, int::GeometricIntegrator{
+        <:FailingTest, <:GeometricProblem})
     # `reset!` sets `sol.t` to the time at the end of the step, so with a timestep of 0.1 and
     # `tfail = 0.35` the first step to throw is n = 4
     sol.t ≥ method(int).tfail && throw(method(int).exception)
@@ -72,7 +72,6 @@ sol_failing = @test_logs (:warn, r"Nonlinear solver failed at timestep n=4") mat
 # any other exception is a bug and must not be masked
 @test_throws ErrorException integrate(failing, FailingTest(0.35, ErrorException("not a solver failure")))
 
-
 # The complement: a real `Newton()` solve that does reach the rejection above. The vector field
 # goes non-finite past a fixed time rather than blowing up gradually, so the step at which the
 # solve breaks down is pinned down (with a timestep of 0.1 and the stage time of the implicit
@@ -84,7 +83,8 @@ end
 
 breakdown = ODEProblem(breakdown_v, (0.0, 1.0), 0.1, [1.0, 0.0])
 
-sol_breakdown = @test_logs (:warn, r"Nonlinear solver failed at timestep n=4") match_mode = :any integrate(breakdown, ImplicitEuler())
+sol_breakdown = @test_logs (:warn, r"Nonlinear solver failed at timestep n=4") match_mode = :any integrate(
+    breakdown, ImplicitEuler())
 
 # the steps before the breakdown survive, and the exception did not propagate. asserting the exact
 # values rather than `isfinite`, because the zeros left behind by an early `break` are finite too:

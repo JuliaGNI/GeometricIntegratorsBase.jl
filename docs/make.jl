@@ -4,25 +4,28 @@ using GeometricIntegratorsBase
 using GeometricEquations
 using GeometricSolutions
 
-DocMeta.setdocmeta!(GeometricIntegratorsBase, :DocTestSetup, :(using GeometricIntegratorsBase); recursive=true)
+DocMeta.setdocmeta!(GeometricIntegratorsBase, :DocTestSetup,
+    :(using GeometricIntegratorsBase); recursive = true)
 
-cp(normpath(@__FILE__, "../../CHANGELOG.md"), normpath(@__FILE__, "../src/releasenotes.md"); force=true)
+cp(normpath(@__FILE__, "../../CHANGELOG.md"), normpath(@__FILE__, "../src/releasenotes.md"); force = true)
 
 links = InterLinks(
     "GeometricEquations" => "https://JuliaGNI.github.io/GeometricEquations.jl/stable/",
 )
 
 makedocs(;
-    sitename="GeometricIntegratorsBase.jl",
-    plugins=[links,],
-    warnonly=Documenter.except(:autodocs_block, :cross_references, :docs_block, :doctest, :eval_block, :example_block, :footnote, :linkcheck_remotes, :linkcheck, :meta_block, :parse_error, :setup_block),
-    authors="Michael Kraus <michael.kraus@ipp.mpg.de> and contributors",
-    format=Documenter.HTML(;
-        canonical="https://JuliaGNI.github.io/GeometricIntegratorsBase.jl",
-        edit_link="main",
-        assets=String[],
+    sitename = "GeometricIntegratorsBase.jl",
+    plugins = [links,],
+    warnonly = Documenter.except(:autodocs_block, :cross_references, :docs_block, :doctest,
+        :eval_block, :example_block, :footnote, :linkcheck_remotes,
+        :linkcheck, :meta_block, :parse_error, :setup_block),
+    authors = "Michael Kraus <michael.kraus@ipp.mpg.de> and contributors",
+    format = Documenter.HTML(;
+        canonical = "https://JuliaGNI.github.io/GeometricIntegratorsBase.jl",
+        edit_link = "main",
+        assets = String[]
     ),
-    pages=[
+    pages = [
         "Home" => "index.md",
         "Extrapolation Methods" => "extrapolation.md",
         "Integrators" => "integrators.md",
@@ -30,18 +33,18 @@ makedocs(;
         "Dependencies" => [
             "Equations" => "deps/equations.md",
             "Problems" => "deps/problems.md",
-            "Solutions" => "deps/solutions.md",
+            "Solutions" => "deps/solutions.md"
         ],
-        "Release Notes" => "releasenotes.md",
+        "Release Notes" => "releasenotes.md"
     ],
-    modules=[
+    modules = [
         GeometricIntegratorsBase,
         GeometricEquations,
-        GeometricSolutions,
-    ],
+        GeometricSolutions
+    ]
 )
 
 deploydocs(;
-    repo="github.com/JuliaGNI/GeometricIntegratorsBase.jl",
-    devbranch="main",
+    repo = "github.com/JuliaGNI/GeometricIntegratorsBase.jl",
+    devbranch = "main"
 )

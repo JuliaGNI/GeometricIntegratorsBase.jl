@@ -10,11 +10,9 @@ using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplecti
 using SimpleSolvers: Newton
 using ..HarmonicOscillator
 
-
 # Accuracy, convergence order, data types and the rejection of unsupported problem types are
 # asserted for every method of the package in `common_tests.jl`.
 @testset "$(rpad("ImplicitEuler Method Tests", 80))" begin
-
     @testset "Method Properties" begin
         method = ImplicitEuler()
 
@@ -52,12 +50,11 @@ using ..HarmonicOscillator
     @testset "Different Timesteps" begin
         # the convergence order test in `common_tests.jl` asserts this asymptotically; here it is
         # asserted at the timesteps a caller would actually reach for
-        errs = [
-            begin
-                ode = odeproblem([0.5, 0.0]; timestep=Δt)
-                relative_maximum_error(integrate(ode, ImplicitEuler()), exact_solution(ode)).q
-            end for Δt in (0.05, 0.2)
-        ]
+        errs = [begin
+                    ode = odeproblem([0.5, 0.0]; timestep = Δt)
+                    relative_maximum_error(integrate(ode, ImplicitEuler()), exact_solution(ode)).q
+                end
+                for Δt in (0.05, 0.2)]
 
         @test errs[1] < 2E-2
         @test errs[2] < 1E-1
@@ -68,7 +65,8 @@ using ..HarmonicOscillator
         # note that the reference solution is singular for q₀ = 0
         for x₀ in ([1.0, 0.5], [0.2, 0.8])
             ode = odeproblem(x₀)
-            @test relative_maximum_error(integrate(ode, ImplicitEuler()), exact_solution(ode)).q < 5E-2
+            @test relative_maximum_error(integrate(ode, ImplicitEuler()), exact_solution(ode)).q <
+                  5E-2
         end
     end
 
@@ -76,7 +74,7 @@ using ..HarmonicOscillator
         ode = odeproblem()
 
         # loose tolerances still converge, and `max_iterations` is accepted as a solver option
-        for options in ((x_abstol=1e-4, f_abstol=1e-4), (max_iterations=200,))
+        for options in ((x_abstol = 1e-4, f_abstol = 1e-4), (max_iterations = 200,))
             sol = integrate(ode, ImplicitEuler(); options...)
             @test all(x -> all(isfinite, x), sol.q)
         end
@@ -108,7 +106,7 @@ using ..HarmonicOscillator
         sol = integrate(ODEProblem(stiff_v, (0.0, 0.1), 0.01, [1.0]), ImplicitEuler())
 
         @test all(n -> sol.q[n][1] ≈ 1 / 2^n, axes(sol.q, 1))
-        @test issorted([sol.q[n][1] for n in axes(sol.q, 1)]; rev=true)
+        @test issorted([sol.q[n][1] for n in axes(sol.q, 1)]; rev = true)
     end
 
     @testset "Edge Cases" begin
@@ -129,5 +127,4 @@ using ..HarmonicOscillator
         @test typeof(int).parameters[1] == ImplicitEuler
         @test typeof(int).parameters[2] == typeof(ode)
     end
-
 end

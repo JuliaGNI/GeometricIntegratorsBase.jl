@@ -7,9 +7,7 @@ import GeometricIntegratorsBase: IntegratorCache, CacheType
 
 using ..HarmonicOscillator
 
-
 prob = odeproblem()
-
 
 struct TestMethod <: GeometricMethod end
 
@@ -27,7 +25,6 @@ end
 @test Cache{Float64}(prob, TestMethod()) == NoCache{Float64}()
 @test CacheType(Float64, prob, TestMethod()) == NoCache{Float64}
 
-
 function Cache{ST}(problem::AbstractProblem, ::TestMethod; kwargs...) where {ST}
     TestCache{ST}(initial_conditions(problem).q; kwargs...)
 end
@@ -37,10 +34,9 @@ CacheType(ST, ::AbstractProblem, ::TestMethod) = TestCache{ST}
 @test typeof(Cache(prob, TestMethod())) <: TestCache{datatype(prob)}
 @test typeof(Cache{datatype(prob)}(prob, TestMethod())) <: TestCache{datatype(prob)}
 
-for ST ∈ (Float32, Float64, Rational{Int64})
+for ST in (Float32, Float64, Rational{Int64})
     @test CacheType(ST, prob, TestMethod()) == TestCache{ST}
 end
-
 
 tcache = Cache(prob, TestMethod())
 caches = CacheDict(prob, TestMethod())

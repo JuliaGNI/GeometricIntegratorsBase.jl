@@ -17,10 +17,10 @@ import GeometricBase: reset!, solutionstep!, update!
 import GeometricBase: solution, solutionkeys, state, vectorfield
 import GeometricBase: integrate, integrate!
 import GeometricBase: periodic, verifyrange
-import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable, TimeVariable
+import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable,
+                      TimeVariable
 import GeometricBase: NoSolver
 import SimpleSolvers: NonlinearSolverException, NonlinearSolverMethod
-
 
 # The problem unions of GeometricEquations also cover the constrained variants, that is
 # `AbstractProblemODE` includes `DAEProblem`, `AbstractProblemPODE` includes `PDAEProblem` and
@@ -30,10 +30,9 @@ import SimpleSolvers: NonlinearSolverException, NonlinearSolverMethod
 # the unconstrained unions below. A combination that is left unimplemented is rejected with an
 # `ArgumentError` naming method and problem, by `initsolver` for a method that solves and by
 # the `integrate_step!` fallback in `src/integrator.jl` for one that does not.
-const ProblemODE{DT,TT} = Union{ODEProblem{DT,TT},SubstepProblem{DT,TT}}
-const ProblemIODE{DT,TT} = Union{IODEProblem{DT,TT},LODEProblem{DT,TT}}
-const ProblemPODE{DT,TT} = Union{PODEProblem{DT,TT},HODEProblem{DT,TT}}
-
+const ProblemODE{DT, TT} = Union{ODEProblem{DT, TT}, SubstepProblem{DT, TT}}
+const ProblemIODE{DT, TT} = Union{IODEProblem{DT, TT}, LODEProblem{DT, TT}}
+const ProblemPODE{DT, TT} = Union{PODEProblem{DT, TT}, HODEProblem{DT, TT}}
 
 export update!, reset!
 export State
@@ -44,12 +43,11 @@ export initialguess!
 
 include("initialguess.jl")
 
-
 export Extrapolation, NoExtrapolation
 export EulerExtrapolation,
-    MidpointExtrapolation,
-    HermiteExtrapolation,
-    NormalizedHermiteExtrapolation
+       MidpointExtrapolation,
+       HermiteExtrapolation,
+       NormalizedHermiteExtrapolation
 export extrapolate!, solutionstep!
 
 include("extrapolation/extrapolation.jl")
@@ -58,16 +56,15 @@ include("extrapolation/euler.jl")
 include("extrapolation/hermite.jl")
 include("extrapolation/midpoint.jl")
 
-
 export GeometricMethod
 export default_solver, default_iguess, default_projection
 export initmethod, internal_variables, nullvector, tableau
-export isexplicit, isimplicit, issymmetric, issymplectic, isenergypreserving, isstifflyaccurate
+export isexplicit, isimplicit, issymmetric, issymplectic, isenergypreserving,
+       isstifflyaccurate
 export isodemethod, ispodemethod, ishodemethod, isiodemethod, islodemethod, issodemethod
 export isdaemethod, ispdaemethod, ishdaemethod, isidaemethod, isldaemethod
 
 include("method.jl")
-
 
 export SolutionStep
 export parameters, solution, state, vectorfield
@@ -76,17 +73,14 @@ export current, history, previous
 include("solutionstep.jl")
 include("solution.jl")
 
-
 export Cache, CacheDict, NoCache
 export cache, nlsolution
 
 include("cache.jl")
 
-
 export check_solver_status
 
 include("solvers.jl")
-
 
 export GeometricIntegrator
 export integrate, integrate!, integrate_step!

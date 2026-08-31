@@ -10,7 +10,6 @@ using ..HarmonicOscillator
 using ..NonautonomousProblems
 using ..NonautonomousProblems: nonautonomous_ode_v
 
-
 # Reference implementation of the scheme, written out directly so that the stage time is stated
 # here rather than taken from the code under test. The times are read off the solution rather
 # than recomputed, so that any disagreement is due to the scheme alone.
@@ -20,18 +19,16 @@ function reference_explicit_euler(prob, sol)
     h = timestep(prob)
 
     for n in 1:lastindex(sol.t)
-        nonautonomous_ode_v(v, sol.t[n-1], q, parameters(prob))
+        nonautonomous_ode_v(v, sol.t[n - 1], q, parameters(prob))
         q .+= h .* v
     end
 
     q
 end
 
-
 # Accuracy, convergence order, data types and the rejection of unsupported problem types are
 # asserted for every method of the package in `common_tests.jl`.
 @testset "$(rpad("ExplicitEuler Method Tests", 80))" begin
-
     @testset "Method Properties" begin
         method = ExplicitEuler()
 
@@ -76,5 +73,4 @@ end
         # the implicit method evaluates at the end of the step instead, and so must differ
         @test integrate(prob, ImplicitEuler()).q[end] != sol.q[end]
     end
-
 end
