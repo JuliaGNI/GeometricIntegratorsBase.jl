@@ -49,6 +49,7 @@ export EulerExtrapolation,
        HermiteExtrapolation,
        NormalizedHermiteExtrapolation
 export extrapolate!, solutionstep!
+export default_extrapolation
 
 include("extrapolation/extrapolation.jl")
 include("extrapolation/aitken_neville.jl")

@@ -7,6 +7,28 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## [Unreleased] — targeting 0.6.5
+
+### New Features
+
+* `default_extrapolation(method)`, dispatched on the method and exported, with the previous
+  `MidpointExtrapolation(default_extrapolation_stages)` as its default. `solutionstep` now takes
+  its `extrap` default from it rather than from the zero-argument `default_extrapolation()`, which
+  is unchanged and still available.
+
+  `SolutionStep` carries states at `t₋₁, t₋₂, …` that no initial condition supplies, and
+  `initialize!` manufactures them by running the problem *backwards* from `t₀`. For a
+  deterministic problem that is well defined and midpoint extrapolation does it accurately. For a
+  **stochastic** problem it is not defined at all — the past of a sample path is not a function of
+  its present, and running an SDE backwards is not the inverse of running it forwards — and the
+  fixed default made `integrate` fail outright on an SDE problem, with a `MethodError` about a
+  missing `_extrapolate!` rather than anything a caller could act on. A family of methods can now
+  return `NoExtrapolation()` instead, which copies the initial state into the history slots.
+
+  Purely additive: every existing method keeps the extrapolation it had, and a caller passing
+  `extrap` explicitly is unaffected.
+
+
 ## 0.6.3
 
 ### Breaking Changes
