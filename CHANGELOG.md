@@ -21,19 +21,11 @@ so that a compat-only bump can be told apart from an interface change.
   those docstrings to reference them. Neither type was rendered anywhere in this manual, so the
   three docstrings × two references had no anchor to point at. Upstream's own manual is green with
   the identical docstrings because it does render them. `[compat]` allows `"0.21"` for
-  GeometricEquations, so the break arrived with a registration rather than a commit: the pull request
-  that preceded 0.6.5 built clean against 0.21.2 and its merge to `main`, byte-identical, failed
-  against 0.21.3 twenty-three minutes later.
+  GeometricEquations, so the break arrived with a registration rather than with any commit here.
 
   Both types are now documented under *Stochastic Processes* on the problems page. They have to be
-  added as a pair — the `WienerProcess` docstring itself references `GridProcess`.
-
-  Worth knowing for the next time: because this manual re-renders upstream docstrings, and
-  GeometricEquations links within itself using plain `@ref`, any upstream release that documents a
-  newly referenced symbol can break this build with no local change. GeometricSolutions avoids
-  this from the other side by writing `@extref` for cross-package links, which is what the
-  `InterLinks` plugin in `docs/make.jl` exists to resolve; migrating the two `deps/` pages to the
-  same idiom would remove the failure class rather than this instance of it.
+  added as a pair — the `WienerProcess` docstring itself references `GridProcess`. Why only the
+  instance was fixed and not the failure class is under *Open Issues*.
 
 
 ## 0.6.5
@@ -554,6 +546,23 @@ collection:
 
 The items below are the unresolved entries of `todo.md`, kept here so that they are visible
 alongside the releases that created them.
+
+### The manual re-renders its dependencies' docstrings — open
+
+`docs/src/deps/equations.md` and `deps/problems.md` render 34 GeometricEquations docstrings each,
+through explicit `@docs` blocks. GeometricEquations links within itself using plain `@ref`, which is
+correct in its own manual and dangling in this one — so **any upstream release that documents a
+newly referenced symbol breaks this build with no commit here**, and it breaks on `main` rather
+than on a pull request, because the pull request resolves the old version and the merge the new one.
+That is what cost the 0.6.5 manual.
+
+The fix is not a change of link syntax. `@extref` resolves a link written in *this* manual's own
+prose; it cannot reach inside an upstream docstring that an `@docs` block has rendered here. So
+removing the failure class means dropping those `@docs` blocks and linking out to the dependency's
+published manual instead — which is what the `InterLinks` plugin in `docs/make.jl` is already
+configured for, and what GeometricSolutions' own docstrings already do from the other side. That is
+a decision about what this manual should contain rather than a build fix, which is why it was not
+folded in alongside the fix above.
 
 ### `check_solver_status` acts on nothing — open, by decision
 
