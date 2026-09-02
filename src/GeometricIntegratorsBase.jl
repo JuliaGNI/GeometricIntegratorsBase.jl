@@ -49,7 +49,6 @@ export EulerExtrapolation,
        HermiteExtrapolation,
        NormalizedHermiteExtrapolation
 export extrapolate!, solutionstep!
-export default_extrapolation
 
 include("extrapolation/extrapolation.jl")
 include("extrapolation/aitken_neville.jl")
@@ -58,7 +57,7 @@ include("extrapolation/hermite.jl")
 include("extrapolation/midpoint.jl")
 
 export GeometricMethod
-export default_solver, default_iguess, default_projection
+export default_solver, default_iguess, default_projection, default_extrapolation
 export initmethod, internal_variables, nullvector, tableau
 export isexplicit, isimplicit, issymmetric, issymplectic, isenergypreserving,
        isstifflyaccurate
