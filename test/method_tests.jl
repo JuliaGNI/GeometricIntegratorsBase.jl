@@ -15,6 +15,7 @@ struct TestMethod <: GeometricMethod end
 @test default_solver(TestMethod()) == NoSolver()
 @test default_iguess(TestMethod()) == NoInitialGuess()
 @test default_projection(TestMethod()) == NoProjection()
+@test default_extrapolation(TestMethod()) == MidpointExtrapolation()
 
 @test isodemethod(TestMethod) == isodemethod(TestMethod()) == false
 @test ispodemethod(TestMethod) == ispodemethod(TestMethod()) == false

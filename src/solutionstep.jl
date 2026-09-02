@@ -110,7 +110,8 @@ end
 #     return solstep
 # end
 
-function solutionstep(int::AbstractIntegrator, sol; extrap::Extrapolation = default_extrapolation(), kwargs...)
+function solutionstep(int::AbstractIntegrator, sol;
+        extrap::Extrapolation = default_extrapolation(method(int)), kwargs...)
     # create solutionstep
     solstep = SolutionStep(problem(int); internal = internal_variables(method(int), problem(int)), kwargs...)
 

@@ -31,6 +31,23 @@ default_solver(::GeometricMethod) = NoSolver()
 default_iguess(::GeometricMethod) = NoInitialGuess()
 default_projection(::GeometricMethod) = NoProjection()
 
+@doc raw"""
+    default_extrapolation(method)
+
+The extrapolation used to fill a `SolutionStep`'s history before the first step.
+
+A `SolutionStep` carries states at ``t_{-1}, t_{-2}, \ldots`` that no initial condition provides,
+and `initialize!` manufactures them by running the problem *backwards* from ``t_0``. For a
+deterministic problem this is well defined, and `MidpointExtrapolation` does it accurately, which
+is why it is the default.
+
+It is dispatched on the method rather than fixed so that a family of methods for which running the
+problem backwards is not meaningful can say so. A stochastic problem is the case in point — its
+past is not a function of its present, so there is nothing to extrapolate to, and such a method
+returns `NoExtrapolation()`, which copies the initial state into the history slots instead.
+"""
+default_extrapolation(::GeometricMethod) = MidpointExtrapolation(default_extrapolation_stages)
+
 isodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
 ispodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
 ishodemethod(::Union{GeometricMethod, Type{<:GeometricMethod}}) = false
