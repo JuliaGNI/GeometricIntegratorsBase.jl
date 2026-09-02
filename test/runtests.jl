@@ -6,6 +6,9 @@ include("examples/harmonic_oscillator.jl")
 include("examples/nonautonomous.jl")
 include("examples/nonlinear.jl")
 
+@safetestset "Interface Tests                                                                 " begin
+    include("interface_tests.jl")
+end
 @safetestset "Initial Guess Tests                                                             " begin
     include("initialguess_tests.jl")
 end

@@ -20,7 +20,23 @@ import GeometricBase: periodic, verifyrange
 import GeometricBase: AbstractVariable, AbstractScalarVariable, AbstractStateVariable,
                       TimeVariable
 import GeometricBase: NoSolver
+
+# The names below are all defined upstream, and importing them is what makes the definitions
+# further down this package *extensions* of those functions rather than new ones. Without the
+# import, a bare `f(::T) = ...` here declares a second generic function of the same name and
+# nothing says so — for the unexported ones because `using` never brought the name into scope to
+# clash with, and for `problem`, which `GeometricEquations` does export, because a definition here
+# wins over a name a `using` only made visible.
+#
+# `isexplicit` and friends are the case that matters: `RungeKutta` and `GeometricIntegrators`
+# attach method properties to `GeometricBase`'s generics, and `GeometricBase.isAbstractMethod`
+# reads them from there, so a property recorded on a separate function is invisible to both.
+import GeometricBase: isexplicit, isimplicit, issymmetric, issymplectic,
+                      isenergypreserving, isstifflyaccurate
+import GeometricBase: reference
+import GeometricEquations: problem
 import SimpleSolvers: NonlinearSolverException, NonlinearSolverMethod
+import SimpleSolvers: cache, initialize!, method
 
 # The problem unions of GeometricEquations also cover the constrained variants, that is
 # `AbstractProblemODE` includes `DAEProblem`, `AbstractProblemPODE` includes `PDAEProblem` and
