@@ -7,7 +7,7 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
-## [Unreleased] — targeting 0.6.5
+## 0.6.5
 
 ### New Features
 
@@ -27,6 +27,16 @@ so that a compat-only bump can be told apart from an interface change.
 
   Purely additive: every existing method keeps the extrapolation it had, and a caller passing
   `extrap` explicitly is unaffected.
+
+
+## 0.6.4
+
+Written up retrospectively — the release itself predates this file.
+
+### Compatibility
+
+* Allow `SimpleSolvers` 0.13 (#33). A compat-only release: `Project.toml` was the sole file
+  touched, and no behaviour, signature or result changed.
 
 
 ## 0.6.3
