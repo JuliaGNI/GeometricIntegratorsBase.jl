@@ -14,11 +14,11 @@ so that a compat-only bump can be told apart from an interface change.
 * `default_extrapolation(method)`, dispatched on the method and exported, with the previous
   `MidpointExtrapolation(default_extrapolation_stages)` as its default. `solutionstep` now takes
   its `extrap` default from it rather than from the zero-argument `default_extrapolation()`, which
-  is unchanged and still available.
+  is unchanged, still available, and now exported alongside it.
 
   `SolutionStep` carries states at `t₋₁, t₋₂, …` that no initial condition supplies, and
   `initialize!` manufactures them by running the problem *backwards* from `t₀`. For a
-  deterministic problem that is well defined and midpoint extrapolation does it accurately. For a
+  deterministic problem this is well defined and midpoint extrapolation does it accurately. For a
   **stochastic** problem it is not defined at all — the past of a sample path is not a function of
   its present, and running an SDE backwards is not the inverse of running it forwards — and the
   fixed default made `integrate` fail outright on an SDE problem, with a `MethodError` about a

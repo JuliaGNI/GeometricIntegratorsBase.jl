@@ -38,7 +38,7 @@ The extrapolation used to fill a `SolutionStep`'s history before the first step.
 
 A `SolutionStep` carries states at ``t_{-1}, t_{-2}, \ldots`` that no initial condition provides,
 and `initialize!` manufactures them by running the problem *backwards* from ``t_0``. For a
-deterministic problem that is well defined, and `MidpointExtrapolation` does it accurately, which
+deterministic problem this is well defined, and `MidpointExtrapolation` does it accurately, which
 is why it is the default.
 
 It is dispatched on the method rather than fixed so that a family of methods for which running the
