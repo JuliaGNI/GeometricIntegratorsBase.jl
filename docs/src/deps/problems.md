@@ -40,6 +40,15 @@ GeometricEquations.PSDEProblem
 GeometricEquations.SPSDEProblem
 ```
 
+## Stochastic Processes
+
+The driving process of a stochastic problem, passed as its `noise` argument.
+
+```@docs
+GeometricEquations.WienerProcess
+GeometricEquations.GridProcess
+```
+
 ## Discrete Equations
 
 ```@docs

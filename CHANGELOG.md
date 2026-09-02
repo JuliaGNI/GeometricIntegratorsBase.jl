@@ -7,6 +7,35 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## [Unreleased] — targeting 0.6.6
+
+### Documentation
+
+* The manual builds again. It had been failing since 0.6.5 — including the `v0.6.5` tag, so the
+  published manual for that release was never rendered — with six `Cannot resolve @ref` errors and
+  `makedocs encountered an error [:cross_references]`.
+
+  Nothing in this package caused it. `docs/src/deps/problems.md` renders the GeometricEquations
+  docstrings for `SDEProblem`, `PSDEProblem` and `SPSDEProblem`, and GeometricEquations 0.21.3
+  added the stochastic-process types `WienerProcess` and `GridProcess` and rewrote all three of
+  those docstrings to reference them. Neither type was rendered anywhere in this manual, so the
+  three docstrings × two references had no anchor to point at. Upstream's own manual is green with
+  the identical docstrings because it does render them. `[compat]` allows `"0.21"` for
+  GeometricEquations, so the break arrived with a registration rather than a commit: the pull request
+  that preceded 0.6.5 built clean against 0.21.2 and its merge to `main`, byte-identical, failed
+  against 0.21.3 twenty-three minutes later.
+
+  Both types are now documented under *Stochastic Processes* on the problems page. They have to be
+  added as a pair — the `WienerProcess` docstring itself references `GridProcess`.
+
+  Worth knowing for the next time: because this manual re-renders upstream docstrings, and
+  GeometricEquations links within itself using plain `@ref`, any upstream release that documents a
+  newly referenced symbol can break this build with no local change. GeometricSolutions avoids
+  this from the other side by writing `@extref` for cross-package links, which is what the
+  `InterLinks` plugin in `docs/make.jl` exists to resolve; migrating the two `deps/` pages to the
+  same idiom would remove the failure class rather than this instance of it.
+
+
 ## 0.6.5
 
 ### New Features
