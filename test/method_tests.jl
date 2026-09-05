@@ -1,6 +1,7 @@
 using GeometricIntegratorsBase
 using Test
 
+import GeometricBase
 import ..HarmonicOscillator: odeproblem
 
 prob = odeproblem()
@@ -36,3 +37,17 @@ struct TestMethod <: GeometricMethod end
 @test ismissing(issymplectic(TestMethod()))
 @test ismissing(isenergypreserving(TestMethod()))
 @test ismissing(isstifflyaccurate(TestMethod()))
+
+# The method properties are asserted through `GeometricBase` on purpose, not through the bare
+# names. The bare names are what this package exports, so a test written with them passes whether
+# or not they are the same functions the rest of the ecosystem uses. `RungeKutta` and
+# `GeometricIntegrators` attach their properties to `GeometricBase`'s generics, so those are the
+# ones that have to answer.
+@test issymplectic === GeometricBase.issymplectic
+@test GeometricBase.issymplectic(ImplicitMidpoint()) == true
+@test GeometricBase.isexplicit(ExplicitEuler()) == true
+
+# `print_reference` reads the reference off `GeometricBase.reference`, where every method in the
+# ecosystem defines it.
+GeometricBase.reference(::TestMethod) = "n/a"
+@test sprint(GeometricIntegratorsBase.print_reference, TestMethod()) == "n/a"

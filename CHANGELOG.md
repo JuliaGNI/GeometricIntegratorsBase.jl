@@ -7,6 +7,73 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## [Unreleased] — targeting 0.6.7
+
+### Fixes
+
+* The method properties this package defines are now the *same functions* the rest of the
+  ecosystem asks. `isexplicit`, `isimplicit`, `issymmetric`, `issymplectic`, `isenergypreserving`,
+  `isstifflyaccurate` and `reference` are declared by `GeometricBase` and are not exported by it,
+  so `using GeometricBase` never brought them into scope here and every definition in `src/` was
+  creating a second generic function of the same name instead of adding a method to
+  `GeometricBase`'s. They are now imported explicitly. No definition site changed, and none of the
+  answers this package gives changed either.
+
+  What a caller could observe: **the same question had two answers depending on which module it
+  was asked through.** `GeometricBase.issymplectic(ImplicitMidpoint())` was `missing` while
+  `GeometricIntegratorsBase.issymplectic(ImplicitMidpoint())` was `true`, and code that asked
+  `GeometricBase` — the package that declares the property — got the fallback. Measured on
+  `ImplicitMidpoint`, four properties now answer through `GeometricBase` that previously did not:
+  `isexplicit`, `isimplicit`, `issymmetric`, `issymplectic`. Across the stack the effect is larger:
+  with `GeometricIntegrators` loaded, `GeometricBase.isexplicit` carries 40 methods where it
+  previously had only its own `missing` fallback. `GeometricBase.reference` goes from 47 methods to
+  48, not from 1 — `RungeKutta` imports it and attaches its tableau references to it already, so
+  the only thing missing from it was this package's own `GeometricMethod` fallback.
+
+  What a downstream package must now avoid: defining a method on both `GeometricBase.isexplicit`
+  and `GeometricIntegratorsBase.isexplicit` for the same type. Those names were two independent
+  generics before this change and are one function afterwards, so the second definition silently
+  overwrites the first instead of standing beside it. Nothing in the ecosystem does this —
+  `GeometricIntegrators` takes `reference` from `GeometricBase` and the predicates from here, and
+  never both for one name.
+
+  Two things this does **not** fix, both pre-existing and neither caused by the shadowing:
+
+  - `GeometricBase.isAbstractMethod` still returns `false` for the methods in this package. It
+    requires all ten properties to be non-`missing`, and `isenergypreserving`,
+    `isstifflyaccurate`, `order`, `name`, `description` and `reference` are simply not defined for
+    them. Sharing the generics was necessary for that predicate to be reachable at all; it is not
+    sufficient.
+  - `print_reference` still prints nothing for the Runge-Kutta method families. It now reads
+    `GeometricBase.reference` rather than a private generic, so it prints for any method that
+    defines that — which the new test asserts — but `RungeKutta`'s reference strings are attached
+    to its *tableau* types, and nothing in the ecosystem defines `GeometricBase.reference` on a
+    method wrapper. `GeometricIntegrators` prints references for those families through its own
+    `print_reference`, which is a separate generic from this package's; unifying the two is out of
+    scope here.
+
+  `cache`, `method` and `initialize!` (`SimpleSolvers`) and `problem` (`GeometricEquations`) were
+  re-defined too, and are now imported as well. `problem` is the one case where the upstream name
+  *is* exported: a definition here wins over a name that `using` only made visible, so it was
+  shadowed for a different reason than the other ten. None of the four was broken for anyone —
+  every call site in this package passes this package's own types — but they were one downstream
+  definition away from the same failure.
+
+### Tests
+
+* `test/interface_tests.jl` asserts that no name this package owns collides with a function of the
+  same name owned by one of its dependencies. It derives the dependency list from the loaded
+  modules rather than a hardcoded list, so a new dependency is covered without editing the test,
+  and it reports *every* dependency that owns a colliding name rather than the first one it
+  happens to find — a name can collide with two at once, and `issymmetric` does, so a reader who
+  acted on the first hit could import the wrong generic and fix nothing. It covers types as well as
+  functions and macros, 112 bindings against nine dependencies, because a colliding name is a
+  collision whatever kind of thing it names; submodule contents and package extensions are outside
+  it, which the test records, and this package has neither. The existing method-property assertions
+  in `test/method_tests.jl` could not have caught any of this: they used the bare exported names,
+  which pass whichever function those names point at.
+
+
 ## 0.6.6
 
 ### Documentation
@@ -563,6 +630,37 @@ published manual instead — which is what the `InterLinks` plugin in `docs/make
 configured for, and what GeometricSolutions' own docstrings already do from the other side. That is
 a decision about what this manual should contain rather than a build fix, which is why it was not
 folded in alongside the fix above.
+
+### No method declares its full property set, so `isAbstractMethod` is `false` for all of them — open
+
+`GeometricBase.isAbstractMethod` requires all ten method properties to be non-`missing`. Since the
+[Unreleased] fix the six `is*` predicates are at least *askable* through `GeometricBase`, but
+`isenergypreserving`, `isstifflyaccurate`, `order`, `name`, `description` and `reference` are
+undefined for every method in this package, so the predicate still answers `false` for all of them
+and cannot be used as the interface conformance check it is meant to be. Filling those in is per
+method, not a single change, and each one is a claim about the scheme that has to be right.
+
+### `print_reference` is two generics, and neither prints for a Runge-Kutta method — open
+
+This package defines `print_reference` and `GeometricIntegrators` defines its own without importing
+it, so they are separate functions; the downstream one is what actually prints, via
+`reference(tableau(method))`. Meanwhile `RungeKutta` attaches its reference strings to tableau types
+and nothing attaches one to a method wrapper, so this package's `print_reference` prints nothing for
+`Gauss`, `VPRK` and the rest. Unifying the two and giving the method families a `reference` belongs
+in `GeometricIntegrators`, which is why the [Unreleased] fix stopped at making this package's
+version read the shared generic.
+
+### `issymmetric` is exported here and means something else in `LinearAlgebra` — open
+
+The one collision of this kind that importing cannot resolve, because the two upstream functions are
+genuinely different. `LinearAlgebra` is a direct dependency and exports its own `issymmetric`, a
+predicate on matrices; `GeometricBase` declares an unexported `issymmetric`, a property of an
+integration method. This package imports the latter and exports it, so `using LinearAlgebra` and
+`using GeometricIntegratorsBase` together still leave a caller with two bindings for one name and no
+way to pick between them but to qualify. Pre-existing — the shadowing fix neither caused it nor made
+it worse — but it is the same failure class, and it is what the new interface guard surfaces, so it
+is recorded rather than left implicit. Resolving it means renaming the method property upstream in
+`GeometricBase`, which is not this package's call.
 
 ### `check_solver_status` acts on nothing — open, by decision
 
