@@ -7,7 +7,7 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
-## [Unreleased] — targeting 0.6.7
+## 0.6.7
 
 ### Fixes
 
@@ -634,7 +634,7 @@ folded in alongside the fix above.
 ### No method declares its full property set, so `isAbstractMethod` is `false` for all of them — open
 
 `GeometricBase.isAbstractMethod` requires all ten method properties to be non-`missing`. Since the
-[Unreleased] fix the six `is*` predicates are at least *askable* through `GeometricBase`, but
+0.6.7 fix the six `is*` predicates are at least *askable* through `GeometricBase`, but
 `isenergypreserving`, `isstifflyaccurate`, `order`, `name`, `description` and `reference` are
 undefined for every method in this package, so the predicate still answers `false` for all of them
 and cannot be used as the interface conformance check it is meant to be. Filling those in is per
@@ -647,7 +647,7 @@ it, so they are separate functions; the downstream one is what actually prints, 
 `reference(tableau(method))`. Meanwhile `RungeKutta` attaches its reference strings to tableau types
 and nothing attaches one to a method wrapper, so this package's `print_reference` prints nothing for
 `Gauss`, `VPRK` and the rest. Unifying the two and giving the method families a `reference` belongs
-in `GeometricIntegrators`, which is why the [Unreleased] fix stopped at making this package's
+in `GeometricIntegrators`, which is why the 0.6.7 fix stopped at making this package's
 version read the shared generic.
 
 ### `issymmetric` is exported here and means something else in `LinearAlgebra` — open
