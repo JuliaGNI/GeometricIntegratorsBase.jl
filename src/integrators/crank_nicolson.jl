@@ -299,17 +299,17 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{
     local x = nlsolution(int)
 
     # temporary solution, extrapolated to the end of the time step
-    ig = (t = sol.t, q = cache(int).q, p = cache(int).p, q̇ = cache(int).v, ṗ = cache(int).f)
+    ig = (t = sol.t, q = cache(int).q, p = cache(int).p, q̇ = cache(int).v, ṗ = cache(int).f)
 
     # compute initial guess
     solutionstep!(ig, history, problem(int), iguess(int))
 
     # assemble initial guess for nonlinear solver solution vector
     # in contrast to the implicit case, the solver variables are the vector fields of the solution
-    # itself, so the extrapolated q̇ and ṗ are guesses for them as they are
+    # itself, so the extrapolated q̇ and ṗ are guesses for them as they are
     for k in 1:D
         x[k] = ig.q̇[k]
-        x[D + k] = ig.ṗ[k]
+        x[D + k] = ig.ṗ[k]
     end
 end
 
@@ -422,7 +422,7 @@ function initial_guess!(sol, history, params, int::GeometricIntegrator{
     end
 
     # at the end of the time step the solution is extrapolated
-    ig = (t = sol.t, q = cache(int).q, p = cache(int).θ, q̇ = cache(int).v, ṗ = cache(int).f)
+    ig = (t = sol.t, q = cache(int).q, p = cache(int).θ, q̇ = cache(int).v, ṗ = cache(int).f)
     solutionstep!(ig, history, problem(int), iguess(int))
     initialguess(problem(int)).v(ig.q̇, ig.t, ig.q, ig.p, params)
 

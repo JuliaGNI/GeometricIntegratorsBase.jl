@@ -207,7 +207,7 @@ end
 # function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::MidpointExtrapolation)
 #     extrapolate!(history.t[1], history.q[1], history.p[1], sol.t, sol.q, sol.p, problem, extrap)
 #     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
-#     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
+#     initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
 #     # update_vectorfields!(sol, problem)
 #     return sol
 # end
@@ -228,7 +228,7 @@ function solutionstep!(sol, history, problem::AbstractProblemPODE, extrap::Midpo
     _extrapolate!(sol, tmpsol, problem, extrap)
 
     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
-    initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
+    initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.p, parameters(problem))
     # update_vectorfields!(sol, problem)
 
     return sol
@@ -301,7 +301,7 @@ function solutionstep!(sol, history, problem::AbstractProblemIODE, extrap::Midpo
     extrapolate!(
         history[1].t, history[1].q, history[1].p, sol.t, sol.q, sol.p, problem, extrap)
     initialguess(problem).v(sol.q̇, sol.t, sol.q, sol.p, parameters(problem))
-    initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.q̇, parameters(problem))
+    initialguess(problem).f(sol.ṗ, sol.t, sol.q, sol.q̇, parameters(problem))
     # update_vectorfields!(sol, problem)
     return sol
 end
