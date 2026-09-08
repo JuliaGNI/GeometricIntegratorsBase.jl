@@ -141,15 +141,15 @@ end
     solstep_pode = SolutionStep(pode; nhistory = 2)
 
     @test nhistory(solstep_pode) == 2
-    # @test keys(solstep_pode) == Val.((:q, :p, :q̇, :ṗ))
-    @test keys(solstep_pode) == (:q, :p, :q̇, :ṗ)
+    # @test keys(solstep_pode) == Val.((:q, :p, :q̇, :ṗ))
+    @test keys(solstep_pode) == (:q, :p, :q̇, :ṗ)
 
     st_pode_current = state(solstep_pode, 0)
     @test hasproperty(st_pode_current, :t)
     @test haskey(st_pode_current, :q)
     @test haskey(st_pode_current, :p)
     @test haskey(st_pode_current, :q̇)
-    @test haskey(st_pode_current, :ṗ)
+    @test haskey(st_pode_current, :ṗ)
 
     sol_pode_current = solution(solstep_pode, 0)
     # @test haskey(sol_pode_current, :t)
@@ -181,7 +181,7 @@ end
     @test hasproperty(solstep, :t̄)
     @test hasproperty(solstep, :q̄)
     @test hasproperty(solstep, :q̇)
-    @test !hasproperty(solstep, :ṫ)
+    @test !hasproperty(solstep, :ṫ)
 
     # @test solstep == SolutionStep(initial_conditions(ode), parameters(ode))
 
@@ -316,8 +316,8 @@ end
     @test hasproperty(solstep, :q̄)
     @test hasproperty(solstep, :p̄)
     @test hasproperty(solstep, :q̇)
-    @test hasproperty(solstep, :ṗ)
-    @test !hasproperty(solstep, :ṫ)
+    @test hasproperty(solstep, :ṗ)
+    @test !hasproperty(solstep, :ṫ)
 
     # @test solstep == SolutionStep(initial_conditions(pode), parameters(pode))
 
@@ -336,12 +336,12 @@ end
 
     @test solstep.q̇ == vectorfield(solstep)[0].q == vectorfield(solstep, 0).q ==
           current(solstep).q̇
-    @test solstep.ṗ == vectorfield(solstep)[0].p == vectorfield(solstep, 0).p ==
-          current(solstep).ṗ
+    @test solstep.ṗ == vectorfield(solstep)[0].p == vectorfield(solstep, 0).p ==
+          current(solstep).ṗ
     @test solstep.q̇̄ == vectorfield(solstep)[1].q == vectorfield(solstep, 1).q ==
           previous(solstep).q̇
-    @test solstep.ṗ̄ == vectorfield(solstep)[1].p == vectorfield(solstep, 1).p ==
-          previous(solstep).ṗ
+    @test solstep.ṗ̄ == vectorfield(solstep)[1].p == vectorfield(solstep, 1).p ==
+          previous(solstep).ṗ
 
     @test solstep.t == initial_conditions(pode).t
     @test solstep.q == initial_conditions(pode).q
@@ -364,14 +364,14 @@ end
         q = initial_conditions(pode).q,
         p = initial_conditions(pode).p,
         q̇ = VectorfieldVariable(initial_conditions(pode).q),
-        ṗ = VectorfieldVariable(initial_conditions(pode).p)
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test state(previous(solstep)) == (
         # t=zero(initial_conditions(pode).t),
         q = zero(initial_conditions(pode).q),
         p = zero(initial_conditions(pode).p),
         q̇ = VectorfieldVariable(initial_conditions(pode).q),
-        ṗ = VectorfieldVariable(initial_conditions(pode).p)
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test time(current(solstep)) == initial_conditions(pode).t
     @test time(previous(solstep)) == initial_conditions(pode).t
@@ -382,14 +382,14 @@ end
         q = initial_conditions(pode).q,
         p = initial_conditions(pode).p,
         q̇ = VectorfieldVariable(initial_conditions(pode).q),
-        ṗ = VectorfieldVariable(initial_conditions(pode).p)
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test state(previous(solstep)) == (
         # t=initial_conditions(pode).t,
         q = initial_conditions(pode).q,
         p = initial_conditions(pode).p,
         q̇ = VectorfieldVariable(initial_conditions(pode).q),
-        ṗ = VectorfieldVariable(initial_conditions(pode).p)
+        ṗ = VectorfieldVariable(initial_conditions(pode).p)
     )
     @test time(current(solstep)) == initial_conditions(pode).t + Δt
     @test time(previous(solstep)) == initial_conditions(pode).t
@@ -436,7 +436,7 @@ end
     @test hasproperty(solstep, :q̄)
     @test hasproperty(solstep, :λ̄)
     @test hasproperty(solstep, :q̇)
-    @test !hasproperty(solstep, :ṫ)
+    @test !hasproperty(solstep, :ṫ)
     @test !hasproperty(solstep, :λ̇)
     @test !hasproperty(solstep, :μ̇)
 

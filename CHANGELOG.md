@@ -7,6 +7,26 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## Unreleased
+
+### Changed
+
+- Every tracked source file is now Unicode NFC-normalised. Seven files stored `ṗ` (192 times), `ẋ`
+  (163), `ḡ` (4), `ū` (4) and `ṫ` (3) as a base letter plus a combining mark, inherited from macOS
+  rather than chosen.
+
+  Nothing about the compiled code changes: Julia's parser normalises identifiers to NFC, so the
+  symbols were already precomposed and dispatch, field names and method resolution are untouched.
+  The only string literals affected are the two docstrings in `src/extrapolation/hermite.jl`, which
+  mention `ẋ` and are rendered rather than compared; the package has no doctests. What changes is
+  that the source now matches what a keyboard, an editor search, a `grep` pattern or an automated
+  replacement produces — in an NFD file a pattern typed in NFC matches nothing at all, silently.
+
+  The diff is mechanical and can be checked as such: every changed file is exactly the NFC
+  normalisation of its predecessor. Note that this is not the same as having no combining marks —
+  `q̇`, `v̄` and `f̄` have no precomposed codepoint and remain two codepoints, and `ṗ̄` composes only
+  its first mark.
+
 ## 0.6.7
 
 ### Fixes
