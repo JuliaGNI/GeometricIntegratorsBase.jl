@@ -17,9 +17,10 @@ so that a compat-only bump can be told apart from an interface change.
 
   Nothing about the compiled code changes: Julia's parser normalises identifiers to NFC, so the
   symbols were already precomposed and dispatch, field names and method resolution are untouched.
-  No string literal was affected, and the package has no doctests. What changes is that the source
-  now matches what a keyboard, an editor search, a `grep` pattern or an automated replacement
-  produces — in an NFD file a pattern typed in NFC matches nothing at all, silently.
+  The only string literals affected are the two docstrings in `src/extrapolation/hermite.jl`, which
+  mention `ẋ` and are rendered rather than compared; the package has no doctests. What changes is
+  that the source now matches what a keyboard, an editor search, a `grep` pattern or an automated
+  replacement produces — in an NFD file a pattern typed in NFC matches nothing at all, silently.
 
   The diff is mechanical and can be checked as such: every changed file is exactly the NFC
   normalisation of its predecessor. Note that this is not the same as having no combining marks —
