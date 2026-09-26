@@ -9,7 +9,8 @@ using SimpleSolvers: NewtonSolver, NonlinearSolverStatus, SolverState, isconverg
                      solve_with_status!
 using SimpleSolvers: dominant_linesearch_outcome
 
-using ..HarmonicOscillator
+include("helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
 
 struct TestMethod <: GeometricMethod end
 

@@ -10,12 +10,14 @@ using GeometricIntegratorsBase: CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
 using SimpleSolvers: Newton
-using ..HarmonicOscillator
-using ..NonlinearProblems
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
+include("../helpers/nonlinear.jl")
+using .NonlinearProblems
 
 # Accuracy, convergence order, data types, the agreement of the formulations of one and the same
 # equation and the rejection of unsupported problem types are asserted for every method of the
-# package in `common_tests.jl`.
+# package in `common.jl`.
 @testset "$(rpad("ImplicitMidpoint Method Tests", 80))" begin
     @testset "Method Properties" begin
         method = ImplicitMidpoint()

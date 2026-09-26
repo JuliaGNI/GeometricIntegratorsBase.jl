@@ -1,12 +1,16 @@
 using GeometricIntegratorsBase
 using GeometricEquations
+using Random
 using Test
 
 using GeometricBase: State, StateWithError, TimeVariable, VectorfieldVariable
 using GeometricBase: initialstate, periodic, value
 using GeometricIntegratorsBase: enforce_periodicity!, internal, nhistory
 
-using ..HarmonicOscillator
+include("helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
+
+Random.seed!(1234)
 
 Δt = 0.1
 t0 = 0.0

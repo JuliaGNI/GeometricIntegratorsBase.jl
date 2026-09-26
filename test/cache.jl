@@ -5,7 +5,8 @@ using Test
 
 import GeometricIntegratorsBase: IntegratorCache, CacheType
 
-using ..HarmonicOscillator
+include("helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
 
 prob = odeproblem()
 

@@ -7,6 +7,23 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## Unreleased
+
+### Tests
+
+* Test suite reorganized to enable code quality checks and cleaner test discovery. Files renamed to
+  mirror `src/` structure (e.g. `test/cache_tests.jl` → `test/cache.jl`; `test/solver_tests.jl` →
+  `test/solvers.jl`; `test/interface_tests.jl` → `test/integration/interface.jl`). Tests now use the
+  GROUPS convention (`core`/`slow`) via `ARGS` and `@safetestset` (one per file). Test problems
+  moved from `test/examples/` to `test/helpers/` with each test file including only what it uses.
+
+  New code-quality test `test/quality/aqua.jl` runs `Aqua.test_all` with three checks marked broken:
+  issue #39 (undefined export `initialguess!`), #40 (stale dependency `SafeTestsets`), #41 (piracy
+  of `integrate`/`integrate!`). Aqua and Random added to test dependencies; `[extras]` removed from
+  `Project.toml`. The empty `initialguess_tests.jl` and `projection_tests.jl`
+  and the profiling script `profile.jl`, which held no test and needed PProf, are deleted. `solutionstep` test now uses a fixed seed.
+
+
 ## 0.6.8
 
 ### Changed

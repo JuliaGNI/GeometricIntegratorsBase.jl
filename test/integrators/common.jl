@@ -5,9 +5,12 @@ using Test
 
 using GeometricSolutions: relative_maximum_error
 using GeometricIntegratorsBase: isimplicit
-using ..HarmonicOscillator
-using ..NonautonomousProblems
-using ..NonlinearProblems
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
+include("../helpers/nonautonomous.jl")
+using .NonautonomousProblems
+include("../helpers/nonlinear.jl")
+using .NonlinearProblems
 
 # Properties every integrator in this package has to have, asserted for all of them from one
 # place rather than restated in each method's test file. What belongs here is what is stated in

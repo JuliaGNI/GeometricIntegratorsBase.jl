@@ -8,10 +8,11 @@ using GeometricIntegratorsBase: ImplicitEulerCache, CacheType, nlsolution, solve
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
 using SimpleSolvers: Newton
-using ..HarmonicOscillator
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
 
 # Accuracy, convergence order, data types and the rejection of unsupported problem types are
-# asserted for every method of the package in `common_tests.jl`.
+# asserted for every method of the package in `common.jl`.
 @testset "$(rpad("ImplicitEuler Method Tests", 80))" begin
     @testset "Method Properties" begin
         method = ImplicitEuler()
@@ -48,7 +49,7 @@ using ..HarmonicOscillator
     end
 
     @testset "Different Timesteps" begin
-        # the convergence order test in `common_tests.jl` asserts this asymptotically; here it is
+        # the convergence order test in `common.jl` asserts this asymptotically; here it is
         # asserted at the timesteps a caller would actually reach for
         errs = [begin
                     ode = odeproblem([0.5, 0.0]; timestep = Δt)

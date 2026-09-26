@@ -5,7 +5,8 @@ using GeometricIntegratorsBase: functions, timestep, value
 using GeometricIntegratorsBase: extrapolate!, initialguess, initialstate, initialtime
 using GeometricIntegratorsBase: StateVariable, VectorfieldVariable
 
-using ..HarmonicOscillator
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
 
 ode = odeproblem()
 pode = podeproblem()
