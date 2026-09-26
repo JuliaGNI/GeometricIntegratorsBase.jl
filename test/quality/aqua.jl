@@ -12,5 +12,5 @@ Aqua.test_all(
 # `test_stale_deps` takes no `broken` keyword, so its check is run here directly.
 # issue #40: SafeTestsets is in [deps] of Project.toml and nothing under src/ loads it
 @testset "Stale dependencies" begin
-    @test_broken isempty(Aqua.find_stale_deps(Base.PkgId(GeometricIntegratorsBase)))
+    @test_broken isempty(Aqua.find_stale_deps(Base.PkgId(GeometricIntegratorsBase)))  # issue #40
 end
