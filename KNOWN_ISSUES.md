@@ -90,8 +90,7 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   Doing this is a behaviour change for any run that currently limps along, which is why it was not
   folded into a compat bump.
 - **kind:** defect
-- **found:** 2026-08-15; the same issue as GeometricIntegrators' entry *The solver status is
-  available but not acted on*, which names this package as the place to act
+- **found:** 2026-08-15; one issue with GeometricIntegrators `K1`
 
 ### K6 · A repeating non-convergence is reported on 1, 2, 4, 8, … — open
 
@@ -104,7 +103,7 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   failing solve is silent, and nothing in this package compensates or counts. A caller who wants
   "how many of my 10 000 steps did not converge" cannot get it from the log, and `check_solver_status`
   is where a tally would go.
-- **kind:** upstream
+- **kind:** defect
 - **found:** 2026-08-15
 
 ### K7 · `default_options` restatements downstream — open
