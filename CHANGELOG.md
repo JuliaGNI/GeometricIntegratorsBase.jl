@@ -21,7 +21,8 @@ so that a compat-only bump can be told apart from an interface change.
   issue #39 (undefined export `initialguess!`), #40 (stale dependency `SafeTestsets`), #41 (piracy
   of `integrate`/`integrate!`). Aqua and Random added to test dependencies; `[extras]` removed from
   `Project.toml`. The empty `initialguess_tests.jl` and `projection_tests.jl`
-  and the profiling script `profile.jl`, which held no test and needed PProf, are deleted. `solutionstep` test now uses a fixed seed.
+  are deleted, and the profiling script `test/profile.jl`, which holds no test, moves to
+  `scripts/profile.jl`. `solutionstep` test now uses a fixed seed.
 
 
 ## 0.6.8
