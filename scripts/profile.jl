@@ -1,4 +1,3 @@
-# Needs PProf, which is not a dependency of the package or its tests; the calls below are commented out.
 using Profile
 # using ProfileView
 using PProf

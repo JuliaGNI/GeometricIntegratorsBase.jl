@@ -14,7 +14,9 @@ so that a compat-only bump can be told apart from an interface change.
 * Test suite reorganized to enable code quality checks and cleaner test discovery. Files renamed to
   mirror `src/` structure (e.g. `test/cache_tests.jl` → `test/cache.jl`; `test/solver_tests.jl` →
   `test/solvers.jl`; `test/interface_tests.jl` → `test/integration/interface.jl`). Tests now use the
-  GROUPS convention (`core`/`slow`) via `ARGS` and `@safetestset` (one per file). Test problems
+  GROUPS convention (`core`/`slow`) via `ARGS` and `@safetestset` (one per file).
+  `integrators/common.jl` takes about 62 s and runs in the `slow` group; all other files run in
+  `core`. Test problems
   moved from `test/examples/` to `test/helpers/` with each test file including only what it uses.
 
   New code-quality test `test/quality/aqua.jl` runs `Aqua.test_all` with three checks marked broken:
