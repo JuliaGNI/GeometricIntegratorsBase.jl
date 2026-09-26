@@ -2,7 +2,8 @@ using GeometricIntegratorsBase
 using Test
 
 import GeometricBase
-import ..HarmonicOscillator: odeproblem
+include("helpers/harmonic_oscillator.jl")
+import .HarmonicOscillator: odeproblem
 
 prob = odeproblem()
 

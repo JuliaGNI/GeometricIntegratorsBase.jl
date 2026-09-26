@@ -6,9 +6,11 @@ using Test
 using GeometricIntegratorsBase: SymplecticEulerCache, CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
-using ..HarmonicOscillator
-using ..NonautonomousProblems
-using ..NonautonomousProblems: nonautonomous_pode_v, nonautonomous_pode_f
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
+include("../helpers/nonautonomous.jl")
+using .NonautonomousProblems
+using .NonautonomousProblems: nonautonomous_pode_v, nonautonomous_pode_f
 
 const METHODS = (SymplecticEulerA(), SymplecticEulerB())
 
@@ -47,7 +49,7 @@ end
 
 # Accuracy, convergence order, data types, the agreement of the PODE and HODE formulations and
 # the rejection of unsupported problem types are asserted for every method of the package in
-# `common_tests.jl`.
+# `common.jl`.
 @testset "$(rpad("SymplecticEuler Method Tests", 80))" begin
     @testset "Method Properties" begin
         for method in METHODS

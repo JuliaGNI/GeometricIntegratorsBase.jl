@@ -8,7 +8,8 @@ using SimpleSolvers: NonlinearSolverException
 
 import GeometricIntegratorsBase: integrate_step!
 
-import ..HarmonicOscillator: odeproblem
+include("helpers/harmonic_oscillator.jl")
+import .HarmonicOscillator: odeproblem
 
 struct ExplicitEulerTest <: ODEMethod end
 

@@ -4,9 +4,9 @@ using PProf
 using GeometricIntegratorsBase
 using GeometricIntegratorsBase: Solution, solutionstep, enforce_periodicity!, ntime
 
-include("examples/harmonic_oscillator.jl")
+include("../test/helpers/harmonic_oscillator.jl")
 
-using ..HarmonicOscillator
+using .HarmonicOscillator
 
 const Δt = 0.1
 const nt = 100_000

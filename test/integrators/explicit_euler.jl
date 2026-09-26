@@ -6,9 +6,11 @@ using Test
 using GeometricIntegratorsBase: ExplicitEulerCache, CacheType, nlsolution, solversize
 using GeometricIntegratorsBase: default_solver, default_iguess
 using GeometricIntegratorsBase: isexplicit, isimplicit, issymmetric, issymplectic
-using ..HarmonicOscillator
-using ..NonautonomousProblems
-using ..NonautonomousProblems: nonautonomous_ode_v
+include("../helpers/harmonic_oscillator.jl")
+using .HarmonicOscillator
+include("../helpers/nonautonomous.jl")
+using .NonautonomousProblems
+using .NonautonomousProblems: nonautonomous_ode_v
 
 # Reference implementation of the scheme, written out directly so that the stage time is stated
 # here rather than taken from the code under test. The times are read off the solution rather
@@ -27,7 +29,7 @@ function reference_explicit_euler(prob, sol)
 end
 
 # Accuracy, convergence order, data types and the rejection of unsupported problem types are
-# asserted for every method of the package in `common_tests.jl`.
+# asserted for every method of the package in `common.jl`.
 @testset "$(rpad("ExplicitEuler Method Tests", 80))" begin
     @testset "Method Properties" begin
         method = ExplicitEuler()
