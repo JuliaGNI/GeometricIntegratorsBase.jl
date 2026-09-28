@@ -9,4 +9,5 @@ GeometricSolutions = "7843afe4-64f4-4df4-9231-049495c56661"
 GeometricIntegratorsBase = {path = ".."}
 
 [compat]
+Documenter = "1.19.0"
 DocumenterInterLinks = "1.1.0"
