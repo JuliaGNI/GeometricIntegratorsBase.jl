@@ -43,8 +43,8 @@ caches = CacheDict(prob, TestMethod())
 
 # the expansion phase of SimpleSolvers 0.11 is deliberately left off, since every method here
 # solves with `Newton()`, whose direction is already scaled like a Newton step
-@test default_linesearch().expand == false
-@test default_linesearch(Float32).expand == false
+@test !default_linesearch().expand
+@test !default_linesearch(Float32).expand
 
 # a solve whose residual goes nowhere is bounded per time step rather than spending
 # `max_iterations` on every one of them
