@@ -27,6 +27,13 @@ so that a compat-only bump can be told apart from an interface change.
   profiling script `test/profile.jl`, which holds no test, moves to `scripts/profile.jl`.
   `solutionstep` test now uses a fixed seed.
 
+* `test/Project.toml` carries the root `Project.toml`'s `[compat]` entry, copied exactly, for
+  each dependency the two files share: GeometricBase, GeometricEquations, GeometricSolutions,
+  SafeTestsets, SimpleSolvers and Unicode. Aqua's `deps_compat` check reads only the root
+  `Project.toml`, so a bound in `test/Project.toml` is otherwise unchecked; keeping the two equal
+  lets the test-layout check detect a shared bound that is deleted or changed. The test-only
+  bounds (Aqua, Parameters, Random) are unchanged.
+
 
 ## 0.6.8
 
