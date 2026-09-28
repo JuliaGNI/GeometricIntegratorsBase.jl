@@ -7,3 +7,6 @@ GeometricSolutions = "7843afe4-64f4-4df4-9231-049495c56661"
 
 [sources]
 GeometricIntegratorsBase = {path = ".."}
+
+[compat]
+GeometricSolutions = "0.6.5"
