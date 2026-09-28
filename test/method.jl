@@ -45,8 +45,8 @@ struct TestMethod <: GeometricMethod end
 # `GeometricIntegrators` attach their properties to `GeometricBase`'s generics, so those are the
 # ones that have to answer.
 @test issymplectic === GeometricBase.issymplectic
-@test GeometricBase.issymplectic(ImplicitMidpoint()) == true
-@test GeometricBase.isexplicit(ExplicitEuler()) == true
+@test GeometricBase.issymplectic(ImplicitMidpoint())
+@test GeometricBase.isexplicit(ExplicitEuler())
 
 # `print_reference` reads the reference off `GeometricBase.reference`, where every method in the
 # ecosystem defines it.
