@@ -31,8 +31,10 @@ so that a compat-only bump can be told apart from an interface change.
   each dependency the two files share: GeometricBase, GeometricEquations, GeometricSolutions,
   SafeTestsets, SimpleSolvers and Unicode. Aqua's `deps_compat` check reads only the root
   `Project.toml`, so a bound in `test/Project.toml` is otherwise unchecked; keeping the two equal
-  lets the test-layout check detect a shared bound that is deleted or changed. The test-only
-  bounds (Aqua, Parameters, Random) are unchanged.
+  lets the test-layout check detect a shared bound that is deleted or changed. Two test floors
+  go down to the root's floors: GeometricEquations from "0.21.4" to "0.21" and
+  GeometricSolutions from "0.6.5" to "0.6.3" (the higher floors came from Dependabot PRs #49 and
+  #50). The test-only bounds (Aqua, Parameters, Random) are unchanged.
 
 
 ## 0.6.8
