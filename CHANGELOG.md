@@ -27,9 +27,10 @@ so that a compat-only bump can be told apart from an interface change.
   profiling script `test/profile.jl`, which holds no test, moves to `scripts/profile.jl`.
   `solutionstep` test now uses a fixed seed.
 
-* The tests assert a predicate directly — `@test issymplectic(ImplicitMidpoint())`,
-  `@test !default_linesearch().expand` — not `== true` or `== false`. The four assertions are
-  stricter, as a non-`Bool` result now fails. Nothing under `src/` changes.
+* Four assertions in `test/method.jl` and `test/solvers.jl` test a predicate directly —
+  `@test issymplectic(ImplicitMidpoint())`, `@test !default_linesearch().expand` — not
+  `== true` or `== false`. They are stricter, as a non-`Bool` result now fails. Nothing under
+  `src/` changes.
 
 
 ## 0.6.8
