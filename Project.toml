@@ -18,8 +18,8 @@ Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
 GeometricBase = "0.14.5"
-GeometricEquations = "0.21"
-GeometricSolutions = "0.6.3"
+GeometricEquations = "0.21.1"
+GeometricSolutions = "0.6.5"
 LinearAlgebra = "1"
 OffsetArrays = "1"
 SafeTestsets = "0.1.0"
