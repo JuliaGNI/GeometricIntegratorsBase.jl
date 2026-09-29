@@ -9,6 +9,16 @@ so that a compat-only bump can be told apart from an interface change.
 
 ## Unreleased
 
+### Compatibility
+
+* The floors rise to `GeometricEquations = "0.21.1"` and `GeometricSolutions = "0.6.5"`. The
+  suite fails on versions that the old floors `"0.21"` and `"0.6.3"` admitted: on
+  GeometricSolutions 0.6.3 `compute_invariant_error` has no method for a `ScalarDataSeries` time
+  argument, and on 0.6.4 the accuracy and convergence tests of `test/integrators/common.jl`
+  measure a `NaN` error. GeometricEquations 0.21.0 does not resolve with the test dependency
+  Parameters 0.13. A compat-only change; no behaviour, signature or result changes. Fixes K9
+  (#53).
+
 ### Tests
 
 * Test suite reorganized to enable code quality checks and cleaner test discovery. Files renamed to
@@ -34,7 +44,7 @@ so that a compat-only bump can be told apart from an interface change.
 
 * `test/Project.toml` no longer has `[compat]` entries for `GeometricEquations` (`"0.21.4"`) and
   `GeometricSolutions` (`"0.6.5"`). Both are dependencies of the package, so the root
-  `Project.toml` alone bounds them (`"0.21"` and `"0.6.3"`); a `test/` or `docs/` environment
+  `Project.toml` alone bounds them; a `test/` or `docs/` environment
   gives no `[compat]` entry for a dependency of the root. The test environment now resolves
   within the root's bounds and no narrower.
 
