@@ -32,6 +32,12 @@ so that a compat-only bump can be told apart from an interface change.
   `== true` or `== false`. They are stricter, as a non-`Bool` result now fails. Nothing under
   `src/` changes.
 
+* `test/Project.toml` no longer has `[compat]` entries for `GeometricEquations` (`"0.21.4"`) and
+  `GeometricSolutions` (`"0.6.5"`). Both are dependencies of the package, so the root
+  `Project.toml` alone bounds them (`"0.21"` and `"0.6.3"`); a `test/` or `docs/` environment
+  gives no `[compat]` entry for a dependency of the root. The test environment now resolves
+  within the root's bounds and no narrower.
+
 
 ## 0.6.8
 
