@@ -144,8 +144,9 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   | 0.6.5 | 0.21.1 | green |
   | 0.6.3 | 0.21.0 | does not resolve with the test-only `Parameters = "0.13.1"` |
 
-  The test bounds `"0.6.5"` and `"0.21.4"` in `test/Project.toml` hid this until they were removed.
-  Reproducer: `run-tests.jl ~/Research/.scratch/critic/GeometricIntegratorsBase-A4/round-1/floor063 full`.
+  The test matrix resolves the newest compatible versions and does not reach these floors.
+  Reproducer: add `GeometricSolutions = "=0.6.3"` and `GeometricEquations = "=0.21.4"` to the
+  `[compat]` table of `test/Project.toml`, then run the suite.
   Issue: JuliaGNI/GeometricIntegratorsBase.jl#53.
 - **kind:** defect
 - **found:** 2026-09-29
