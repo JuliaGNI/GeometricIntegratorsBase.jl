@@ -18,6 +18,9 @@ so that a compat-only bump can be told apart from an interface change.
   measure a `NaN` error. GeometricEquations 0.21.0 does not resolve with the test dependency
   Parameters 0.13. A compat-only change; no behaviour, signature or result changes. Fixes K9
   (#53).
+* The floors rise to Julia 1.11, GeometricBase 0.15.0, GeometricEquations 0.21.5,
+  GeometricSolutions 0.6.6 and SimpleSolvers 0.14.1, because GeometricBase 0.15 declares its stubs
+  public and requires Julia 1.11.
 
 ### Tests
 
