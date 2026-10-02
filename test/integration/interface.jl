@@ -62,7 +62,7 @@ function shadowed_generics(mod::Module)
     for n in names(mod; all = true)
         startswith(String(n), "#") && continue
         # Every module owns an auto-generated `eval` and `include`, and before Julia 1.12
-        # `parentmodule` reported the module itself for both — so on 1.10 and 1.11 every
+        # `parentmodule` reported the module itself for both — so on 1.11 every
         # dependency collides with this package on those two names and on nothing else. Skipped
         # rather than version-gated: they are never a name this package could shadow by accident.
         n in (:eval, :include) && continue
