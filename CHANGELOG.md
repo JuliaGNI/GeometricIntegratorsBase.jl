@@ -11,8 +11,8 @@ so that a compat-only bump can be told apart from an interface change.
 
 ### Compatibility
 
-* The floors rise to `GeometricEquations = "0.21.1"` and `GeometricSolutions = "0.6.5"`. The
-  suite fails on versions that the old floors `"0.21"` and `"0.6.3"` admitted: on
+* The floors of GeometricEquations and GeometricSolutions exclude the versions on which the
+  suite fails and which the old floors `"0.21"` and `"0.6.3"` admitted: on
   GeometricSolutions 0.6.3 `compute_invariant_error` has no method for a `ScalarDataSeries` time
   argument, and on 0.6.4 the accuracy and convergence tests of `test/integrators/common.jl`
   measure a `NaN` error. GeometricEquations 0.21.0 does not resolve with the test dependency
