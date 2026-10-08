@@ -7,6 +7,14 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## Unreleased
+
+### Changed
+
+* CI uploads coverage from the `Julia 1 - ubuntu-latest` job instead of `Julia min`, and a test
+  job saves the Julia cache only when it succeeds.
+
+
 ## 0.6.9
 
 ### Compatibility
