@@ -13,6 +13,14 @@ so that a compat-only bump can be told apart from an interface change.
 
 * CI uploads coverage from the `Julia 1 - ubuntu-latest` job instead of `Julia min`, and a test
   job saves the Julia cache only when it succeeds.
+* **Julia 1.12 is the floor** (`[compat] julia = "1.12"`, from 1.11). A breaking change under
+  this package's pre-1.0 convention: a caller on Julia 1.11 can no longer install this version.
+  The interface test `test/integration/interface.jl` no longer skips the auto-generated `eval` and
+  `include` of a module: before Julia 1.12 `parentmodule` reported the module itself for both, so
+  on 1.11 every dependency collided with this package on those two names; on 1.12 the scan finds no
+  collision without the skip (measured). `docs/src/releasenotes.md` keeps its released notes
+  untouched, including "Requires Julia 1.10 and SimpleSolvers 0.7.5.", which is a statement about
+  that release.
 
 
 ## 0.6.9
