@@ -7,6 +7,22 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## Unreleased
+
+### Compatibility
+
+* The OffsetArrays floor rises from `"1"` to `"1.14"`. On Julia 1.12, OffsetArrays 1.0.0 overwrites `Base.fill`
+  and fails to precompile with "Method overwriting is not permitted during Module precompilation",
+  so the package does not precompile at the old floor. Every release measured from 1.0.0 to 1.13.0
+  fails the same way, and 1.14.0 is the first that precompiles.
+  A compat-only change; no behaviour, signature or result changes.
+* The test dependency Aqua has the floor `"0.8.14"` (from `"0.8"`). Aqua 0.8.14 is the first
+  release that reads the method table of Julia 1.12; on Aqua 0.8.0 to 0.8.13 the piracy check
+  stops with a `FieldError` for `Core.TypeName.mt`.
+* With these floors, the downgrade CI job, which resolves `Project.toml` and `test/Project.toml`
+  together at their lower bounds, passes the test suite.
+
+
 ## 0.6.10
 
 ### Changed
