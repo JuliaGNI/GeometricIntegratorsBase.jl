@@ -16,17 +16,19 @@ const METHODS = (SymplecticEulerA(), SymplecticEulerB())
 
 # Reference implementations of the two schemes, written out directly so that the stage times
 # are stated here rather than taken from the code under test. The times are read off the
-# solution rather than recomputed, so that any disagreement is due to the scheme alone.
+# solution rather than recomputed, so that any disagreement is due to the scheme alone. The letters
+# are those of Leimkuhler and Reich (2004), Eqs. (4.6)-(4.9): A evaluates at (qₙ₊₁, pₙ), so q moves
+# first, and B at (qₙ, pₙ₊₁), so p moves first.
 function reference_symplectic_euler_A(prob, sol)
     q, p = copy(initial_conditions(prob).q), copy(initial_conditions(prob).p)
     v, f = zero(q), zero(p)
     h = timestep(prob)
 
     for n in 1:lastindex(sol.t)
-        nonautonomous_pode_f(f, sol.t[n - 1], q, p, parameters(prob))
-        p .+= h .* f
-        nonautonomous_pode_v(v, sol.t[n], q, p, parameters(prob))
+        nonautonomous_pode_v(v, sol.t[n - 1], q, p, parameters(prob))
         q .+= h .* v
+        nonautonomous_pode_f(f, sol.t[n], q, p, parameters(prob))
+        p .+= h .* f
     end
 
     (q = q, p = p)
@@ -38,10 +40,10 @@ function reference_symplectic_euler_B(prob, sol)
     h = timestep(prob)
 
     for n in 1:lastindex(sol.t)
-        nonautonomous_pode_v(v, sol.t[n - 1], q, p, parameters(prob))
-        q .+= h .* v
-        nonautonomous_pode_f(f, sol.t[n], q, p, parameters(prob))
+        nonautonomous_pode_f(f, sol.t[n - 1], q, p, parameters(prob))
         p .+= h .* f
+        nonautonomous_pode_v(v, sol.t[n], q, p, parameters(prob))
+        q .+= h .* v
     end
 
     (q = q, p = p)
@@ -89,7 +91,7 @@ end
     end
 
     @testset "A and B are Different Methods" begin
-        # note that for p₀ = 0 the position sequence of B is that of A shifted by one step,
+        # note that for p₀ = 0 the position sequence of A is that of B shifted by one step,
         # which makes the momentum sequences of the two methods coincide, so a generic initial
         # condition is needed here
         pode = podeproblem([0.5], [0.5])

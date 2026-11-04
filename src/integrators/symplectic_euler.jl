@@ -22,21 +22,6 @@ issymplectic(method::SymplecticEulerMethod) = true
 @doc raw"""
 Symplectic Euler-A Method for separable Hamiltonians.
 
-The momentum is updated explicitly and the position is updated with the new momentum,
-```math
-\begin{aligned}
-p_{n+1} &= p_{n} + h \, f (t_{n}, q_{n}) , \\
-q_{n+1} &= q_{n} + h \, v (t_{n+1}, p_{n+1}) .
-\end{aligned}
-```
-This is the adjoint of [`SymplecticEulerB`](@ref). See [`SymplecticEulerMethod`](@ref) for the
-separability assumption.
-"""
-struct SymplecticEulerA <: SymplecticEulerMethod end
-
-@doc raw"""
-Symplectic Euler-B Method for separable Hamiltonians.
-
 The position is updated explicitly and the momentum is updated with the new position,
 ```math
 \begin{aligned}
@@ -44,8 +29,25 @@ q_{n+1} &= q_{n} + h \, v (t_{n}, p_{n}) , \\
 p_{n+1} &= p_{n} + h \, f (t_{n+1}, q_{n+1}) .
 \end{aligned}
 ```
-This is the adjoint of [`SymplecticEulerA`](@ref). See [`SymplecticEulerMethod`](@ref) for the
-separability assumption.
+The Hamiltonian vector field is evaluated at ``(q_{n+1}, p_{n})``, which is Euler-A of Leimkuhler
+and Reich, *Simulating Hamiltonian Dynamics* (2004), Eqs. (4.8)-(4.9). This is the adjoint of
+[`SymplecticEulerB`](@ref). See [`SymplecticEulerMethod`](@ref) for the separability assumption.
+"""
+struct SymplecticEulerA <: SymplecticEulerMethod end
+
+@doc raw"""
+Symplectic Euler-B Method for separable Hamiltonians.
+
+The momentum is updated explicitly and the position is updated with the new momentum,
+```math
+\begin{aligned}
+p_{n+1} &= p_{n} + h \, f (t_{n}, q_{n}) , \\
+q_{n+1} &= q_{n} + h \, v (t_{n+1}, p_{n+1}) .
+\end{aligned}
+```
+The Hamiltonian vector field is evaluated at ``(q_{n}, p_{n+1})``, which is Euler-B of Leimkuhler
+and Reich, *Simulating Hamiltonian Dynamics* (2004), Eqs. (4.6)-(4.7). This is the adjoint of
+[`SymplecticEulerA`](@ref). See [`SymplecticEulerMethod`](@ref) for the separability assumption.
 """
 struct SymplecticEulerB <: SymplecticEulerMethod end
 
@@ -74,20 +76,6 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{
     # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
     t̄ = sol.t - timestep(int)
 
-    # compute f = f(t̄, q̄) and update p (separable: f does not depend on p)
-    equations(int).f(cache(int).f, t̄, sol.q, sol.p, params)
-    sol.p .+= timestep(int) .* cache(int).f
-
-    # compute v = v(t, p) at the new momentum and update q (separable: v does not depend on q)
-    equations(int).v(cache(int).v, sol.t, sol.q, sol.p, params)
-    sol.q .+= timestep(int) .* cache(int).v
-end
-
-function integrate_step!(sol, history, params, int::GeometricIntegrator{
-        <:SymplecticEulerB, <:ProblemPODE})
-    # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
-    t̄ = sol.t - timestep(int)
-
     # compute v = v(t̄, p̄) and update q (separable: v does not depend on q)
     equations(int).v(cache(int).v, t̄, sol.q, sol.p, params)
     sol.q .+= timestep(int) .* cache(int).v
@@ -95,4 +83,18 @@ function integrate_step!(sol, history, params, int::GeometricIntegrator{
     # compute f = f(t, q) at the new position and update p (separable: f does not depend on p)
     equations(int).f(cache(int).f, sol.t, sol.q, sol.p, params)
     sol.p .+= timestep(int) .* cache(int).f
+end
+
+function integrate_step!(sol, history, params, int::GeometricIntegrator{
+        <:SymplecticEulerB, <:ProblemPODE})
+    # on entry, sol.t holds tₙ₊₁ while sol.q and sol.p still hold qₙ and pₙ
+    t̄ = sol.t - timestep(int)
+
+    # compute f = f(t̄, q̄) and update p (separable: f does not depend on p)
+    equations(int).f(cache(int).f, t̄, sol.q, sol.p, params)
+    sol.p .+= timestep(int) .* cache(int).f
+
+    # compute v = v(t, p) at the new momentum and update q (separable: v does not depend on q)
+    equations(int).v(cache(int).v, sol.t, sol.q, sol.p, params)
+    sol.q .+= timestep(int) .* cache(int).v
 end
