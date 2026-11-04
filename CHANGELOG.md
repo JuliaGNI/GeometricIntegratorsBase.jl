@@ -9,6 +9,15 @@ so that a compat-only bump can be told apart from an interface change.
 
 ## Unreleased
 
+### Breaking Changes
+
+* `SymplecticEulerA` and `SymplecticEulerB` exchange their meaning, to follow the letters of
+  Leimkuhler and Reich, *Simulating Hamiltonian Dynamics* (2004), Eqs. (4.6)-(4.9), the only source
+  of these letters. `SymplecticEulerA` now moves `q` first and evaluates at `(q_{n+1}, p_n)`;
+  `SymplecticEulerB` moves `p` first and evaluates at `(q_n, p_{n+1})`. Both names stay, so a
+  caller's code runs without an error and computes the adjoint method: exchange the two names to
+  keep a result.
+
 ### Compatibility
 
 * The OffsetArrays floor rises from `"1"` to `"1.14"`. On Julia 1.12, OffsetArrays 1.0.0 overwrites `Base.fill`
