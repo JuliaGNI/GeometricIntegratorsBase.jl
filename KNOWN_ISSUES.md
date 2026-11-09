@@ -129,3 +129,29 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   GeometricIntegrators, GeometricProblems and ChargedParticleDynamics.
 - **kind:** not verified
 - **found:** 2026-08-15
+
+### K10 · `CacheDict.caches` has the abstract value type `Cache` — open, by decision
+
+- **location:** `src/cache.jl:36`
+- **evidence:**
+
+  `CacheDict` holds one integrator cache per data type and thread, in a
+  `Dict{UInt64, Cache}` keyed by `hash(Threads.threadid(), hash(ST))` (`src/cache.jl:33-50`, at
+  `d11c22b`). `getindex` fills an entry on first use with `Cache{ST}(problem, method)`
+  (`src/cache.jl:48`) and reads it back as a `Cache` (`src/cache.jl:46`). A read is concrete only
+  through the typeassert `::CacheType(ST, problem, method)` (`src/cache.jl:49`), whose type is
+  computed from the arguments; `updateall!` (`src/cache.jl:52-56`) calls `update!` on each entry by
+  dynamic dispatch. The census script `concrete-fields.jl` (every field concrete up to type
+  variables; Julia 1.13) reports:
+
+  ```
+  GeometricIntegratorsBase.CacheDict.caches::Dict{UInt64, GeometricIntegratorsBase.Cache}
+  ```
+
+  The rule flags such a heterogeneous cache by design. A fix in outline: hold the caches in a
+  concretely typed container, for example a type parameter for the cache of `datatype(problem)`
+  and a separate store for the other data types, or a `Dict` whose value type is
+  `CacheType(datatype(problem), problem, method)`. That is a design decision, so the field stays as
+  it is for now. VlasovMethods has the same pattern in its own `CacheDict`.
+- **kind:** defect
+- **found:** 2026-11-09
