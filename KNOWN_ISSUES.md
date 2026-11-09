@@ -148,10 +148,20 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   GeometricIntegratorsBase.CacheDict.caches::Dict{UInt64, GeometricIntegratorsBase.Cache}
   ```
 
-  The rule flags such a heterogeneous cache by design. A fix in outline: hold the caches in a
-  concretely typed container, for example a type parameter for the cache of `datatype(problem)`
-  and a separate store for the other data types, or a `Dict` whose value type is
-  `CacheType(datatype(problem), problem, method)`. That is a design decision, so the field stays as
-  it is for now. VlasovMethods has the same pattern in its own `CacheDict`.
+  Reproducer, in a session with the package loaded (Julia 1.13.3):
+
+  ```julia
+  julia> fieldtype(GeometricIntegratorsBase.CacheDict, :caches)
+  Dict{UInt64, Cache}
+
+  julia> isabstracttype(GeometricIntegratorsBase.Cache)
+  true
+  ```
+
+  The census has no exemption, so it flags a heterogeneous cache like this one. A fix in outline:
+  hold the cache of `datatype(problem)` in a concretely typed field, for example through a type
+  parameter or a `Dict` whose value type is `CacheType(datatype(problem), problem, method)`, and
+  the caches of the other data types in a separate store. That is a design decision, so the field
+  stays as it is for now. VlasovMethods has the same pattern in its own `CacheDict`.
 - **kind:** defect
 - **found:** 2026-11-09
