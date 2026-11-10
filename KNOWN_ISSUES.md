@@ -129,3 +129,39 @@ when its fix merges, and the CHANGELOG entry of the fix names its ID.
   GeometricIntegrators, GeometricProblems and ChargedParticleDynamics.
 - **kind:** not verified
 - **found:** 2026-08-15
+
+### K10 · `CacheDict.caches` has the abstract value type `Cache` — open, by decision
+
+- **location:** `src/cache.jl:36`
+- **evidence:**
+
+  `CacheDict` holds one integrator cache per data type and thread, in a
+  `Dict{UInt64, Cache}` keyed by `hash(Threads.threadid(), hash(ST))` (`src/cache.jl:33-50`, at
+  `d11c22b`). `getindex` fills an entry on first use with `Cache{ST}(problem, method)`
+  (`src/cache.jl:48`) and reads it back as a `Cache` (`src/cache.jl:46`). A read is concrete only
+  through the typeassert `::CacheType(ST, problem, method)` (`src/cache.jl:49`), whose type is
+  computed from the arguments; `updateall!` (`src/cache.jl:52-56`) calls `update!` on each entry by
+  dynamic dispatch. The census script `concrete-fields.jl` (every field concrete up to type
+  variables; Julia 1.13) reports:
+
+  ```
+  GeometricIntegratorsBase.CacheDict.caches::Dict{UInt64, GeometricIntegratorsBase.Cache}
+  ```
+
+  Reproducer, in a session with the package loaded (Julia 1.13.3):
+
+  ```julia
+  julia> fieldtype(GeometricIntegratorsBase.CacheDict, :caches)
+  Dict{UInt64, Cache}
+
+  julia> isabstracttype(GeometricIntegratorsBase.Cache)
+  true
+  ```
+
+  The census has no exemption, so it flags a heterogeneous cache like this one. A fix in outline:
+  hold the cache of `datatype(problem)` in a concretely typed field, for example through a type
+  parameter or a `Dict` whose value type is `CacheType(datatype(problem), problem, method)`, and
+  the caches of the other data types in a separate store. That is a design decision, so the field
+  stays as it is for now. VlasovMethods has the same pattern in its own `CacheDict`.
+- **kind:** defect
+- **found:** 2026-11-09
