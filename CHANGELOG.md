@@ -7,6 +7,17 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## [Unreleased]
+
+### Compatibility
+
+* GeometricSolutions compat widens from `"0.6.6"` to `"0.6.6, 0.7"`. The one breaking change of
+  GeometricSolutions 0.7, a fifth type parameter `tsType` of `EnsembleSolution`, does not reach
+  this package: it builds an `EnsembleSolution` only through its constructor and names no
+  `EnsembleSolution` type parameter anywhere. A compat-only change; no behaviour, signature or
+  result changes.
+
+
 ## 0.7.0
 
 ### Breaking Changes
