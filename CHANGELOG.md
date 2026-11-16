@@ -7,6 +7,30 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 so that a compat-only bump can be told apart from an interface change.
 
 
+## Unreleased
+
+### New Features
+
+* `GeometricBase.interface_violations` has a method for `GeometricMethod`, so a package that
+  implements methods tests each one with `@test isempty(GeometricBase.interface_violations(m))`.
+  It returns the entries of the method for `AbstractMethod` first, with `include_missing` passed
+  on, and then checks the defaults that take no problem: a `:throws` entry for each of
+  `initmethod`, `nullvector`, `tableau` and the four `default_…` functions that throws; a `:type`
+  entry where `initmethod` answers other than a `GeometricMethod`, `default_solver` other than a
+  `GeometricBase.SolverMethod`, `default_iguess` neither an `InitialGuess` nor an `Extrapolation`,
+  `default_projection` other than a `ProjectionMethod`, or `default_extrapolation` other than an
+  `Extrapolation`; and a `:value` entry where a method under one of the twelve families, such as
+  `ODEMethod`, does not answer `true` for that family's trait, such as `isodemethod`, or a
+  `:throws` entry where that trait throws. The traits of the other families have no rule,
+  because a method such as `ImplicitMidpoint` is implemented for more kinds of problem than its
+  family. The methods of this package give no entry.
+
+### Compatibility
+
+* GeometricBase compat rises from `"0.15.0"` to `"0.15.4"`, the first release that holds
+  `interface_violations`.
+
+
 ## 0.7.1
 
 ### Compatibility

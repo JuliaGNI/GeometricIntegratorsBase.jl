@@ -78,6 +78,83 @@ isldaemethod(::Union{LDAEMethod, Type{<:LDAEMethod}}) = true
 
 isdelemethod(::Union{DELEMethod, Type{<:DELEMethod}}) = true
 
+const METHOD_DEFAULTS = (initmethod, nullvector, tableau, default_solver, default_iguess,
+    default_projection, default_extrapolation)
+
+const METHOD_FAMILIES = (ODEMethod => isodemethod, PODEMethod => ispodemethod,
+    HODEMethod => ishodemethod, IODEMethod => isiodemethod, LODEMethod => islodemethod,
+    SODEMethod => issodemethod, DAEMethod => isdaemethod, PDAEMethod => ispdaemethod,
+    HDAEMethod => ishdaemethod, IDAEMethod => isidaemethod, LDAEMethod => isldaemethod,
+    DELEMethod => isdelemethod)
+
+"""
+    interface_violations(method::GeometricMethod; include_missing = false)
+
+The violations of the contract of `GeometricMethod` by `method`, in the form of
+`GeometricBase.interface_violations`. The entries of the method for `AbstractMethod`, which checks
+the ten properties of GeometricBase and receives `include_missing`, come first. The entries of the
+defaults of `GeometricMethod` that take no problem follow, in the order `initmethod`,
+`nullvector`, `tableau`, `default_solver`, `default_iguess`, `default_projection` and
+`default_extrapolation`, each called on `method`, and then the entry of the family trait:
+
+- `:throws`: the call throws; `detail` names the exception's type. An `InterruptException` is
+  thrown again.
+- `:type`: `initmethod` answers other than a `GeometricMethod`, `default_solver` other than a
+  `GeometricBase.SolverMethod`, `default_iguess` neither an `InitialGuess` nor an `Extrapolation`,
+  `default_projection` other than a `ProjectionMethod`, or `default_extrapolation` other than an
+  `Extrapolation`; `detail` names the type of the answer. `nullvector` and `tableau` have no type
+  rule.
+- `:value`: `method` is a subtype of one of the twelve family types, such as `ODEMethod`, and the
+  trait of that family, such as `isodemethod`, answers other than `true`; `detail` names the
+  family. The other eleven traits have no rule, because a method may be implemented for more kinds
+  of problem than its family, and a method under no family gets no entry of this kind.
+"""
+function GeometricBase.interface_violations(method::GeometricMethod;
+        include_missing::Bool = false)
+    violations = invoke(GeometricBase.interface_violations, Tuple{AbstractMethod}, method;
+        include_missing)
+    for f in METHOD_DEFAULTS
+        result = call_default!(violations, f, method)
+        result === nothing && continue
+        answer = something(result)
+        default_has_type(f, answer) ||
+            push!(violations,
+                (; f = nameof(f), kind = :type,
+                    detail = "answers a value of type $(typeof(answer))"))
+    end
+    for (family, trait) in METHOD_FAMILIES
+        method isa family || continue
+        result = call_default!(violations, trait, method)
+        result === nothing && continue
+        answer = something(result)
+        answer === true ||
+            push!(violations,
+                (; f = nameof(trait), kind = :value,
+                    detail = "answers `$(repr(answer))` on a method of the family `$family`"))
+    end
+    return violations
+end
+
+# Calls `f(method)` and answers `Some(answer)`; where the call throws, pushes a `:throws` entry
+# and answers `nothing`. An `InterruptException` is thrown again.
+function call_default!(violations, f, method)
+    try
+        return Some(f(method))
+    catch e
+        e isa InterruptException && rethrow()
+        push!(violations, (; f = nameof(f), kind = :throws, detail = "throws $(typeof(e))"))
+        return nothing
+    end
+end
+
+function default_has_type(f, answer)
+    f === initmethod ? answer isa GeometricMethod :
+    f === default_solver ? answer isa GeometricBase.SolverMethod :
+    f === default_iguess ? answer isa Union{InitialGuess, Extrapolation} :
+    f === default_projection ? answer isa ProjectionMethod :
+    f === default_extrapolation ? answer isa Extrapolation : true
+end
+
 isexplicit(::GeometricMethod) = missing
 isimplicit(::GeometricMethod) = missing
 issymmetric(::GeometricMethod) = missing
