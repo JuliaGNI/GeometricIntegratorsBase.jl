@@ -200,9 +200,12 @@ end
 end
 
 @testset "an interrupt is thrown again" begin
-    # The fixtures throw the `InterruptException` themselves; it carries no message.
-    @test_throws InterruptException() GeometricBase.interface_violations(InterruptingDefaultMethod())
-    @test_throws InterruptException() GeometricBase.interface_violations(InterruptingTraitMethod())
+    # An `InterruptException` carries no message, and `@test_throws` catches one only when its
+    # first argument is the type itself.
+    # ast-grep-ignore: test-throws-bare-type
+    @test_throws InterruptException GeometricBase.interface_violations(InterruptingDefaultMethod())
+    # ast-grep-ignore: test-throws-bare-type
+    @test_throws InterruptException GeometricBase.interface_violations(InterruptingTraitMethod())
 end
 
 @testset "a method for more kinds of problem" begin
